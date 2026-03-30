@@ -1,0 +1,96 @@
+// app global css in SCSS form
+@import 'quasar.variables';
+
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px white inset !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+.q-expansion-item__container {
+  .q-item {
+    .q-item__section {
+      .q-icon {
+        color: $white !important;
+      }
+    }
+
+    &.text-primary {
+      .q-item__section {
+        .q-icon {
+          color: var(--q-primary) !important;
+        }
+      }
+    }
+  }
+}
+
+.q-table__container {
+  max-height: calc(100vh - 100px);
+
+  &.table {
+    thead tr:last-child th:last-child {
+      background-color: $white;
+    }
+
+    td:last-child {
+      background-color: $white;
+    }
+
+    th:last-child,
+    td:last-child {
+      position: sticky;
+      right: 0;
+      z-index: 1;
+    }
+  }
+}
+
+.login-container {
+  background-color: $secondary-2;
+
+  .login-card {
+    min-width: 100%;
+    flex-direction: column;
+
+    .logo {
+      max-width: 115px;
+      margin-bottom: 30px;
+    }
+
+    .my-card {
+      padding: 20px 10px;
+      border-radius: 10px !important;
+
+      .login-inputs {
+        padding-bottom: 0 !important;
+
+        .login-error-msg {
+          color: $negative;
+        }
+      }
+
+      .forgot-password-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-top: 10px;
+
+        .forgot-password {
+          margin: 10px;
+          color: #00796B;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+}
+
+.icon-hide {
+  right: 10px;
+  bottom: 15px;
+}
+
+.user-menu {
+  min-width: 200px;
+}
