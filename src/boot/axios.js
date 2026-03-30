@@ -18,8 +18,6 @@ api.interceptors.request.use(config => {
 export default defineBoot(({ app }) => {
   app.config.globalProperties.$axios = axios
   app.config.globalProperties.$api = api
-
-  // Para Composition API (provide/inject)
   app.provide('api', api)
 })
 

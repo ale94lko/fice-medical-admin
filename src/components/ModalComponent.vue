@@ -3,8 +3,7 @@
     v-model="modelValue"
     persistent
     transition-show="scale"
-    transition-hide="scale"
-  >
+    transition-hide="scale">
     <q-card class="modal-card">
       <q-toolbar class="q-px-md bg-teal-10 text-white">
         <q-toolbar-title>{{ title }}</q-toolbar-title>
