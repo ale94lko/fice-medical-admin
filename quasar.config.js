@@ -7,7 +7,7 @@ export default defineConfig((ctx) => {
       'i18n',
       'axios'
     ],
-    css: [S
+    css: [
       'app.scss'
     ],
     extras: [
