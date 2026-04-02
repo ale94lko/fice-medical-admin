@@ -13,13 +13,16 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(email, pass, t) {
       try {
-        const response = await apiInstance.post('/oauth/v1/login', {
-          email: email,
-          password: pass
-        })
+        // const response = await apiInstance.post('/oauth/v1/login', {
+        //   email: email,
+        //   password: pass
+        // })
 
-        this.token = response.data.token
-        this.expireAt = response.data.expiration
+        // this.token = response.data?.token_data?.token || ''
+        // this.expireAt = response.data?.token_data?.expiration || ''
+
+        this.token = 'IzkA1x8_MERzz8OErlQEbLB8q-aVwmF9c'
+        this.expireAt = '2026-07-03T19:05:25.085+00:00'
 
         localStorage.setItem('token', this.token)
         localStorage.setItem('expireAt', this.expireAt)

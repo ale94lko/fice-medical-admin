@@ -7,6 +7,10 @@ const routes = [
         path: 'dashboard',
         component: () => import('pages/dashboard/DashboardPage.vue'),
       },
+      {
+        path: 'users',
+        component: () => import('pages/administration/UserList.vue'),
+      },
     ],
     meta: { requiresAuth: true },
   },

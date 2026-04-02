@@ -108,7 +108,7 @@ async function handleLogin() {
         t
       )
       if (result) {
-        await router.push('/')
+        await router.push('/dashboard')
       }
     } catch (error) {
       console.warn(error)

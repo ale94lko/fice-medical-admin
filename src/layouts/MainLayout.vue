@@ -61,11 +61,15 @@
             v-if="accordionMenu"
             v-model="administrationMenu"
             :content-inset-level="1"
+            :label="t('administration')"
             expand-separator
-            icon="manage_accounts"
-            label="Administration">
-            <q-item clickable v-ripple>
-              <q-item-section>General</q-item-section>
+            icon="manage_accounts">
+            <q-item
+              clickable
+              v-ripple
+              to="/users"
+              :active-class="activeClass">
+              <q-item-section>{{ t('users') }}</q-item-section>
             </q-item>
           </q-expansion-item>
           <q-item clickable v-ripple v-else>
@@ -83,8 +87,12 @@
               self="top left"
               class="bg-teal-9 text-white"
               v-model="administrationMenu">
-              <q-item clickable v-ripple>
-                <q-item-section>General</q-item-section>
+              <q-item
+                clickable
+                v-ripple
+                to="/users"
+                :active-class="activeClass">
+                <q-item-section>{{ t('users') }}</q-item-section>
               </q-item>
             </q-menu>
           </q-item>
