@@ -33,6 +33,8 @@ export default {
   clientList: 'Listado de clientes',
   clientNumber: 'No. Cliente',
   name: 'Nombre',
+  domain: 'Dominio',
+  planName: 'Plan',
   dob: 'Cumpleaños',
   status: 'Estado',
   actions: 'Acciones',

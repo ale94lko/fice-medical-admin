@@ -33,6 +33,8 @@ export default {
   clientList: 'Client list',
   clientNumber: 'Client No.',
   name: 'Name',
+  domain: 'Domain',
+  planName: 'Plan',
   dob: 'DOB',
   status: 'Status',
   actions: 'Actions',
