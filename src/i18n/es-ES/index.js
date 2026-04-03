@@ -24,6 +24,7 @@ export default {
   administration: 'Administración',
   users: 'Usuarios',
   addUser: 'Agregar usuario',
+  addTenant: 'Agregar tenant',
   username: 'Nombre de usuario',
   tenants: 'Tenants',
   roles: 'Roles',
