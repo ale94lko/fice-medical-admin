@@ -38,14 +38,14 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     async logout(router) {
+      this.clearSession()
+      await router.push('/login')
       try {
         await apiInstance.post('/logout')
       } catch (error) {
         console.warn(error)
         throw error
       }
-      this.clearSession()
-      await router.push('/login')
     },
     restoreSession() {
       const token = localStorage.getItem('token')
