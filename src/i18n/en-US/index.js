@@ -8,6 +8,7 @@ export default {
   signOut: 'Sign out',
   confirmSignOut: 'Are you sure you want to sign out?',
   confirmSignOutTitle: 'Confirm sign out',
+  alreadySignOut: 'You have already signed out',
   forgotPassword: 'Forgot password?',
   resetPassword: 'Reset password',
   continue: 'Continue',

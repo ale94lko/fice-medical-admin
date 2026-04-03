@@ -37,14 +37,19 @@ export const useAuthStore = defineStore('auth', {
         throw error
       }
     },
-    async logout(router) {
-      this.clearSession()
-      await router.push('/login')
+    async logout(router, t) {
       try {
         await apiInstance.post('/logout')
       } catch (error) {
-        console.warn(error)
+        switch (error.status) {
+          case 401:
+            throw new Error(t('alreadySignOut'))
+        }
+
         throw error
+      } finally {
+        this.clearSession()
+        await router.push('/login')
       }
     },
     restoreSession() {

@@ -8,6 +8,7 @@ export default {
   signOut: 'Cerrar sesión',
   confirmSignOut: '¿Seguro que deseas cerrar sesión?',
   confirmSignOutTitle: 'Confirmar cerrar sesión',
+  alreadySignOut: 'Ya has cerrado sesión',
   forgotPassword: '¿Olvidaste tu contraseña?',
   resetPassword: 'Restablecer contraseña',
   continue: 'Continuar',

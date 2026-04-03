@@ -212,7 +212,7 @@ const activeClass = computed(() => 'text-primary bg-blue-1')
 const { t } = useI18n()
 
 const handleSignOutConfirm = () => {
-  authStore.logout(router)
+  authStore.logout(router, t)
 }
 
 const handleSignOutCancel = () => {
