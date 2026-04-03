@@ -15,3 +15,5 @@ export const clientStatus = {
   CLOSED: 0,
   OPEN: 1,
 }
+
+export const defaultTenant = 'main'

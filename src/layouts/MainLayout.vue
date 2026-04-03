@@ -67,9 +67,30 @@
             <q-item
               clickable
               v-ripple
+              to="/tenants"
+              :active-class="activeClass">
+              <q-item-section>{{ t('tenants') }}</q-item-section>
+            </q-item>
+            <q-item
+              clickable
+              v-ripple
               to="/users"
               :active-class="activeClass">
               <q-item-section>{{ t('users') }}</q-item-section>
+            </q-item>
+            <q-item
+              clickable
+              v-ripple
+              to="/roles"
+              :active-class="activeClass">
+              <q-item-section>{{ t('roles') }}</q-item-section>
+            </q-item>
+            <q-item
+              clickable
+              v-ripple
+              to="/permissions"
+              :active-class="activeClass">
+              <q-item-section>{{ t('permissions') }}</q-item-section>
             </q-item>
           </q-expansion-item>
           <q-item clickable v-ripple v-else>
@@ -90,9 +111,30 @@
               <q-item
                 clickable
                 v-ripple
+                to="/tenants"
+                :active-class="activeClass">
+                <q-item-section>{{ t('tenants') }}</q-item-section>
+              </q-item>
+              <q-item
+                clickable
+                v-ripple
                 to="/users"
                 :active-class="activeClass">
                 <q-item-section>{{ t('users') }}</q-item-section>
+              </q-item>
+              <q-item
+                clickable
+                v-ripple
+                to="/roles"
+                :active-class="activeClass">
+                <q-item-section>{{ t('roles') }}</q-item-section>
+              </q-item>
+              <q-item
+                clickable
+                v-ripple
+                to="/permissions"
+                :active-class="activeClass">
+                <q-item-section>{{ t('permissions') }}</q-item-section>
               </q-item>
             </q-menu>
           </q-item>

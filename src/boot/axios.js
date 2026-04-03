@@ -1,7 +1,10 @@
 import { defineBoot } from '#q-app/wrappers'
 import axios from 'axios'
+import { defaultTenant } from 'components/constants.js'
 
-const api = axios.create({ baseURL: 'https://8abee00f087d.ngrok-free.app' })
+const api = axios.create({
+  baseURL: 'https://d9be-79-116-146-1.ngrok-free.app',
+})
 
 api.interceptors.request.use(config => {
   const token = localStorage.getItem('token')
@@ -9,6 +12,8 @@ api.interceptors.request.use(config => {
   if (token && !config.url.includes('/login')) {
     config.headers.Authorization = `Bearer ${token}`
   }
+
+  config.headers['X-Tenant-Key'] = defaultTenant
 
   return config
 }, error => {
