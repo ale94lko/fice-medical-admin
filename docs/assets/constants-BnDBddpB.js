@@ -1,0 +1,1 @@
+var e={XS:`xs`,SM:`sm`,MD:`md`,LG:`lg`,XL:`xl`},t={XXS:500,MD:1024},n=`main`;export{e as n,t as r,n as t};
