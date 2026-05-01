@@ -8,7 +8,7 @@ export function useNotifications() {
       color: 'negative',
       icon: 'error',
       message,
-      position: 'bottom-left',
+      position: 'top',
       timeout: 5000,
     })
   }
@@ -18,7 +18,7 @@ export function useNotifications() {
       color: 'positive',
       icon: 'check_circle',
       message,
-      position: 'bottom-left',
+      position: 'top',
       timeout: 3000,
     })
   }
@@ -28,7 +28,7 @@ export function useNotifications() {
       color: 'warning',
       icon: 'warning',
       message,
-      position: 'bottom-left',
+      position: 'top',
       timeout: 4000,
     })
   }

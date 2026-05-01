@@ -40,7 +40,11 @@ export default defineConfig((ctx) => {
       open: true
     },
     framework: {
-      config: {},
+      config: {
+        notify: {
+          position: 'top',
+        },
+      },
       lang: 'en-US',
       plugins: [
         'Notify',
