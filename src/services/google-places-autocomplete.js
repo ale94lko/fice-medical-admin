@@ -1,20 +1,11 @@
-/**
- * Browser autocomplete via Google Maps JavaScript API (Places).
- * The Places **REST** API is not callable from the browser (CORS); this uses
- * the official script + `AutocompleteService`.
- *
- * Maps Platform includes a monthly free allowance but requires a **billing
- * account** and API key. Set `VITE_GOOGLE_MAPS_API_KEY` in `.env` to prefer
- * Google over Photon.
- */
-
-import { usAddressTextMatchesState } from 'components/constants.js'
+import { typeNames } from 'components/constants.js'
+import { usAddressTextMatchesState } from 'components/helpers.js'
 
 let mapsScriptPromise = null
 
 function googleMapsApiKey() {
   const k = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-  return typeof k === 'string' ? k.trim() : ''
+  return typeof k === typeNames.string ? k.trim() : ''
 }
 
 export function isGooglePlacesBrowserConfigured() {
@@ -22,7 +13,7 @@ export function isGooglePlacesBrowserConfigured() {
 }
 
 function loadGoogleMapsPlacesScript() {
-  if (typeof window === 'undefined') {
+  if (typeof window === typeNames.undefined) {
     return Promise.reject(new Error('no window'))
   }
   if (window.google?.maps?.places) {
@@ -64,12 +55,6 @@ function loadGoogleMapsPlacesScript() {
   return mapsScriptPromise
 }
 
-/**
- * @param {string} query
- * @param {string} iso3166Alpha2 e.g. "US"
- * @param {string} stateCode e.g. "CA" (required)
- * @returns {Promise<Array<{ label: string, value: string }>>}
- */
 export async function searchGooglePlacesAddresses(
   query,
   iso3166Alpha2,

@@ -1,9 +1,9 @@
 <template>
   <q-dialog
+    :transition-show="quasarTransitions.scale"
+    :transition-hide="quasarTransitions.scale"
     :model-value="modelValue"
     :persistent="persistent"
-    transition-show="scale"
-    transition-hide="scale"
     @update:model-value="emit('update:modelValue', $event)">
     <q-card class="modal-card" :style="cardStyle">
       <q-toolbar class="q-px-md bg-teal-10 text-white">
@@ -13,62 +13,55 @@
       <q-form ref="formRef" class="q-gutter-none" @submit.prevent="submit">
         <q-card-section
           class="q-px-xl q-py-md modal-body"
-          :style="{ maxHeight: bodyMaxHeight, overflowY: 'auto' }">
+          :style="{ maxHeight: bodyMaxHeight, overflowY: cssOverflow.auto }">
           <div class="column q-gutter-sm">
             <div
               v-for="field in fields"
-              :key="field.key"
-              v-show="field.key !== 'status' || initialValues != null"
+              v-show="showFieldRow(field)"
               class="dialog-field-row"
-            >
+              :key="field.key">
               <q-input
-                v-if="
-                  field.kind === 'input' && !field.phoneDialFromCountryField
-                "
+                v-if="showPhoneField(field)"
                 v-model="form[field.key]"
                 outlined
                 lazy-rules
                 :readonly="isFieldReadonly(field)"
-                :type="field.inputType || 'text'"
+                :type="field.inputType || htmlInputTypes.text"
                 :label="labelFor(field)"
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
-                @blur="onFieldBlur(field)"
-              />
+                @blur="onFieldBlur(field)"/>
               <q-input
-                v-else-if="field.kind === 'input'"
-                :model-value="form[field.key]"
+                v-else-if="isDialPrefixedPhoneField(field)"
                 outlined
                 lazy-rules
-                type="text"
+                :type="htmlInputTypes.text"
+                :inputmode="htmlInputModes.tel"
+                :autocomplete="htmlAutocomplete.telNational"
+                :model-value="form[field.key]"
                 :readonly="isFieldReadonly(field)"
                 :maxlength="phoneDisplayMaxLength(field)"
                 :label="labelFor(field)"
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
-                inputmode="tel"
-                autocomplete="tel-national"
                 @keydown="ev => onDialPrefixedPhoneKeydown(field, ev)"
                 @paste="ev => onDialPrefixedPhonePaste(field, ev)"
-                @update:model-value="v => onDialPrefixedPhoneInput(field, v)"
                 @blur="onDialPrefixedPhoneBlur(field)"
-              >
+                @update:model-value="v => onDialPrefixedPhoneInput(field, v)">
                 <template #prepend>
                   <div class="row items-center no-wrap q-gutter-xs">
                     <component
                       :is="phoneFlagComponent(field)"
-                      v-if="phoneFlagComponent(field)"
-                    />
-                    <span class="text-body2 text-grey-9">(+{{
-                      dialMetaForField(field).dialDigits
-                    }})</span>
+                      v-if="phoneFlagComponent(field)"/>
+                    <span class="text-body2 text-grey-9">
+                      (+{{dialMetaForField(field).dialDigits}})
+                    </span>
                   </div>
                 </template>
               </q-input>
               <div
-                v-else-if="field.kind === 'addressSuggest'"
-                class="column q-gutter-y-xs address-suggest-wrap"
-              >
+                v-else-if="field.kind === fieldTypes.addressSuggest"
+                class="column q-gutter-y-xs address-suggest-wrap">
                 <q-input
                   v-model="form[field.key]"
                   outlined
@@ -78,58 +71,51 @@
                   :hint="addressSuggestHint(field)"
                   :rules="rulesFor(field)"
                   :loading="addressSuggestSlot(field).loading"
-                  @update:model-value="v => onAddressSuggestInput(field, v)"
                   @blur="onFieldBlur(field)"
-                />
+                  @update:model-value="v => onAddressSuggestInput(field, v)"/>
                 <q-list
-                  v-if="
-                    addressSuggestSlot(field).options.length > 0
-                    && !isFieldReadonly(field)
-                    && !isAddressSuggestWaitingForState(field)
-                  "
+                  v-if="showAddressSuggestSlot(field)"
                   bordered
                   separator
-                  class="rounded-borders bg-white address-suggest-list"
-                >
+                  class="rounded-borders bg-white address-suggest-list">
                   <q-item
                     v-for="(opt, idx) in addressSuggestSlot(field).options"
-                    :key="idx"
                     v-ripple
                     clickable
                     dense
-                    @mousedown.prevent="
-                      pickAddressSuggestion(field, opt.value)
-                    "
-                  >
+                    :key="idx"
+                    @mousedown.prevent="pickAddressSuggestion(
+                      field, opt.value
+                    )">
                     <q-item-section>{{ opt.label }}</q-item-section>
                   </q-item>
                 </q-list>
               </div>
               <q-input
-                v-else-if="field.kind === 'textarea'"
+                v-else-if="field.kind === fieldTypes.textarea"
                 v-model="form[field.key]"
                 outlined
-                type="textarea"
+                input-class="dialog-textarea-inner"
+                :type="htmlInputTypes.textarea"
                 :readonly="isFieldReadonly(field)"
                 :rows="field.rows == null ? 3 : field.rows"
                 :autogrow="field.autogrow !== false"
-                input-class="dialog-textarea-inner"
                 :label="labelFor(field)"
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
-                @blur="onFieldBlur(field)"
-              />
+                @blur="onFieldBlur(field)"/>
               <q-select
-                v-else-if="field.kind === 'select'"
+                v-else-if="field.kind === fieldTypes.select"
                 v-model="form[field.key]"
                 outlined
                 emit-value
                 map-options
-                :behavior="field.selectBehavior || 'default'"
                 lazy-rules
+                input-debounce="0"
+                :behavior="field.selectBehavior || selectBehaviors.default"
                 :options="selectOptionsDisplayed(field)"
-                :option-label="field.optionLabel || 'label'"
-                :option-value="field.optionValue || 'value'"
+                :option-label="field.optionLabel || qSelectOptionKeys.label"
+                :option-value="field.optionValue || qSelectOptionKeys.value"
                 :label="labelFor(field)"
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
@@ -139,10 +125,8 @@
                 :use-input="field.useInput === true && !isFieldReadonly(field)"
                 :hide-selected="field.useInput === true"
                 :fill-input="field.useInput === true"
-                input-debounce="0"
                 @filter="(val, update) => onSelectFilter(val, update, field)"
-                @blur="onFieldBlur(field)"
-              />
+                @blur="onFieldBlur(field)"/>
             </div>
           </div>
         </q-card-section>
@@ -161,7 +145,7 @@
             no-caps
             class="primary-action"
             color="primary"
-            type="submit"
+            :type="htmlButtonTypes.submit"
             :label="t(submitKey)"
             :loading="saving"
           />
@@ -176,14 +160,33 @@ import { reactive, ref, watch, computed, unref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import {
+  clipboardMimeTypes,
   countryCodeUsa,
+  cssOverflow,
+  dialogEmitEvents,
+  dialogI18nKeys,
+  fieldTypes,
+  htmlAutocomplete,
+  htmlButtonTypes,
+  htmlInputModes,
+  htmlInputTypes,
+  keyboardKeys,
+  phoneInputNavKeys,
+  qSelectOptionKeys,
+  quasarNotifyTypes,
+  quasarTransitions,
+  selectBehaviors,
+  tenantFieldKeys,
+  typeNames,
+} from './constants.js'
+import {
   formatNationalPhoneDisplay,
   getCountryDialMeta,
   getTenantCountryIso3166Alpha2,
   nationalPhoneDisplayMaxLength,
   parseNationalPhoneDigits,
-} from 'components/constants.js'
-import UsFlagIcon from 'components/UsFlagIcon.vue'
+} from './helpers.js'
+import UsFlagIcon from './UsFlagIcon.vue'
 import {
   searchTenantAddressSuggestions,
 } from 'src/services/tenant-address-search.js'
@@ -194,66 +197,37 @@ const PHONE_FLAG_BY_COUNTRY = {
   USA: UsFlagIcon,
 }
 
-/** Allow; block other printable keys so only digits reach the NANP field. */
-const DIAL_PHONE_NAV_KEYS = new Set([
-  'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
-  'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
-  'Home', 'End',
-])
+const DIAL_PHONE_NAV_KEYS = new Set(phoneInputNavKeys)
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
   saving: { type: Boolean, default: false },
-  /** i18n key for toolbar title (used if `title` is empty). */
   titleKey: { type: String, default: '' },
-  /** Raw title when not using i18n. */
   title: { type: String, default: '' },
-  /**
-   * Field definitions: key, kind, labelKey, hintKey, inputType, rules,
-   * options, defaultValue, disable, loading, onBlur, useInput (filterable
-   * select), phoneDialFromCountryField (prepend flag + +NN),
-   * textarea: optional `rows`, `autogrow` (default true),
-   * addressSuggest: `addressCountryField`, `addressStateField` (suggestions
-   * only after state is chosen; Google if VITE_GOOGLE_MAPS_API_KEY), …
-   */
   fields: { type: Array, required: true },
-  cancelKey: { type: String, default: 'cancel' },
-  submitKey: { type: String, default: 'save' },
-  /**
-   * (form) => payload. If omitted, emits a shallow snapshot of form keys
-   * listed in fields.
-   */
+  cancelKey: { type: String, default: dialogI18nKeys.cancel },
+  submitKey: { type: String, default: dialogI18nKeys.save },
   formatPayload: { type: Function, default: null },
-  /** Called when the dialog opens (after form reset). */
   onOpen: { type: Function, default: null },
-  /**
-   * Partial values merged onto the form after reset (e.g. edit mode).
-   * Only keys that exist in `fields` are applied.
-   */
   initialValues: { type: Object, default: null },
   persistent: { type: Boolean, default: true },
-  /** CSS value, e.g. `min(520px, 100vw - 24px)` */
   minWidth: { type: String, default: 'min(520px, 100vw - 24px)' },
   maxWidth: { type: String, default: '520px' },
-  /** Scroll area max-height, e.g. `min(520px, 70vh)` */
   bodyMaxHeight: { type: String, default: 'min(520px, 70vh)' },
-  /**
-   * When non-empty, every field whose `key` is not in this list is
-   * `readonly` (e.g. tenant edit: name and country locked).
-   */
   editableKeysWhenEdit: { type: Array, default: null },
 })
 
-const emit = defineEmits(['update:modelValue', 'save'])
+const emit = defineEmits([
+  dialogEmitEvents.updateModelValue,
+  dialogEmitEvents.save,
+])
 
 const { t } = useI18n()
 const $q = useQuasar()
 
 const formRef = ref(null)
 const form = reactive({})
-/** IANA search text per field when `field.useInput` is true. */
 const selectFilterQueries = reactive({})
-/** Photon suggestions per `addressSuggest` field key. */
 const addressSuggestByKey = reactive({})
 const addressSuggestTimers = {}
 
@@ -264,6 +238,7 @@ const titleText = computed(() => {
   if (props.titleKey) {
     return t(props.titleKey)
   }
+
   return ''
 })
 
@@ -277,16 +252,33 @@ function isFieldReadonly(field) {
   if (!allowed?.length) {
     return false
   }
+
   return !allowed.includes(field.key)
+}
+
+function showPhoneField(field) {
+  return field.kind === fieldTypes.input
+    && !field.phoneDialFromCountryField
+}
+
+function showFieldRow(field) {
+  return field.key !== tenantFieldKeys.status
+    || props.initialValues != null
+}
+
+function isDialPrefixedPhoneField(field) {
+  return field.kind === fieldTypes.input
+    && Boolean(field.phoneDialFromCountryField)
 }
 
 function blankForKind(kind) {
   switch (kind) {
-    case 'select':
+    case fieldTypes.select:
       return null
-    case 'textarea':
-    case 'input':
-    case 'addressSuggest':
+
+    case fieldTypes.textarea:
+    case fieldTypes.input:
+    case fieldTypes.addressSuggest:
     default:
       return ''
   }
@@ -303,11 +295,18 @@ function addressSuggestSlot(field) {
   if (!addressSuggestByKey[k]) {
     addressSuggestByKey[k] = { options: [], loading: false }
   }
+
   return addressSuggestByKey[k]
 }
 
+function showAddressSuggestSlot(field) {
+  return addressSuggestSlot(field).options.length > 0
+    && !isFieldReadonly(field)
+    && !isAddressSuggestWaitingForState(field)
+}
+
 function isAddressSuggestWaitingForState(field) {
-  const stKey = field.addressStateField || 'state'
+  const stKey = field.addressStateField || tenantFieldKeys.state
   const st = form[stKey]
   return st == null || String(st).trim() === ''
 }
@@ -316,6 +315,7 @@ function addressSuggestHint(field) {
   if (isAddressSuggestWaitingForState(field)) {
     return t('contactAddressSelectStateHint')
   }
+
   return hintFor(field)
 }
 
@@ -336,8 +336,8 @@ function onAddressSuggestInput(field, val) {
     return
   }
   const slot = addressSuggestSlot(field)
-  const countryField = field.addressCountryField || 'country'
-  const stateField = field.addressStateField || 'state'
+  const countryField = field.addressCountryField || tenantFieldKeys.country
+  const stateField = field.addressStateField || tenantFieldKeys.state
   const iso = getTenantCountryIso3166Alpha2(form[countryField])
   const stateVal = form[stateField]
   const q = String(val ?? '').trim()
@@ -347,10 +347,12 @@ function onAddressSuggestInput(field, val) {
   }
   if (isAddressSuggestWaitingForState(field)) {
     slot.options = []
+
     return
   }
   if (q.length < 3) {
     slot.options = []
+
     return
   }
   addressSuggestTimers[field.key] = setTimeout(async() => {
@@ -370,7 +372,7 @@ function onAddressSuggestInput(field, val) {
     } catch {
       slot.options = []
       $q.notify({
-        type: 'warning',
+        type: quasarNotifyTypes.warning,
         message: t('addressSearchFailed'),
       })
     } finally {
@@ -394,16 +396,15 @@ function resetForm() {
     if (!field?.key) {
       continue
     }
-    const v = field.defaultValue !== undefined
+    form[field.key] = field.defaultValue !== undefined
       ? field.defaultValue
       : blankForKind(field.kind)
-    form[field.key] = v
   }
 }
 
 function applyInitialValues() {
   const seed = props.initialValues
-  if (seed && typeof seed === 'object') {
+  if (seed && typeof seed === typeNames.object) {
     const keys = new Set(props.fields.map(f => f?.key).filter(Boolean))
     for (const key of keys) {
       if (!Object.prototype.hasOwnProperty.call(seed, key)) {
@@ -437,7 +438,7 @@ watch(
     }
     resetForm()
     applyInitialValues()
-    if (typeof props.onOpen === 'function') {
+    if (typeof props.onOpen === typeNames.function) {
       await props.onOpen()
     }
   },
@@ -446,8 +447,8 @@ watch(
 watch(
   () => ({
     open: props.modelValue,
-    country: form.country,
-    state: form.state,
+    country: form[tenantFieldKeys.country],
+    state: form[tenantFieldKeys.state],
   }),
   (cur, prev) => {
     if (!cur.open || !prev?.open) {
@@ -460,13 +461,16 @@ watch(
     }
     for (const f of props.fields) {
       if (
-        f.phoneDialFromCountryField === 'country'
+        f.phoneDialFromCountryField === tenantFieldKeys.country
         && f.key
         && countryChanged
       ) {
-        form[f.key] = formatNationalPhoneDisplay(cur.country, form[f.key])
+        form[f.key] = formatNationalPhoneDisplay(
+          cur.country,
+          form[f.key],
+        )
       }
-      if (f.kind === 'addressSuggest' && f.key) {
+      if (f.kind === fieldTypes.addressSuggest && f.key) {
         addressSuggestSlot(f).options = []
         if (addressSuggestTimers[f.key]) {
           clearTimeout(addressSuggestTimers[f.key])
@@ -482,6 +486,7 @@ function phoneFlagComponent(field) {
     return null
   }
   const cc = form[field.phoneDialFromCountryField] || countryCodeUsa
+
   return PHONE_FLAG_BY_COUNTRY[cc] ?? PHONE_FLAG_BY_COUNTRY[countryCodeUsa]
 }
 
@@ -490,6 +495,7 @@ function phoneDisplayMaxLength(field) {
     return undefined
   }
   const cc = form[field.phoneDialFromCountryField] || countryCodeUsa
+
   return nationalPhoneDisplayMaxLength(cc)
 }
 
@@ -506,7 +512,7 @@ function onDialPrefixedPhoneKeydown(field, ev) {
   if (ev.ctrlKey || ev.metaKey || ev.altKey) {
     return
   }
-  if (ev.key === 'Unidentified' || ev.key === '') {
+  if (ev.key === keyboardKeys.unidentified || ev.key === keyboardKeys.empty) {
     return
   }
   if (/^[0-9]$/.test(ev.key)) {
@@ -520,18 +526,18 @@ function onDialPrefixedPhonePaste(field, ev) {
     return
   }
   ev.preventDefault()
-  const clip = ev.clipboardData?.getData('text/plain') ?? ''
+  const clip = ev.clipboardData?.getData(clipboardMimeTypes.textPlain) ?? ''
   const cc = form[field.phoneDialFromCountryField]
   const cur = String(form[field.key] ?? '')
   const el = ev.target
-  if (
-    el
-    && typeof el.selectionStart === 'number'
-    && typeof el.selectionEnd === 'number'
+  if (el
+    && typeof el.selectionStart === typeNames.number
+    && typeof el.selectionEnd === typeNames.number
   ) {
     const { selectionStart: start, selectionEnd: end } = el
     const merged = cur.slice(0, start) + clip + cur.slice(end)
     form[field.key] = formatNationalPhoneDisplay(cc, merged)
+
     return
   }
   form[field.key] = formatNationalPhoneDisplay(cc, clip)
@@ -556,6 +562,7 @@ function onDialPrefixedPhoneBlur(field) {
 function dialMetaForField(field) {
   const refKey = field.phoneDialFromCountryField
   const cc = refKey ? form[refKey] : null
+
   return getCountryDialMeta(cc)
 }
 
@@ -580,17 +587,20 @@ function rulesFor(field) {
       if (country === countryCodeUsa) {
         return digits.length === 10 || t('invalidPhone')
       }
+
       return true
     })
   }
+
   return list.length ? list : undefined
 }
 
 function optionsFor(field) {
   const o = field.options
-  if (typeof o === 'function') {
+  if (typeof o === typeNames.function) {
     return o() ?? []
   }
+
   return unref(o) ?? []
 }
 
@@ -599,15 +609,17 @@ function selectOptionsDisplayed(field) {
   if (!field.useInput) {
     return all
   }
-  const labelKey = field.optionLabel || 'label'
-  const valueKey = field.optionValue || 'value'
+  const labelKey = field.optionLabel || qSelectOptionKeys.label
+  const valueKey = field.optionValue || qSelectOptionKeys.value
   const q = String(selectFilterQueries[field.key] ?? '').toLowerCase().trim()
   if (!q) {
     return all
   }
+
   return all.filter(opt => {
     const lab = String(opt[labelKey] ?? '').toLowerCase()
     const val = String(opt[valueKey] ?? '').toLowerCase()
+
     return lab.includes(q) || val.includes(q)
   })
 }
@@ -615,6 +627,7 @@ function selectOptionsDisplayed(field) {
 function onSelectFilter(val, update, field) {
   if (!field.useInput) {
     update(() => {})
+
     return
   }
   update(() => {
@@ -626,27 +639,29 @@ function loadingFor(field) {
   if (field.loading == null) {
     return false
   }
+
   return unref(field.loading)
 }
 
 function disableFor(field) {
-  if (typeof field.disable === 'function') {
+  if (typeof field.disable === typeNames.function) {
     return field.disable(form)
   }
   if (field.disable != null) {
     return unref(field.disable)
   }
+
   return false
 }
 
 function onFieldBlur(field) {
-  if (typeof field.onBlur === 'function') {
+  if (typeof field.onBlur === typeNames.function) {
     field.onBlur(form)
   }
 }
 
 function close() {
-  emit('update:modelValue', false)
+  emit(dialogEmitEvents.updateModelValue, false)
 }
 
 function snapshotForm() {
@@ -656,6 +671,7 @@ function snapshotForm() {
       out[field.key] = form[field.key]
     }
   }
+
   return out
 }
 
@@ -664,32 +680,31 @@ async function submit() {
   if (!valid) {
     return
   }
-  const payload = typeof props.formatPayload === 'function'
+  const payload = typeof props.formatPayload === typeNames.function
     ? props.formatPayload(form)
     : snapshotForm()
-  emit('save', payload)
+  emit(dialogEmitEvents.save, payload)
 }
 </script>
 
 <style scoped>
-.primary-action {
-  margin-left: 25px;
-  padding: 7px 30px;
-}
+  .primary-action {
+    margin-left: 25px;
+    padding: 7px 30px;
+  }
 
-/* q-input forwards input-class to the native control (textarea). */
-:deep(.dialog-textarea-inner) {
-  min-height: 6.5rem;
-  resize: vertical;
-}
+  :deep(.dialog-textarea-inner) {
+    min-height: 6.5rem;
+    resize: vertical;
+  }
 
-.address-suggest-list {
-  max-height: 220px;
-  overflow-y: auto;
-}
+  .address-suggest-list {
+    max-height: 220px;
+    overflow-y: auto;
+  }
 
-.dialog-field-row {
-  width: 100%;
-  min-width: 0;
-}
+  .dialog-field-row {
+    width: 100%;
+    min-width: 0;
+  }
 </style>

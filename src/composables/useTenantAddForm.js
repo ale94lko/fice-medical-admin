@@ -3,29 +3,36 @@ import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import { useSiteStore } from 'stores/site-store.js'
 import {
-  concatInternationalPhone,
   countryCodeUsa,
-  getOfficialUtcOffsetTimezoneOptions,
+  fieldTypes,
+  htmlInputTypes,
+  localeCodes,
+  quasarNotifyTypes,
+  selectBehaviors,
+  tenantFieldKeys,
+  tenantFormDefaults,
   usStateOptions,
 } from 'components/constants.js'
+import {
+  concatInternationalPhone,
+  getOfficialUtcOffsetTimezoneOptions,
+} from 'components/helpers.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-/** Tenant edit dialog: only these `field.key` values stay editable. */
 export const TENANT_EDITABLE_KEYS_ON_EDIT = [
-  'domain',
-  'planId',
-  'status',
-  'timezone',
-  'locale',
-  'state',
-  'contactEmail',
-  'contactPhone',
-  'contactAddress',
-  'notes',
+  tenantFieldKeys.domain,
+  tenantFieldKeys.planId,
+  tenantFieldKeys.status,
+  tenantFieldKeys.timezone,
+  tenantFieldKeys.locale,
+  tenantFieldKeys.state,
+  tenantFieldKeys.contactEmail,
+  tenantFieldKeys.contactPhone,
+  tenantFieldKeys.contactAddress,
+  tenantFieldKeys.notes,
 ]
 
-/** Letters-only segments → lowercase → underscores (tenant schema_name). */
 function deriveSchemaNameFromTenantName(name) {
   const s = String(name ?? '')
     .normalize('NFD')
@@ -54,10 +61,9 @@ export function useTenantAddForm() {
     [...usStateOptions].sort((a, b) => a.label.localeCompare(b.label)),
   )
 
-  /** Visible labels; values are API locale codes (e.g. en_US). */
   const localeOptions = computed(() => [
-    { label: t('languageEnglish'), value: 'en_US' },
-    { label: t('languageSpanish'), value: 'es_US' },
+    { label: t('languageEnglish'), value: localeCodes.enUs },
+    { label: t('languageSpanish'), value: localeCodes.esUs },
   ])
 
   const timezoneOptions = computed(() => getOfficialUtcOffsetTimezoneOptions())
@@ -78,99 +84,100 @@ export function useTenantAddForm() {
       deriveSchemaNameFromTenantName(val) !== ''
       || t('tenantNameLettersRequired')
 
+    const tk = tenantFieldKeys
     return [
       {
-        key: 'name',
-        kind: 'input',
-        labelKey: 'name',
+        key: tk.name,
+        kind: fieldTypes.input,
+        labelKey: tk.name,
         rules: [requiredRule, tenantNameLettersRule],
       },
       {
-        key: 'domain',
-        kind: 'input',
-        labelKey: 'domain',
+        key: tk.domain,
+        kind: fieldTypes.input,
+        labelKey: tk.domain,
         rules: [requiredRule],
       },
       {
-        key: 'planId',
-        kind: 'select',
+        key: tk.planId,
+        kind: fieldTypes.select,
         labelKey: 'planName',
         rules: [selectRequiredRule],
         options: () => siteStore.planSelectOptions,
         loading: plansLoading,
       },
       {
-        key: 'status',
-        kind: 'select',
-        labelKey: 'status',
-        selectBehavior: 'menu',
+        key: tk.status,
+        kind: fieldTypes.select,
+        labelKey: tk.status,
+        selectBehavior: selectBehaviors.menu,
         rules: [selectRequiredRule],
         options: () => [
           { label: t('tenantStatusActive'), value: 1 },
           { label: t('tenantStatusInactive'), value: 0 },
         ],
-        defaultValue: 1,
+        defaultValue: tenantFormDefaults.statusActive,
       },
       {
-        key: 'timezone',
-        kind: 'select',
-        labelKey: 'timezone',
+        key: tk.timezone,
+        kind: fieldTypes.select,
+        labelKey: tk.timezone,
         rules: [selectRequiredRule],
         options: timezoneOptions,
-        defaultValue: 'UTC-08:00',
+        defaultValue: tenantFormDefaults.timezonePicker,
         useInput: true,
       },
       {
-        key: 'locale',
-        kind: 'select',
+        key: tk.locale,
+        kind: fieldTypes.select,
         labelKey: 'language',
         rules: [selectRequiredRule],
         options: localeOptions,
-        defaultValue: 'en_US',
+        defaultValue: localeCodes.enUs,
       },
       {
-        key: 'country',
-        kind: 'select',
-        labelKey: 'country',
+        key: tk.country,
+        kind: fieldTypes.select,
+        labelKey: tk.country,
         rules: [selectRequiredRule],
         options: countryOptions,
         defaultValue: countryCodeUsa,
       },
       {
-        key: 'state',
-        kind: 'select',
-        labelKey: 'state',
+        key: tk.state,
+        kind: fieldTypes.select,
+        labelKey: tk.state,
         rules: [selectRequiredRule],
         options: stateOptions,
-        disable: form => !form.country,
+        disable: form => !form[tk.country],
       },
       {
-        key: 'contactEmail',
-        kind: 'input',
-        labelKey: 'contactEmail',
-        inputType: 'email',
+        key: tk.contactEmail,
+        kind: fieldTypes.input,
+        labelKey: tk.contactEmail,
+        inputType: htmlInputTypes.email,
         rules: [requiredRule, emailRule],
       },
       {
-        key: 'contactPhone',
-        kind: 'input',
-        labelKey: 'contactPhone',
-        phoneDialFromCountryField: 'country',
+        key: tk.contactPhone,
+        kind: fieldTypes.input,
+        labelKey: tk.contactPhone,
+        phoneDialFromCountryField: tk.country,
         rules: [requiredRule],
       },
       {
-        key: 'contactAddress',
-        kind: 'addressSuggest',
-        labelKey: 'contactAddress',
+        key: tk.contactAddress,
+        kind: fieldTypes.addressSuggest,
+        labelKey: tk.contactAddress,
         hintKey: 'contactAddressHint',
-        addressCountryField: 'country',
-        addressStateField: 'state',
+        addressCountryField: tk.country,
+        addressStateField: tk.state,
         rules: [requiredRule],
       },
       {
-        key: 'notes',
-        kind: 'textarea',
-        labelKey: 'notes',
+        key: tk.notes,
+        kind: fieldTypes.textarea,
+        labelKey: tk.notes,
         rows: 4,
         autogrow: false,
       },
@@ -183,7 +190,7 @@ export function useTenantAddForm() {
       await siteStore.getPlans()
     } catch {
       $q.notify({
-        type: 'negative',
+        type: quasarNotifyTypes.negative,
         message: t('plansLoadError'),
       })
     } finally {
@@ -192,52 +199,54 @@ export function useTenantAddForm() {
   }
 
   function formatTenantPayload(form) {
+    const tk = tenantFieldKeys
     return {
-      name: form.name.trim(),
-      domain: form.domain.trim(),
-      planId: Number(form.planId),
-      schemaName: deriveSchemaNameFromTenantName(form.name),
-      timezone: String(form.timezone ?? '').trim(),
-      locale: String(form.locale ?? '').trim(),
-      contactEmail: form.contactEmail.trim(),
-      contactPhone: concatInternationalPhone(
-        form.country,
-        form.contactPhone.trim(),
+      [tk.name]: form[tk.name].trim(),
+      [tk.domain]: form[tk.domain].trim(),
+      [tk.planId]: Number(form[tk.planId]),
+      [tk.schemaName]: deriveSchemaNameFromTenantName(form[tk.name]),
+      [tk.timezone]: String(form[tk.timezone] ?? '').trim(),
+      [tk.locale]: String(form[tk.locale] ?? '').trim(),
+      [tk.contactEmail]: form[tk.contactEmail].trim(),
+      [tk.contactPhone]: concatInternationalPhone(
+        form[tk.country],
+        form[tk.contactPhone].trim(),
       ),
-      contactAddress: form.contactAddress.trim(),
-      notes: form.notes.trim(),
-      state: String(form.state ?? '').trim(),
-      country: String(form.country ?? '').trim(),
+      [tk.contactAddress]: form[tk.contactAddress].trim(),
+      [tk.notes]: form[tk.notes].trim(),
+      [tk.state]: String(form[tk.state] ?? '').trim(),
+      [tk.country]: String(form[tk.country] ?? '').trim(),
     }
   }
 
   function formatTenantUpdatePayload(form) {
+    const tk = tenantFieldKeys
     const shaped = {
-      domain: form.domain.trim(),
-      timezone: String(form.timezone ?? '').trim(),
-      locale: String(form.locale ?? '').trim(),
-      contactEmail: form.contactEmail.trim(),
-      contactPhone: concatInternationalPhone(
-        form.country,
-        form.contactPhone.trim(),
+      [tk.domain]: form[tk.domain].trim(),
+      [tk.timezone]: String(form[tk.timezone] ?? '').trim(),
+      [tk.locale]: String(form[tk.locale] ?? '').trim(),
+      [tk.contactEmail]: form[tk.contactEmail].trim(),
+      [tk.contactPhone]: concatInternationalPhone(
+        form[tk.country],
+        form[tk.contactPhone].trim(),
       ),
-      contactAddress: form.contactAddress.trim(),
-      notes: form.notes.trim(),
-      state: String(form.state ?? '').trim(),
+      [tk.contactAddress]: form[tk.contactAddress].trim(),
+      [tk.notes]: form[tk.notes].trim(),
+      [tk.state]: String(form[tk.state] ?? '').trim(),
     }
     const out = {}
     for (const key of TENANT_EDITABLE_KEYS_ON_EDIT) {
-      if (key === 'status') {
-        const s = form.status
+      if (key === tk.status) {
+        const s = form[tk.status]
         if (s === 0 || s === 1) {
-          out.status = Number(s)
+          out[tk.status] = Number(s)
         }
         continue
       }
-      if (key === 'planId') {
-        const v = Number(form.planId)
+      if (key === tk.planId) {
+        const v = Number(form[tk.planId])
         if (Number.isFinite(v)) {
-          out.planId = v
+          out[tk.planId] = v
         }
         continue
       }
@@ -245,6 +254,7 @@ export function useTenantAddForm() {
         out[key] = shaped[key]
       }
     }
+
     return out
   }
 

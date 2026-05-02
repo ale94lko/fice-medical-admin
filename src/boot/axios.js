@@ -3,7 +3,7 @@ import axios from 'axios'
 import { defaultTenant } from 'components/constants.js'
 
 const api = axios.create({
-  baseURL: 'https://65f4-79-112-108-239.ngrok-free.app',
+  baseURL: 'https://7646-79-112-108-239.ngrok-free.app',
 })
 
 api.interceptors.request.use(config => {

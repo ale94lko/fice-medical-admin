@@ -1,12 +1,10 @@
-import { usAddressTextMatchesState } from 'components/constants.js'
+import { typeNames } from 'components/constants.js'
+import { usAddressTextMatchesState } from 'components/helpers.js'
 
 const PHOTON_URL = 'https://photon.komoot.io/api/'
 
-/**
- * Single-line postal address from a Photon `properties` object.
- */
 export function formatPhotonAddressLine(props) {
-  if (!props || typeof props !== 'object') {
+  if (!props || typeof props !== typeNames.object) {
     return ''
   }
   const line1 = [props.housenumber, props.street]
@@ -23,6 +21,7 @@ export function formatPhotonAddressLine(props) {
     props.postcode,
     props.country,
   ].filter(p => p && String(p).trim())
+
   return parts.join(', ')
 }
 
@@ -36,15 +35,10 @@ function photonMatchesCountryAndState(props, iso3166Alpha2, stateCode) {
     return false
   }
   const line = formatPhotonAddressLine(props)
+
   return usAddressTextMatchesState(line, stateCode)
 }
 
-/**
- * Photon forward geocode. Requires `stateCode` (no global fallback).
- * @param {string} query
- * @param {string} [iso3166Alpha2] e.g. "US"
- * @param {string} stateCode US state value e.g. "CA"
- */
 export async function searchPhotonAddresses(
   query,
   iso3166Alpha2,
@@ -84,5 +78,6 @@ export async function searchPhotonAddresses(
       break
     }
   }
+
   return out
 }

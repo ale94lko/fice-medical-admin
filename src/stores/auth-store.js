@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiInstance } from 'boot/axios'
+import { typeNames } from 'components/constants.js'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -72,7 +73,7 @@ export const useAuthStore = defineStore('auth', {
         return
       }
       this._initialized = true
-      if (typeof window !== 'undefined') {
+      if (typeof window !== typeNames.undefined) {
         window.addEventListener('storage', (event) => {
           if (event.key === 'token' && event.newValue === null) {
             this.token = null

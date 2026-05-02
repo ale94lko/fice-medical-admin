@@ -18,18 +18,17 @@
           icon="add"
           :disable="loading || addSaving || deleteSaving"
           :label="t('addTenant')"
-          @click="addTenant" />
+          @click="addTenant"/>
         <q-space />
         <q-btn
           color="secondary"
           class="text-teal-10"
           icon="filter_alt"
+          badge-color="primary"
           :disable="loading || deleteSaving"
           :label="t('filters')"
           :badge="getbadge(activeTenantFilterCount)"
-          badge-color="primary"
-          @click="openTenantFilters"
-        />
+          @click="openTenantFilters"/>
       </template>
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
@@ -41,8 +40,7 @@
             color="primary"
             :size="siteBreakpoints.SM"
             :disable="addSaving || deleteSaving"
-            @click="editRow(props.row)"
-          />
+            @click="editRow(props.row)"/>
           <q-btn
             v-if="!isTenantStatusZero(props.row) && !isMainTenant(props.row)"
             flat
@@ -51,8 +49,7 @@
             color="primary"
             :size="siteBreakpoints.SM"
             :disable="deleteSaving"
-            @click="deleteRow(props.row)"
-          />
+            @click="deleteRow(props.row)"/>
         </q-td>
       </template>
     </q-table>
@@ -72,8 +69,8 @@
     <q-dialog
       v-model="filterDialogOpen"
       persistent
-      transition-show="scale"
-      transition-hide="scale">
+      :transition-show="quasarTransitions.scale"
+      :transition-hide="quasarTransitions.scale">
       <q-card class="tenant-filter-card">
         <q-toolbar class="q-px-md bg-teal-10 text-white">
           <q-toolbar-title>{{ t('tenantFiltersTitle') }}</q-toolbar-title>
@@ -87,43 +84,39 @@
         </q-toolbar>
         <q-card-section class="column q-gutter-md q-px-lg q-py-md">
           <q-input
-            v-model="filterDraft.name"
+            v-model="filterDraft[tk.name]"
             outlined
             dense
             clearable
-            :label="t('name')"
-          />
+            :label="t('name')"/>
           <q-input
-            v-model="filterDraft.domain"
+            v-model="filterDraft[tk.domain]"
             outlined
             dense
             clearable
-            :label="t('domain')"
-          />
+            :label="t('domain')"/>
           <q-select
-            v-model="filterDraft.planId"
+            v-model="filterDraft[tk.planId]"
             outlined
             dense
             clearable
             emit-value
             map-options
             :options="planFilterOptions"
-            option-label="label"
-            option-value="value"
-            :label="t('planName')"
-          />
+            :option-label="qSelectOptionKeys.label"
+            :option-value="qSelectOptionKeys.value"
+            :label="t('planName')"/>
           <q-select
-            v-model="filterDraft.status"
+            v-model="filterDraft[tk.status]"
             outlined
             dense
             clearable
             emit-value
             map-options
             :options="statusFilterOptions"
-            option-label="label"
-            option-value="value"
-            :label="t('status')"
-          />
+            :option-label="qSelectOptionKeys.label"
+            :option-value="qSelectOptionKeys.value"
+            :label="t('status')"/>
         </q-card-section>
         <q-separator />
         <q-card-actions align="center" class="q-pa-md">
@@ -133,16 +126,14 @@
             color="secondary"
             class="text-teal-10"
             :label="t('tenantFilterClear')"
-            @click="clearTenantFilters"
-          />
+            @click="clearTenantFilters"/>
           <q-btn
             no-caps
             class="primary-action"
             color="primary"
             padding="7px 30px"
             :label="t('tenantFilterApply')"
-            @click="applyTenantFilters"
-          />
+            @click="applyTenantFilters"/>
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -167,18 +158,30 @@ import { useQuasar } from 'quasar'
 import {
   countryCodeUsa,
   defaultTenant,
+  qSelectOptionKeys,
+  quasarNotifyTypes,
+  quasarTableAlign,
+  quasarTransitions,
+  siteBreakpoints,
+  siteBreakpointsPx,
+  tenantFieldKeys,
+  tenantFormDefaults,
+  tenantListColumnKeys,
+  tenantModelFallbacks,
+} from 'components/constants.js'
+import {
   formatNationalPhoneDisplay,
   formatPhoneWithCountryCode,
   nationalPhoneDigitsFromStored,
-  siteBreakpoints,
-  siteBreakpointsPx,
-} from 'components/constants.js'
+} from 'components/helpers.js'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import {
   TENANT_EDITABLE_KEYS_ON_EDIT,
   useTenantAddForm,
 } from 'src/composables/useTenantAddForm.js'
+
+const tk = tenantFieldKeys
 
 const $q = useQuasar()
 const loading = ref(false)
@@ -219,29 +222,30 @@ function tenantRowToFormSeed(row) {
     return null
   }
   const seed = {
-    name: row.name ?? '',
-    domain: row.domain ?? '',
-    planId: row.planId ?? null,
-    status: row.status === 0 || row.status === '0' ? 0 : 1,
-    timezone: row.timezone ?? 'UTC-08:00',
-    locale: row.locale ?? 'en_US',
-    contactEmail: row.contactEmail ?? '',
-    contactPhone: formatNationalPhoneDisplay(
-      row.country ?? countryCodeUsa,
+    [tk.name]: row[tk.name] ?? '',
+    [tk.domain]: row[tk.domain] ?? '',
+    [tk.planId]: row[tk.planId] ?? null,
+    [tk.status]: row[tk.status] === 0 || row[tk.status] === '0' ? 0 : 1,
+    [tk.timezone]: row[tk.timezone] ?? tenantFormDefaults.timezonePicker,
+    [tk.locale]: row[tk.locale] ?? tenantModelFallbacks.locale,
+    [tk.contactEmail]: row[tk.contactEmail] ?? '',
+    [tk.contactPhone]: formatNationalPhoneDisplay(
+      row[tk.country] ?? countryCodeUsa,
       nationalPhoneDigitsFromStored(
-        row.country ?? countryCodeUsa,
-        row.contactPhone ?? '',
+        row[tk.country] ?? countryCodeUsa,
+        row[tk.contactPhone] ?? '',
       ),
     ),
-    contactAddress: row.contactAddress ?? '',
-    notes: row.notes ?? '',
+    [tk.contactAddress]: row[tk.contactAddress] ?? '',
+    [tk.notes]: row[tk.notes] ?? '',
   }
-  if (row.country) {
-    seed.country = row.country
+  if (row[tk.country]) {
+    seed[tk.country] = row[tk.country]
   }
-  if (row.state) {
-    seed.state = row.state
+  if (row[tk.state]) {
+    seed[tk.state] = row[tk.state]
   }
+
   return seed
 }
 
@@ -257,14 +261,13 @@ watch(addDialogOpen, open => {
   }
 })
 
-// Load data when component is mounted
 onMounted(async() => {
   loading.value = true
   try {
     await siteStore.getTenantList()
   } catch {
     $q.notify({
-      type: 'negative',
+      type: quasarNotifyTypes.negative,
       message: t('tenantListError'),
     })
   } finally {
@@ -272,73 +275,72 @@ onMounted(async() => {
   }
 })
 
-// Computed properties
 const columns = computed(() => [
   {
-    name: 'name',
+    name: tk.name,
     required: true,
     label: t('name'),
-    align: 'left',
-    field: row => row.name,
+    align: quasarTableAlign.left,
+    field: row => row[tk.name],
     sortable: true,
   },
   {
-    name: 'domain',
+    name: tk.domain,
     required: true,
     label: t('domain'),
-    align: 'left',
-    field: row => row.domain,
+    align: quasarTableAlign.left,
+    field: row => row[tk.domain],
     sortable: true,
   },
   {
-    name: 'planName',
+    name: tk.planName,
     required: true,
     label: t('planName'),
-    align: 'left',
-    field: row => row.planName,
+    align: quasarTableAlign.left,
+    field: row => row[tk.planName],
     sortable: false,
   },
   {
-    name: 'contactEmail',
+    name: tk.contactEmail,
     required: true,
     label: t('contactEmail'),
-    align: 'left',
-    field: row => row.contactEmail ?? '',
+    align: quasarTableAlign.left,
+    field: row => row[tk.contactEmail] ?? '',
     sortable: true,
   },
   {
-    name: 'contactPhone',
+    name: tk.contactPhone,
     required: true,
     label: t('contactPhone'),
-    align: 'left',
+    align: quasarTableAlign.left,
     field: row =>
       formatPhoneWithCountryCode(
-        row.country ?? countryCodeUsa,
-        row.contactPhone ?? '',
+        row[tk.country] ?? countryCodeUsa,
+        row[tk.contactPhone] ?? '',
       ),
     sortable: false,
   },
   {
-    name: 'actions',
+    name: tenantListColumnKeys.actions,
     required: true,
     label: t('actions'),
-    align: 'center',
+    align: quasarTableAlign.center,
     field: row => row.actions,
     sortable: false,
   },
 ])
 const filterDialogOpen = ref(false)
 const filterDraft = reactive({
-  name: '',
-  domain: '',
-  planId: null,
-  status: null,
+  [tk.name]: '',
+  [tk.domain]: '',
+  [tk.planId]: null,
+  [tk.status]: null,
 })
 const filterApplied = reactive({
-  name: '',
-  domain: '',
-  planId: null,
-  status: null,
+  [tk.name]: '',
+  [tk.domain]: '',
+  [tk.planId]: null,
+  [tk.status]: null,
 })
 
 const planFilterOptions = computed(() => [
@@ -353,63 +355,65 @@ const statusFilterOptions = computed(() => [
 ])
 
 function syncDraftFromApplied() {
-  filterDraft.name = filterApplied.name
-  filterDraft.domain = filterApplied.domain
-  filterDraft.planId = filterApplied.planId
-  filterDraft.status = filterApplied.status
+  filterDraft[tk.name] = filterApplied[tk.name]
+  filterDraft[tk.domain] = filterApplied[tk.domain]
+  filterDraft[tk.planId] = filterApplied[tk.planId]
+  filterDraft[tk.status] = filterApplied[tk.status]
 }
 
 function rowStatusBucket(row) {
-  const s = row?.status
+  const s = row?.[tk.status]
   return s === 0 || s === '0' ? 0 : 1
 }
 
 const filteredRows = computed(() => {
   let list = siteStore.tenantList
   const f = filterApplied
-  const nameQ = String(f.name ?? '').trim().toLowerCase()
+  const nameQ = String(f[tk.name] ?? '').trim().toLowerCase()
   if (nameQ) {
     list = list.filter(r =>
-      String(r.name ?? '').toLowerCase().includes(nameQ),
+      String(r[tk.name] ?? '').toLowerCase().includes(nameQ),
     )
   }
-  const domainQ = String(f.domain ?? '').trim().toLowerCase()
+  const domainQ = String(f[tk.domain] ?? '').trim().toLowerCase()
   if (domainQ) {
     list = list.filter(r =>
-      String(r.domain ?? '').toLowerCase().includes(domainQ),
+      String(r[tk.domain] ?? '').toLowerCase().includes(domainQ),
     )
   }
-  if (f.planId != null
-    && f.planId !== ''
-    && Number.isFinite(Number(f.planId))
+  if (f[tk.planId] != null
+    && f[tk.planId] !== ''
+    && Number.isFinite(Number(f[tk.planId]))
   ) {
-    const pid = Number(f.planId)
-    list = list.filter(r => Number(r.planId) === pid)
+    const pid = Number(f[tk.planId])
+    list = list.filter(r => Number(r[tk.planId]) === pid)
   }
-  if (f.status === 0 || f.status === 1) {
-    list = list.filter(r => rowStatusBucket(r) === f.status)
+  if (f[tk.status] === 0 || f[tk.status] === 1) {
+    list = list.filter(r => rowStatusBucket(r) === f[tk.status])
   }
+
   return list
 })
 
 const activeTenantFilterCount = computed(() => {
   let n = 0
   const f = filterApplied
-  if (String(f.name ?? '').trim()) {
+  if (String(f[tk.name] ?? '').trim()) {
     n += 1
   }
-  if (String(f.domain ?? '').trim()) {
+  if (String(f[tk.domain] ?? '').trim()) {
     n += 1
   }
-  if (f.planId != null
-    && f.planId !== ''
-    && Number.isFinite(Number(f.planId))
+  if (f[tk.planId] != null
+    && f[tk.planId] !== ''
+    && Number.isFinite(Number(f[tk.planId]))
   ) {
     n += 1
   }
-  if (f.status === 0 || f.status === 1) {
+  if (f[tk.status] === 0 || f[tk.status] === 1) {
     n += 1
   }
+
   return n
 })
 
@@ -419,7 +423,7 @@ async function openTenantFilters() {
       await siteStore.getPlans()
     } catch {
       $q.notify({
-        type: 'negative',
+        type: quasarNotifyTypes.negative,
         message: t('plansLoadError'),
       })
       return
@@ -435,33 +439,34 @@ function closeTenantFilterDialog() {
 }
 
 function applyTenantFilters() {
-  filterApplied.name = String(filterDraft.name ?? '').trim()
-  filterApplied.domain = String(filterDraft.domain ?? '').trim()
-  const pid = filterDraft.planId
-  filterApplied.planId =
+  filterApplied[tk.name] = String(filterDraft[tk.name] ?? '').trim()
+  filterApplied[tk.domain] = String(filterDraft[tk.domain] ?? '').trim()
+  const pid = filterDraft[tk.planId]
+  filterApplied[tk.planId] =
     pid != null && pid !== '' && Number.isFinite(Number(pid))
       ? Number(pid)
       : null
-  const st = filterDraft.status
-  filterApplied.status =
+  const st = filterDraft[tk.status]
+  filterApplied[tk.status] =
     st === 0 || st === 1 ? Number(st) : null
   filterDialogOpen.value = false
 }
 
 function clearTenantFilters() {
-  filterDraft.name = ''
-  filterDraft.domain = ''
-  filterDraft.planId = null
-  filterDraft.status = null
-  filterApplied.name = ''
-  filterApplied.domain = ''
-  filterApplied.planId = null
-  filterApplied.status = null
+  filterDraft[tk.name] = ''
+  filterDraft[tk.domain] = ''
+  filterDraft[tk.planId] = null
+  filterDraft[tk.status] = null
+  filterApplied[tk.name] = ''
+  filterApplied[tk.domain] = ''
+  filterApplied[tk.planId] = null
+  filterApplied[tk.status] = null
   filterDialogOpen.value = false
 }
 
 function isTenantStatusZero(row) {
-  const s = row?.status
+  const s = row?.[tk.status]
+
   return s === 0 || s === '0'
 }
 
@@ -474,10 +479,12 @@ const deleteTenantMessage = computed(() => {
   if (!row) {
     return ''
   }
-  return t('deleteTenantMessage', { name: row.name || row.domain || row.id })
+
+  return t('deleteTenantMessage', {
+    name: row[tk.name] || row[tk.domain] || row.id,
+  })
 })
 
-// Responsive logic
 const windowWidth = computed(() => $q.screen.width)
 // TODO: take into account drawer width
 const showGrid = computed(() => windowWidth.value <= siteBreakpointsPx.XXS)
@@ -495,13 +502,13 @@ async function onSaveTenant(payload) {
     if (editingId != null) {
       await siteStore.updateTenant(editingId, payload)
       $q.notify({
-        type: 'positive',
+        type: quasarNotifyTypes.positive,
         message: t('tenantUpdatedSuccess'),
       })
     } else {
       await siteStore.createTenant(payload)
       $q.notify({
-        type: 'positive',
+        type: quasarNotifyTypes.positive,
         message: t('tenantCreatedSuccess'),
       })
     }
@@ -516,7 +523,7 @@ async function onSaveTenant(payload) {
       || error?.message
       || fallback
     $q.notify({
-      type: 'negative',
+      type: quasarNotifyTypes.negative,
       message: String(msg),
     })
   } finally {
@@ -529,8 +536,9 @@ function isMainTenant(row) {
     return false
   }
   const key = String(defaultTenant).toLowerCase()
-  const name = String(row.name ?? '').toLowerCase()
-  const domain = String(row.domain ?? '').toLowerCase()
+  const name = String(row[tk.name] ?? '').toLowerCase()
+  const domain = String(row[tk.domain] ?? '').toLowerCase()
+
   return name === key || domain === key
 }
 
@@ -568,7 +576,7 @@ async function onConfirmDeleteTenant() {
   try {
     await siteStore.deleteTenant(id)
     $q.notify({
-      type: 'positive',
+      type: quasarNotifyTypes.positive,
       message: t('tenantDeletedSuccess'),
     })
   } catch (error) {
@@ -578,7 +586,7 @@ async function onConfirmDeleteTenant() {
       || error?.message
       || t('tenantDeleteError')
     $q.notify({
-      type: 'negative',
+      type: quasarNotifyTypes.negative,
       message: String(msg),
     })
   } finally {
@@ -590,25 +598,21 @@ async function onConfirmDeleteTenant() {
 </script>
 
 <style scoped>
-/*
- * status === 0: light red — set on every td (incl. actions slot), not only tr,
- * because Quasar / q-td defaults paint cells white.
- */
-:deep(tbody tr.tenant-row--status-zero td) {
-  background-color: rgba(244, 67, 54, 0.12) !important;
-}
+  :deep(tbody tr.tenant-row--status-zero td) {
+    background-color: rgba(244, 67, 54, 0.12) !important;
+  }
 
-:deep(.q-table--grid .tenant-row--status-zero) {
-  background-color: rgba(244, 67, 54, 0.12);
-}
+  :deep(.q-table--grid .tenant-row--status-zero) {
+    background-color: rgba(244, 67, 54, 0.12);
+  }
 
-.tenant-filter-card {
-  min-width: min(400px, 100vw - 32px);
-  max-width: 440px;
-}
+  .tenant-filter-card {
+    min-width: min(400px, 100vw - 32px);
+    max-width: 440px;
+  }
 
-.tenant-filter-card .primary-action {
-  margin-left: 16px;
-}
+  .tenant-filter-card .primary-action {
+    margin-left: 16px;
+  }
 </style>
 

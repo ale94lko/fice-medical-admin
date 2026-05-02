@@ -17,8 +17,7 @@
       rx="2"
       fill="none"
       stroke="rgba(0,0,0,0.14)"
-      stroke-width="0.5"
-    />
+      stroke-width="0.5"/>
   </svg>
 </template>
 
@@ -27,10 +26,10 @@ defineOptions({ name: 'UsFlagIcon' })
 </script>
 
 <style scoped>
-.phone-flag-icon {
-  width: 28px;
-  height: 14px;
-  display: block;
-  flex-shrink: 0;
-}
+  .phone-flag-icon {
+    width: 28px;
+    height: 14px;
+    display: block;
+    flex-shrink: 0;
+  }
 </style>
