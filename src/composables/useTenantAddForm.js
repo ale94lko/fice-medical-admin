@@ -16,6 +16,7 @@ import {
 import {
   concatInternationalPhone,
   getOfficialUtcOffsetTimezoneOptions,
+  sanitizeTenantDomainInput,
 } from 'components/helpers.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -97,6 +98,7 @@ export function useTenantAddForm() {
         kind: fieldTypes.input,
         labelKey: tk.domain,
         rules: [requiredRule],
+        normalizeInput: sanitizeTenantDomainInput,
       },
       {
         key: tk.planId,

@@ -22,7 +22,7 @@
               :key="field.key">
               <q-input
                 v-if="showPhoneField(field)"
-                v-model="form[field.key]"
+                :model-value="form[field.key]"
                 outlined
                 lazy-rules
                 :readonly="isFieldReadonly(field)"
@@ -30,7 +30,8 @@
                 :label="labelFor(field)"
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
-                @blur="onFieldBlur(field)"/>
+                @blur="onFieldBlur(field)"
+                @update:model-value="v => onPlainInputField(field, v)"/>
               <q-input
                 v-else-if="isDialPrefixedPhoneField(field)"
                 outlined
@@ -330,6 +331,15 @@ function clearAddressSuggestState() {
   }
 }
 
+function onPlainInputField(field, val) {
+  if (typeof field.normalizeInput === 'function') {
+    form[field.key] = field.normalizeInput(val ?? '')
+
+    return
+  }
+  form[field.key] = val
+}
+
 function onAddressSuggestInput(field, val) {
   form[field.key] = val
   if (isFieldReadonly(field)) {
@@ -417,6 +427,16 @@ function applyInitialValues() {
     }
   }
   normalizeDialPrefixedPhoneFields()
+  normalizePlainInputFields()
+}
+
+function normalizePlainInputFields() {
+  for (const field of props.fields) {
+    if (!field?.key || typeof field.normalizeInput !== 'function') {
+      continue
+    }
+    form[field.key] = field.normalizeInput(form[field.key] ?? '')
+  }
 }
 
 function normalizeDialPrefixedPhoneFields() {

@@ -1,36 +1,56 @@
 import { defineStore } from 'pinia'
 import { apiInstance } from 'boot/axios'
-import { typeNames } from 'components/constants.js'
+import { apiPaths, typeNames } from 'components/constants.js'
+import { extractOAuthTokenPayload } from 'components/helpers.js'
+import {
+  clearAuthLocalStorage,
+  readStoredExpireAt,
+  readStoredRefreshToken,
+  readStoredToken,
+  writeStoredExpireAt,
+  writeStoredRefreshToken,
+  writeStoredToken,
+} from '../utils/auth-local-storage.js'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: null,
     expireAt: null,
-    _initialized: false
+    refreshToken: null,
+    _initialized: false,
   }),
   getters: {
-    isAuthenticated: (state) => !!state.token
+    isAuthenticated: state => !!state.token,
   },
   actions: {
+    applyTokensFromApi(td) {
+      if (!td) {
+        return
+      }
+      this.token = td.token || td.access_token || ''
+      this.expireAt = td.expiration || td.expires_at || td.expiresAt || ''
+      const nextRefresh = td.refreshToken || td.refresh_token
+      if (nextRefresh) {
+        this.refreshToken = nextRefresh
+        writeStoredRefreshToken(nextRefresh)
+      }
+      writeStoredToken(this.token)
+      writeStoredExpireAt(this.expireAt)
+    },
     async login(email, pass, t) {
       try {
-        const response = await apiInstance.post('/oauth/v1/login', {
+        const response = await apiInstance.post(apiPaths.oauthLogin, {
           email: email,
-          password: pass
+          password: pass,
         })
 
-        this.token = response.data.data.token_data.token || ''
-        this.expireAt = response.data.data.token_data.expiration || ''
-
-        // this.token = 'IzkA1x8_MERzz8OErlQEbLB8q-aVwmF9c'
-        // this.expireAt = '2026-07-03T19:05:25.085+00:00'
-
-        localStorage.setItem('token', this.token)
-        localStorage.setItem('expireAt', this.expireAt)
+        const td = extractOAuthTokenPayload(response.data)
+        this.applyTokensFromApi(td)
 
         return true
       } catch (error) {
-        switch (error.status) {
+        const st = error.response?.status ?? error.status
+        switch (st) {
           case 401:
             throw new Error(t('invalidCredentials'))
         }
@@ -40,9 +60,10 @@ export const useAuthStore = defineStore('auth', {
     },
     async logout(router, t) {
       try {
-        await apiInstance.post('/logout')
+        await apiInstance.post(apiPaths.logout)
       } catch (error) {
-        switch (error.status) {
+        const st = error.response?.status ?? error.status
+        switch (st) {
           case 401:
             throw new Error(t('alreadySignOut'))
         }
@@ -54,19 +75,20 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     restoreSession() {
-      const token = localStorage.getItem('token')
-      const expireAt = localStorage.getItem('expireAt')
-
-      if (token && expireAt && new Date() < new Date(expireAt)) {
+      const token = readStoredToken()
+      const expireAt = readStoredExpireAt()
+      const refreshToken = readStoredRefreshToken()
+      if (token) {
         this.token = token
         this.expireAt = expireAt
+        this.refreshToken = refreshToken
       }
     },
     clearSession() {
       this.token = null
       this.expireAt = null
-      localStorage.removeItem('token')
-      localStorage.removeItem('expireAt')
+      this.refreshToken = null
+      clearAuthLocalStorage()
     },
     init() {
       if (this._initialized) {
@@ -74,16 +96,17 @@ export const useAuthStore = defineStore('auth', {
       }
       this._initialized = true
       if (typeof window !== typeNames.undefined) {
-        window.addEventListener('storage', (event) => {
+        window.addEventListener('storage', event => {
           if (event.key === 'token' && event.newValue === null) {
             this.token = null
             this.expireAt = null
+            this.refreshToken = null
             if (this.router) {
               this.router.push('/login')
             }
           }
         })
       }
-    }
-  }
+    },
+  },
 })

@@ -17,6 +17,18 @@ export const apiPaths = {
   plans: '/plans/v1',
   tenantsList: '/admin-tenant/v1/tenants',
   tenantsCreate: '/admin-tenant/v1/tenants/create',
+  oauthLogin: '/oauth/v1/login',
+  oauthRefresh: '/oauth/v1/refresh',
+  oauthResetPassword: '/oauth/v1/reset-password',
+  logout: '/logout',
+}
+
+export const authStorageKeys = {
+  token: 'token',
+  expireAt: 'expireAt',
+  expireAtLegacy: 'expiresAt',
+  refresh: 'refreshToken',
+  refreshLegacy: 'refresh_token',
 }
 
 export const countryCodeUsa = 'USA'

@@ -37,7 +37,12 @@ export default defineRouter(function() {
           token = authStore.token
         }
 
-        if (now < expireAt && token != null) {
+        const accessValid = token != null && expireAt
+          && !Number.isNaN(expireAt.getTime())
+          && now < expireAt
+        const canUseRefresh = token != null && authStore.refreshToken != null
+
+        if (accessValid || canUseRefresh) {
           next()
         } else {
           next('/login')

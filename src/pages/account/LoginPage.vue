@@ -60,27 +60,19 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from 'stores/auth-store'
 
-//import { useNotifications } from 'src/composables/useNotifications'
 import TextInput from 'components/TextInput.vue'
 
-// Quasar + Router + Auth Store
 const router = useRouter()
 const authStore = useAuthStore()
 
-// Reactive form fields
 const email = ref('')
 const password = ref('')
 
-// Validation flags
 const isEmailInvalid = ref(false)
 const isPasswordInvalid = ref(false)
 const loginError = ref('')
 const loading = ref(false)
 
-//Notifications
-//const { notifyError } = useNotifications()
-
-// Validation error messages
 const emailErrorMessage = computed(() => {
   const valid = /.+@.+\..+/.test(email.value)
   return email.value.trim() === ''
@@ -94,7 +86,6 @@ const passwordErrorMessage = computed(() => {
 
 const { t } = useI18n()
 
-// Login handler
 async function handleLogin() {
   isEmailInvalid.value = !!emailErrorMessage.value
   isPasswordInvalid.value = password.value.trim() === ''
@@ -111,9 +102,7 @@ async function handleLogin() {
         await router.push('/dashboard')
       }
     } catch (error) {
-      console.warn(error)
-      loginError.value = t('networkError')
-      //notifyError(error.message || 'Error al iniciar sesión')
+      loginError.value = error.message || t('networkError')
     }
   }
   loading.value = false
