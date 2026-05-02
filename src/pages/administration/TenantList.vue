@@ -33,6 +33,15 @@
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
           <q-btn
+            flat
+            round
+            icon="visibility"
+            color="primary"
+            :size="siteBreakpoints.SM"
+            :disable="addSaving || deleteSaving"
+            :aria-label="t('viewTenant')"
+            @click="openViewTenant(props.row)"/>
+          <q-btn
             v-if="!isMainTenant(props.row)"
             flat
             round
@@ -147,6 +156,44 @@
       @confirm="onConfirmDeleteTenant"
       @cancel="onCancelDeleteTenant"
     />
+
+    <q-dialog
+      v-model="viewTenantDialogOpen"
+      :transition-show="quasarTransitions.scale"
+      :transition-hide="quasarTransitions.scale">
+      <q-card v-if="tenantViewing" class="tenant-view-card">
+        <q-toolbar class="q-px-md bg-teal-10 text-white">
+          <q-toolbar-title>{{ t('viewTenantTitle') }}</q-toolbar-title>
+          <q-btn
+            flat
+            round
+            dense
+            icon="close"
+            @click="closeViewTenant"/>
+        </q-toolbar>
+        <q-card-section class="tenant-view-body q-px-lg q-py-md">
+          <div class="row q-col-gutter-md">
+            <div
+              v-for="item in tenantDetailRows"
+              class="col-12 col-sm-6"
+              :key="item.key">
+              <div class="text-caption text-grey-7">{{ item.label }}</div>
+              <div class="text-body2 text-grey-9">{{ item.value }}</div>
+            </div>
+          </div>
+        </q-card-section>
+        <q-separator />
+        <q-card-actions align="center" class="q-pa-md">
+          <q-btn
+            no-caps
+            padding="7px 30px"
+            color="primary"
+            :label="t('cancel')"
+            @click="closeViewTenant"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -167,12 +214,14 @@ import {
   tenantFieldKeys,
   tenantFormDefaults,
   tenantListColumnKeys,
+  localeCodes,
   tenantModelFallbacks,
 } from 'components/constants.js'
 import {
   formatNationalPhoneDisplay,
   formatPhoneWithCountryCode,
   nationalPhoneDigitsFromStored,
+  usStateLabelFromCode,
 } from 'components/helpers.js'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
@@ -191,6 +240,8 @@ const deleteConfirmOpen = ref(false)
 const tenantPendingDelete = ref(null)
 const deleteSaving = ref(false)
 const tenantBeingEdited = ref(null)
+const viewTenantDialogOpen = ref(false)
+const tenantViewing = ref(null)
 
 const siteStore = useSiteStore()
 const { t } = useI18n()
@@ -260,6 +311,91 @@ watch(addDialogOpen, open => {
     tenantBeingEdited.value = null
   }
 })
+
+watch(viewTenantDialogOpen, open => {
+  if (!open) {
+    tenantViewing.value = null
+  }
+})
+
+function dashText(v) {
+  const s = String(v ?? '').trim()
+
+  return s || '—'
+}
+
+const tenantDetailRows = computed(() => {
+  const r = tenantViewing.value
+  if (!r) {
+    return []
+  }
+  const statusText = rowStatusBucket(r) === 1
+    ? t('tenantStatusActive')
+    : t('tenantStatusInactive')
+  const countryVal = r[tk.country] === countryCodeUsa
+    ? t('countryUnitedStates')
+    : dashText(r[tk.country])
+  const sc = r[tk.state]
+  const stateVal = sc
+    ? dashText(usStateLabelFromCode(sc) || sc)
+    : '—'
+  const phoneVal = formatPhoneWithCountryCode(
+    r[tk.country] ?? countryCodeUsa,
+    r[tk.contactPhone] ?? '',
+  )
+  const rawLoc = String(r[tk.locale] ?? '').trim()
+  let localeVal = '—'
+  if (rawLoc) {
+    if (rawLoc === localeCodes.enUs) {
+      localeVal = t('languageEnglish')
+    } else if (rawLoc === localeCodes.esUs) {
+      localeVal = t('languageSpanish')
+    } else {
+      localeVal = rawLoc
+    }
+  }
+
+  return [
+    { key: tk.name, label: t('name'), value: dashText(r[tk.name]) },
+    { key: tk.domain, label: t('domain'), value: dashText(r[tk.domain]) },
+    {
+      key: tk.schemaName,
+      label: t('schemaName'),
+      value: dashText(r[tk.schemaName]),
+    },
+    { key: tk.planName, label: t('planName'), value: dashText(r[tk.planName]) },
+    { key: tk.status, label: t('status'), value: statusText },
+    { key: tk.timezone, label: t('timezone'), value: dashText(r[tk.timezone]) },
+    { key: tk.locale, label: t('language'), value: localeVal },
+    { key: tk.country, label: t('country'), value: countryVal },
+    { key: tk.state, label: t('state'), value: stateVal },
+    {
+      key: tk.contactEmail,
+      label: t('contactEmail'),
+      value: dashText(r[tk.contactEmail]),
+    },
+    {
+      key: tk.contactPhone,
+      label: t('contactPhone'),
+      value: phoneVal || '—',
+    },
+    {
+      key: tk.contactAddress,
+      label: t('contactAddress'),
+      value: dashText(r[tk.contactAddress]),
+    },
+    { key: tk.notes, label: t('notes'), value: dashText(r[tk.notes]) },
+  ]
+})
+
+function openViewTenant(row) {
+  tenantViewing.value = row
+  viewTenantDialogOpen.value = true
+}
+
+function closeViewTenant() {
+  viewTenantDialogOpen.value = false
+}
 
 onMounted(async() => {
   loading.value = true
@@ -613,6 +749,16 @@ async function onConfirmDeleteTenant() {
 
   .tenant-filter-card .primary-action {
     margin-left: 16px;
+  }
+
+  .tenant-view-card {
+    min-width: min(560px, 100vw - 24px);
+    max-width: min(720px, 100vw - 24px);
+  }
+
+  .tenant-view-body {
+    max-height: min(520px, 70vh);
+    overflow-y: auto;
   }
 </style>
 
