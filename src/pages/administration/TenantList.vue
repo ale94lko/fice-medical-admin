@@ -188,7 +188,7 @@
             no-caps
             padding="7px 30px"
             color="primary"
-            :label="t('cancel')"
+            :label="t('close')"
             @click="closeViewTenant"
           />
         </q-card-actions>

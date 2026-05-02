@@ -88,4 +88,5 @@ export default {
   all: 'All',
   open: 'Open',
   closed: 'Closed',
+  close: 'Close',
 }

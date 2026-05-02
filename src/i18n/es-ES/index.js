@@ -90,4 +90,5 @@ export default {
   all: 'Todos',
   open: 'Abierto',
   closed: 'Cerrado',
+  close: 'Cerrar',
 }
