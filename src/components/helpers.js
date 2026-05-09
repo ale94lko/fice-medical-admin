@@ -12,6 +12,10 @@ import {
   usStateOptions,
 } from './constants.js'
 
+export function isEmpty(value) {
+  return value === null || value === undefined || value === ''
+}
+
 export function sanitizeTenantDomainInput(raw) {
   let s = String(raw ?? '').replace(/[^a-zA-Z0-9_]/g, '')
   while (s.length > 0 && /[0-9]/.test(s[0])) {
@@ -29,7 +33,7 @@ function pickExpiration(td, root) {
   let expiration =
     td?.expiration ?? td?.expires_at ?? td?.expiresAt
     ?? root?.expiration ?? root?.expires_at ?? root?.expiresAt
-  if (expiration !== undefined && expiration !== null && expiration !== '') {
+  if (!isEmpty(expiration)) {
     return String(expiration)
   }
   const ei = root?.expires_in ?? td?.expires_in
@@ -356,8 +360,31 @@ export function extractTenantList(root) {
   return []
 }
 
+export function extractTenantListPagination(root) {
+  if (!root || typeof root !== typeNames.object) {
+    return null
+  }
+  const p = root.pagination
+  if (!p || typeof p !== typeNames.object) {
+    return null
+  }
+  const limit = Number(p.limit)
+  const offset = Number(p.offset)
+  const total = Number(p.total)
+  const page = Number(p.page)
+  const totalPages = Number(p.total_pages)
+
+  return {
+    limit: Number.isFinite(limit) ? limit : 0,
+    offset: Number.isFinite(offset) ? offset : 0,
+    total: Number.isFinite(total) ? total : 0,
+    page: Number.isFinite(page) ? page : 0,
+    totalPages: Number.isFinite(totalPages) ? totalPages : 0,
+  }
+}
+
 function normalizeTenantStatus(raw) {
-  if (raw === null || raw === undefined || raw === '') {
+  if (isEmpty(raw)) {
     return null
   }
   const n = Number(raw)

@@ -3,14 +3,18 @@
     <q-table
       class="table"
       row-key="id"
-      :rows-per-page-options="[20, 50, 100, t('all')]"
+      binary-state-sort
+      v-model:pagination="tablePagination"
+      :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
       :title="t('tenants')"
       :rows="filteredRows"
       :columns="columns"
+      :loading="loading"
       :table-row-class-fn="tenantRowClass"
       :card-class-fn="tenantRowClass"
-      :rows-per-page-label="t('rowsPerPage')">
+      :rows-per-page-label="t('rowsPerPage')"
+      @request="onTableRequest">
       <template v-slot:top>
         <q-btn
           no-caps
@@ -397,10 +401,40 @@ function closeViewTenant() {
   viewTenantDialogOpen.value = false
 }
 
-onMounted(async() => {
+const tablePagination = ref({
+  sortBy: 'name',
+  descending: false,
+  page: 1,
+  rowsPerPage: 20,
+  rowsNumber: 0,
+})
+
+function tenantTablePaginationFromStore(paginationPayload) {
+  const meta = siteStore.tenantListPagination
+  const total = meta?.total != null && Number.isFinite(Number(meta.total))
+    ? Number(meta.total)
+    : siteStore.tenantList.length
+  let resolvedPage = paginationPayload.page
+  if (meta && meta.limit > 0 && Number.isFinite(meta.offset)) {
+    resolvedPage = Math.floor(Number(meta.offset) / Number(meta.limit)) + 1
+  }
+  return {
+    sortBy: paginationPayload.sortBy,
+    descending: paginationPayload.descending,
+    page: resolvedPage,
+    rowsPerPage: paginationPayload.rowsPerPage,
+    rowsNumber: total,
+  }
+}
+
+async function loadTenants(paginationPayload) {
   loading.value = true
   try {
-    await siteStore.getTenantList()
+    await siteStore.getTenantList({
+      page: paginationPayload.page,
+      limit: paginationPayload.rowsPerPage,
+    })
+    tablePagination.value = tenantTablePaginationFromStore(paginationPayload)
   } catch {
     $q.notify({
       type: quasarNotifyTypes.negative,
@@ -409,6 +443,14 @@ onMounted(async() => {
   } finally {
     loading.value = false
   }
+}
+
+function onTableRequest(props) {
+  return loadTenants(props.pagination)
+}
+
+onMounted(() => {
+  loadTenants(tablePagination.value)
 })
 
 const columns = computed(() => [
@@ -649,6 +691,9 @@ async function onSaveTenant(payload) {
       })
     }
     addDialogOpen.value = false
+    tablePagination.value = tenantTablePaginationFromStore(
+      tablePagination.value,
+    )
   } catch (error) {
     const fallback = editingId != null
       ? t('tenantUpdateError')

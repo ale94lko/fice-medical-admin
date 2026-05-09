@@ -6,6 +6,7 @@ import {
   coerceTenantMutationRoot,
   extractPlansList,
   extractTenantList,
+  extractTenantListPagination,
   extractTenantMutationResponse,
   mapPlanRow,
   mapTenant,
@@ -16,6 +17,8 @@ import {
 export const useSiteStore = defineStore('site', {
   state: () => ({
     tenantList: [],
+    tenantListPagination: null,
+    tenantListQuery: { page: 1, limit: 20 },
     userList: [],
     plans: [],
   }),
@@ -42,12 +45,23 @@ export const useSiteStore = defineStore('site', {
         throw error
       }
     },
-    async getTenantList() {
+    async getTenantList(params = {}) {
       try {
-        const response = await apiInstance.get(apiPaths.tenantsList)
+        const page = Number(params.page ?? this.tenantListQuery.page ?? 1)
+        const limit = Number(params.limit ?? this.tenantListQuery.limit ?? 20)
+        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
+        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
+        this.tenantListQuery = { page: safePage, limit: safeLimit }
+
+        const apiPage = Math.max(0, safePage - 1)
+        const response = await apiInstance.get(apiPaths.tenantsList, {
+          params: { page: apiPage, limit: safeLimit },
+        })
 
         const tenantRoot = response?.data?.data
         if (!tenantRoot) {
+          this.tenantList = []
+          this.tenantListPagination = null
           return
         }
         const list = extractTenantList(tenantRoot)
@@ -55,6 +69,7 @@ export const useSiteStore = defineStore('site', {
         this.tenantList = list
           .map(mapTenant)
           .filter(Boolean)
+        this.tenantListPagination = extractTenantListPagination(tenantRoot)
       } catch (error) {
         console.error('Error fetching tenants:', error)
         throw error
@@ -74,11 +89,7 @@ export const useSiteStore = defineStore('site', {
           payload,
           this.plans,
         )
-        if (created && created.id != null) {
-          this.tenantList = [...this.tenantList, created]
-        } else {
-          await this.getTenantList()
-        }
+        await this.getTenantList()
         return created
       } catch (error) {
         console.error('Error creating tenant:', error)
