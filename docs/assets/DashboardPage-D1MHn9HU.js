@@ -1,1 +1,0 @@
-import{M as e,l as t}from"./runtime-core.esm-bundler-DtepgAkc.js";import{_ as n}from"./index-Cz6_RCe0.js";import{t as r}from"./QPage-BDLJA-oe.js";var i={};function a(n,i){return e(),t(r,{class:`flex flex-center`})}var o=n(i,[[`render`,a]]);export{o as default};
