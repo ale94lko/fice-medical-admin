@@ -15,6 +15,8 @@ export const defaultTenant = 'main'
 
 export const primarySuperadminUser = 'superadmin@fice.medical'
 
+export const tenantsListQueryParams = { active: true }
+
 export const apiPaths = {
   plans: '/plans/v1',
   tenantsList: '/admin-tenant/v1/tenants',

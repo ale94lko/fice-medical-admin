@@ -12,6 +12,7 @@ import {
   roleFieldKeys,
   selectBehaviors,
   tenantFieldKeys,
+  tenantsListQueryParams,
 } from 'components/constants.js'
 import {
   buildPermissionCodeToIdMap,
@@ -24,13 +25,13 @@ import {
   roleByIdPath,
 } from 'components/helpers.js'
 
-async function fetchAllPaginatedRaw(path) {
+async function fetchAllPaginatedRaw(path, extraQuery = {}) {
   const limit = 100
   let page = 0
   const combined = []
   while (true) {
     const response = await apiInstance.get(path, {
-      params: { page, limit },
+      params: { page, limit, ...extraQuery },
     })
     const root = response?.data?.data
     const batch = extractTenantList(root)
@@ -273,7 +274,10 @@ export function useRoleAddForm() {
 
     roleTenantsLoading.value = true
     try {
-      const tenantRawRows = await fetchAllPaginatedRaw(apiPaths.tenantsList)
+      const tenantRawRows = await fetchAllPaginatedRaw(
+        apiPaths.tenantsList,
+        tenantsListQueryParams,
+      )
       const ttk = tenantFieldKeys
       const mapped = tenantRawRows.map(mapTenant).filter(Boolean)
       tenantSelectOptions.value = mapped

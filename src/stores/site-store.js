@@ -3,6 +3,7 @@ import { apiInstance } from 'boot/axios'
 import {
   apiPaths,
   tenantFieldKeys,
+  tenantsListQueryParams,
   userFieldKeys,
 } from 'components/constants.js'
 import {
@@ -80,7 +81,11 @@ export const useSiteStore = defineStore('site', {
 
         const apiPage = Math.max(0, safePage - 1)
         const response = await apiInstance.get(apiPaths.tenantsList, {
-          params: { page: apiPage, limit: safeLimit },
+          params: {
+            page: apiPage,
+            limit: safeLimit,
+            ...tenantsListQueryParams,
+          },
         })
 
         const tenantRoot = response?.data?.data

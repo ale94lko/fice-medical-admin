@@ -522,12 +522,14 @@ export function extractTenantListPagination(root) {
   }
 }
 
-export async function fetchAllEnvelopeList(apiGet, path) {
+export async function fetchAllEnvelopeList(apiGet, path, extraQuery = {}) {
   const limit = 100
   let page = 0
   const combined = []
   while (true) {
-    const response = await apiGet(path, { params: { page, limit } })
+    const response = await apiGet(path, {
+      params: { page, limit, ...extraQuery },
+    })
     const root = response?.data?.data
     const batch = extractTenantList(root)
     const meta = extractTenantListPagination(root)
