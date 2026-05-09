@@ -10,11 +10,15 @@
         <q-toolbar-title>{{ titleText }}</q-toolbar-title>
         <q-btn flat round dense icon="close" :disable="saving" @click="close" />
       </q-toolbar>
-      <q-form ref="formRef" class="q-gutter-none" @submit.prevent="submit">
+      <q-form
+        ref="formRef"
+        class="q-gutter-none"
+        autocomplete="off"
+        @submit.prevent="submit">
         <q-card-section
           class="q-px-xl q-py-md modal-body"
           :style="{ maxHeight: bodyMaxHeight, overflowY: cssOverflow.auto }">
-          <div class="column q-gutter-sm">
+          <div class="column no-wrap q-gutter-md">
             <div
               v-for="field in fields"
               v-show="showFieldRow(field)"
@@ -27,6 +31,8 @@
                 lazy-rules
                 :readonly="isFieldReadonly(field)"
                 :type="field.inputType || htmlInputTypes.text"
+                :name="field.inputName"
+                :autocomplete="plainInputAutocomplete(field)"
                 :label="labelFor(field)"
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
@@ -105,6 +111,13 @@
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
                 @blur="onFieldBlur(field)"/>
+              <q-checkbox
+                v-else-if="field.kind === fieldTypes.checkbox"
+                v-model="form[field.key]"
+                color="primary"
+                class="dialog-checkbox-field"
+                :disable="isFieldReadonly(field)"
+                :label="labelFor(field)"/>
               <q-select
                 v-else-if="field.kind === fieldTypes.select"
                 v-model="form[field.key]"
@@ -113,6 +126,8 @@
                 map-options
                 lazy-rules
                 input-debounce="0"
+                :multiple="field.multiple === true"
+                :use-chips="field.multiple === true"
                 :behavior="field.selectBehavior || selectBehaviors.default"
                 :options="selectOptionsDisplayed(field)"
                 :option-label="field.optionLabel || qSelectOptionKeys.label"
@@ -263,6 +278,9 @@ function showPhoneField(field) {
 }
 
 function showFieldRow(field) {
+  if (field.alwaysShow === true) {
+    return true
+  }
   return field.key !== tenantFieldKeys.status
     || props.initialValues != null
 }
@@ -272,11 +290,21 @@ function isDialPrefixedPhoneField(field) {
     && Boolean(field.phoneDialFromCountryField)
 }
 
-function blankForKind(kind) {
-  switch (kind) {
-    case fieldTypes.select:
-      return null
+function blankForKind(field) {
+  if (!field) {
+    return ''
+  }
+  if (field.kind === fieldTypes.checkbox) {
+    return false
+  }
+  if (field.kind === fieldTypes.select) {
+    if (field.multiple === true) {
+      return []
+    }
 
+    return null
+  }
+  switch (field.kind) {
     case fieldTypes.textarea:
     case fieldTypes.input:
     case fieldTypes.addressSuggest:
@@ -408,7 +436,7 @@ function resetForm() {
     }
     form[field.key] = field.defaultValue !== undefined
       ? field.defaultValue
-      : blankForKind(field.kind)
+      : blankForKind(field)
   }
 }
 
@@ -594,6 +622,14 @@ function hintFor(field) {
   return field.hintKey ? t(field.hintKey) : (field.hint || undefined)
 }
 
+function plainInputAutocomplete(field) {
+  if (field && typeof field.autocomplete === typeNames.string) {
+    return field.autocomplete
+  }
+
+  return undefined
+}
+
 function rulesFor(field) {
   const list = []
   if (field.rules?.length) {
@@ -726,5 +762,18 @@ async function submit() {
   .dialog-field-row {
     width: 100%;
     min-width: 0;
+  }
+
+  .dialog-checkbox-field.q-checkbox.row.inline {
+    display: flex !important;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  .dialog-checkbox-field :deep(.q-checkbox__inner) {
+    margin-left: -0.25em;
   }
 </style>

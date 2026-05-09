@@ -7,6 +7,7 @@ import {
   tenantFieldKeys,
   tenantModelFallbacks,
   typeNames,
+  userFieldKeys,
   US_NANP_DISPLAY_MAX_LENGTH,
   US_NANP_LENGTH,
   usStateOptions,
@@ -27,6 +28,10 @@ export function sanitizeTenantDomainInput(raw) {
 
 export function tenantByIdPath(id) {
   return `${apiPaths.tenantsList}/${encodeURIComponent(String(id))}`
+}
+
+export function userByIdPath(id) {
+  return `${apiPaths.usersList}/${encodeURIComponent(String(id))}`
 }
 
 function pickExpiration(td, root) {
@@ -554,4 +559,151 @@ export function coerceTenantMutationRoot(raw) {
   return raw && typeof raw === typeNames.object && !Array.isArray(raw)
     ? raw
     : null
+}
+
+function normalizeUserStatus(raw) {
+  if (isEmpty(raw)) {
+    return null
+  }
+  const n = Number(raw)
+
+  return Number.isFinite(n) ? n : null
+}
+
+export function extractUserMutationResponse(data) {
+  if (!data || typeof data !== typeNames.object) {
+    return null
+  }
+  let root = data.data
+  if (root == null || typeof root !== typeNames.object || Array.isArray(root)) {
+    root = data
+  }
+  if (root.user && typeof root.user === typeNames.object) {
+    return root.user
+  }
+
+  return root
+}
+
+export function coerceUserMutationRoot(raw) {
+  return raw && typeof raw === typeNames.object && !Array.isArray(raw)
+    ? raw
+    : null
+}
+
+export function mapUser(user) {
+  if (!user || typeof user !== typeNames.object) {
+    return null
+  }
+  const uk = userFieldKeys
+
+  return {
+    id: user.id ?? user.user_id,
+    [uk.username]: user.username ?? user.user_name ?? '',
+    [uk.email]: user.email ?? user.user_email ?? '',
+    [uk.status]: normalizeUserStatus(
+      user.status ?? user.user_status ?? user.account_status,
+    ),
+  }
+}
+
+export function mergeUserWithPayload(mapped, payload) {
+  if (!mapped) {
+    return null
+  }
+  if (!payload || typeof payload !== typeNames.object) {
+    return mapped
+  }
+  const uk = userFieldKeys
+  const pickStr = (fromApi, fromPayload) => {
+    const a = String(fromApi ?? '').trim()
+    if (a.length > 0) {
+      return a
+    }
+
+    return String(fromPayload ?? '').trim()
+  }
+
+  return {
+    ...mapped,
+    [uk.username]: pickStr(mapped[uk.username], payload[uk.username]),
+    [uk.email]: pickStr(mapped[uk.email], payload[uk.email]),
+    [uk.status]: normalizeUserStatus(
+      mapped[uk.status] ?? payload[uk.status],
+    ),
+  }
+}
+
+export function buildUserRequestBody(payload) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const body = {}
+  const uk = userFieldKeys
+  if (Object.prototype.hasOwnProperty.call(payload, uk.username)) {
+    body.username = String(payload[uk.username] ?? '').trim()
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, uk.email)) {
+    body.email = String(payload[uk.email] ?? '').trim()
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, uk.password)) {
+    const pw = String(payload[uk.password] ?? '').trim()
+    if (pw.length > 0) {
+      body.password = pw
+    }
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, uk.status)) {
+    const n = Number(payload[uk.status])
+    if (Number.isFinite(n)) {
+      body.status = n
+    }
+  }
+
+  return body
+}
+
+function intIdList(value) {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.map(x => Number(x)).filter(Number.isFinite)
+}
+
+export function buildUserRegisterBody(payload) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const uk = userFieldKeys
+  const username =
+    String(payload[uk.username] ?? '').trim()
+    || String(payload[uk.email] ?? '').trim()
+  const password = String(payload[uk.password] ?? '').trim()
+  const status = Number(payload[uk.status])
+  const description = String(payload.description ?? '').trim()
+  const changePassword = payload.changePassword
+  const roles = intIdList(payload.roles)
+  const permissions = intIdList(payload.permissions)
+  const modules = intIdList(payload.modules)
+  const allowedSub = intIdList(
+    payload.allowedSubtenantIds ?? payload.allowed_subtenant_ids,
+  )
+
+  /* eslint-disable camelcase */
+  const body = {
+    username,
+    password,
+    status: Number.isFinite(status) ? status : 1,
+    change_password: changePassword !== false && changePassword !== 0,
+    roles,
+    permissions,
+    modules,
+    allowed_subtenant_ids: allowedSub,
+  }
+  /* eslint-enable camelcase */
+  if (description.length > 0) {
+    body.description = description
+  }
+
+  return body
 }

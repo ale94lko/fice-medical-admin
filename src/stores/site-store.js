@@ -1,17 +1,28 @@
 import { defineStore } from 'pinia'
 import { apiInstance } from 'boot/axios'
-import { apiPaths, tenantFieldKeys } from 'components/constants.js'
+import {
+  apiPaths,
+  tenantFieldKeys,
+  userFieldKeys,
+} from 'components/constants.js'
 import {
   buildTenantRequestBody,
+  buildUserRegisterBody,
+  buildUserRequestBody,
   coerceTenantMutationRoot,
+  coerceUserMutationRoot,
   extractPlansList,
   extractTenantList,
   extractTenantListPagination,
   extractTenantMutationResponse,
+  extractUserMutationResponse,
   mapPlanRow,
   mapTenant,
+  mapUser,
   mergeTenantWithPayload,
+  mergeUserWithPayload,
   tenantByIdPath,
+  userByIdPath,
 } from 'components/helpers.js'
 
 export const useSiteStore = defineStore('site', {
@@ -20,6 +31,8 @@ export const useSiteStore = defineStore('site', {
     tenantListPagination: null,
     tenantListQuery: { page: 1, limit: 20 },
     userList: [],
+    userListPagination: null,
+    userListQuery: { page: 1, limit: 20 },
     plans: [],
   }),
   getters: {
@@ -134,22 +147,86 @@ export const useSiteStore = defineStore('site', {
     async deleteTenant(id) {
       return this.updateTenant(id, { [tenantFieldKeys.status]: 0 })
     },
-    async getUserList(t) {
+    async getUserList(params = {}) {
       try {
-        console.warn(t)
-        // const response = await apiInstance.get(
-        //   '/client/v1/all-clients?limit=10&offset=0'
-        // )
-        //
-        // if (!response) {
-        //   return
-        // }
-        //
-        // this.clientList = response.data
+        const page = Number(params.page ?? this.userListQuery.page ?? 1)
+        const limit = Number(params.limit ?? this.userListQuery.limit ?? 20)
+        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
+        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
+        this.userListQuery = { page: safePage, limit: safeLimit }
+
+        const apiPage = Math.max(0, safePage - 1)
+        const response = await apiInstance.get(apiPaths.usersList, {
+          params: { page: apiPage, limit: safeLimit },
+        })
+
+        const userRoot = response?.data?.data
+        if (!userRoot) {
+          this.userList = []
+          this.userListPagination = null
+          return
+        }
+        const list = extractTenantList(userRoot)
+
+        this.userList = list
+          .map(mapUser)
+          .filter(Boolean)
+        this.userListPagination = extractTenantListPagination(userRoot)
       } catch (error) {
         console.error('Error fetching users:', error)
         throw error
       }
+    },
+    async createUser(payload) {
+      try {
+        const body = buildUserRegisterBody(payload)
+        const response = await apiInstance.post(
+          apiPaths.usersRegister,
+          body,
+        )
+        const raw = extractUserMutationResponse(response.data)
+        const mapped = mapUser(coerceUserMutationRoot(raw))
+        const created = mergeUserWithPayload(mapped, payload)
+        await this.getUserList()
+        return created
+      } catch (error) {
+        console.error('Error creating user:', error)
+        throw error
+      }
+    },
+    async updateUser(id, payload) {
+      try {
+        const body = buildUserRequestBody(payload)
+        const response = await apiInstance.patch(
+          userByIdPath(id),
+          body,
+        )
+        const raw = extractUserMutationResponse(response.data)
+        const mapped = mapUser(coerceUserMutationRoot(raw))
+        let updated = mergeUserWithPayload(mapped, payload)
+        if (updated && updated.id == null && id != null) {
+          updated = { ...updated, id }
+        }
+        if (updated && updated.id != null) {
+          const idx = this.userList.findIndex(
+            u => String(u.id) === String(updated.id),
+          )
+          if (idx >= 0) {
+            this.userList.splice(idx, 1, updated)
+          } else {
+            await this.getUserList()
+          }
+        } else {
+          await this.getUserList()
+        }
+        return updated
+      } catch (error) {
+        console.error('Error updating user:', error)
+        throw error
+      }
+    },
+    async deleteUser(id) {
+      return this.updateUser(id, { [userFieldKeys.status]: 0 })
     },
   },
 })

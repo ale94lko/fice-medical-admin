@@ -13,10 +13,16 @@ export const siteBreakpointsPx = {
 
 export const defaultTenant = 'main'
 
+export const primarySuperadminUser = 'superadmin@fice.medical'
+
 export const apiPaths = {
   plans: '/plans/v1',
   tenantsList: '/admin-tenant/v1/tenants',
   tenantsCreate: '/admin-tenant/v1/tenants/create',
+  usersList: '/user/v1',
+  usersRegister: '/user/v1/register',
+  rolesList: '/roles/v1',
+  permissionsList: '/permissions/v1',
   oauthLogin: '/oauth/v1/login',
   oauthRefresh: '/oauth/v1/refresh',
   oauthResetPassword: '/oauth/v1/reset-password',
@@ -87,6 +93,7 @@ export const fieldTypes = {
   input: 'input',
   textarea: 'textarea',
   select: 'select',
+  checkbox: 'checkbox',
   addressSuggest: 'addressSuggest',
 }
 
@@ -111,6 +118,25 @@ export const tenantListColumnKeys = {
   actions: 'actions',
 }
 
+export const userFieldKeys = {
+  username: 'username',
+  email: 'email',
+  password: 'password',
+  status: 'status',
+  description: 'description',
+  changePassword: 'changePassword',
+  roles: 'roles',
+  permissions: 'permissions',
+}
+
+export const userListColumnKeys = {
+  actions: 'actions',
+}
+
+export const userFormDefaults = {
+  statusActive: 1,
+}
+
 export const localeCodes = {
   enUs: 'en_US',
   esUs: 'es_US',
@@ -129,6 +155,7 @@ export const tenantFormDefaults = {
 export const htmlInputTypes = {
   text: 'text',
   email: 'email',
+  password: 'password',
   tel: 'tel',
   textarea: 'textarea',
 }
@@ -138,6 +165,8 @@ export const htmlInputModes = {
 }
 
 export const htmlAutocomplete = {
+  off: 'off',
+  newPassword: 'new-password',
   telNational: 'tel-national',
 }
 
