@@ -19,6 +19,10 @@ const routes = [
         path: 'roles',
         component: () => import('pages/administration/RoleList.vue'),
       },
+      {
+        path: 'permissions',
+        component: () => import('pages/administration/PermissionList.vue'),
+      },
     ],
     meta: { requiresAuth: true },
   },

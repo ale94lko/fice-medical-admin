@@ -24,6 +24,7 @@ export const apiPaths = {
   rolesList: '/roles/v1',
   rolesCreate: '/admin-tenant/v1/role/add',
   permissionsList: '/permissions/v1',
+  permissionsUpdate: '/permissions/v1/update',
   modulesList: '/modules/v1',
   oauthLogin: '/oauth/v1/login',
   oauthRefresh: '/oauth/v1/refresh',
@@ -146,6 +147,17 @@ export const roleFieldKeys = {
 }
 
 export const roleListColumnKeys = {
+  actions: 'actions',
+}
+
+export const permissionFieldKeys = {
+  name: 'name',
+  description: 'description',
+  moduleId: 'moduleId',
+  moduleName: 'moduleName',
+}
+
+export const permissionListColumnKeys = {
   actions: 'actions',
 }
 

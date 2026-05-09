@@ -4,6 +4,7 @@ import {
   countryDialMetaByCode,
   officialTimezoneRows,
   tenantCountryToIso3166Alpha2,
+  permissionFieldKeys,
   roleDetailNumericIdArrayKeys,
   roleDetailPermissionEntryArrayKeys,
   roleFieldKeys,
@@ -42,6 +43,10 @@ export function roleByIdPath(id) {
   return `${apiPaths.rolesList}/${encodeURIComponent(String(id))}`
 }
 
+export function permissionByIdPath(id) {
+  return `${apiPaths.permissionsList}/${encodeURIComponent(String(id))}`
+}
+
 export function mapRole(row) {
   if (!row || typeof row !== typeNames.object) {
     return null
@@ -78,6 +83,53 @@ export function mapRole(row) {
   return mapped
 }
 
+export function mapPermission(row) {
+  if (!row || typeof row !== typeNames.object) {
+    return null
+  }
+  const pk = permissionFieldKeys
+  const id = Number(row.id ?? row.permission_id ?? row.permissionId)
+  if (!Number.isFinite(id)) {
+    return null
+  }
+  const mod = row.module != null && typeof row.module === typeNames.object
+    ? row.module
+    : null
+  const moduleIdRaw =
+    row.module_id ?? row.moduleId ?? mod?.id
+  const moduleId =
+    moduleIdRaw != null && moduleIdRaw !== ''
+      ? Number(moduleIdRaw)
+      : null
+  const moduleName = mod != null
+    ? String(mod.name ?? '').trim()
+    : ''
+
+  return {
+    id,
+    [pk.name]: String(row.name ?? row.code ?? row.title ?? '').trim(),
+    [pk.description]: String(row.description ?? '').trim(),
+    [pk.moduleId]: Number.isFinite(moduleId) ? moduleId : null,
+    [pk.moduleName]: moduleName,
+  }
+}
+
+export function clonePermissionTreeForViewReadonly(nodes) {
+  if (!Array.isArray(nodes)) {
+    return []
+  }
+
+  return nodes.map(node => {
+    const children = node.children
+    const copy = { ...node, tickable: false }
+    if (Array.isArray(children) && children.length > 0) {
+      copy.children = clonePermissionTreeForViewReadonly(children)
+    }
+
+    return copy
+  })
+}
+
 export function buildRoleCreateBody(payload) {
   if (!payload || typeof payload !== typeNames.object) {
     return {}
@@ -86,12 +138,33 @@ export function buildRoleCreateBody(payload) {
   const name = String(payload[rk.name] ?? '').trim()
   const description = String(payload[rk.description] ?? '').trim()
   const permissionIds = intIdList(payload[rk.permissions])
+  const tenantIdNum = Number(payload[rk.tenantId])
 
-  return {
+  const body = {
     name,
     description,
     // eslint-disable-next-line camelcase -- API contract
     permissions_ids: permissionIds,
+  }
+  if (Number.isFinite(tenantIdNum)) {
+    // eslint-disable-next-line camelcase -- API contract
+    body.tenant_id = tenantIdNum
+  }
+
+  return body
+}
+
+export function buildPermissionUpdateBody(payload) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const pk = permissionFieldKeys
+  const name = String(payload[pk.name] ?? '').trim()
+  const description = String(payload[pk.description] ?? '').trim()
+
+  return {
+    name,
+    description,
   }
 }
 
@@ -447,6 +520,81 @@ export function extractTenantListPagination(root) {
     page: Number.isFinite(page) ? page : 0,
     totalPages: Number.isFinite(totalPages) ? totalPages : 0,
   }
+}
+
+export async function fetchAllEnvelopeList(apiGet, path) {
+  const limit = 100
+  let page = 0
+  const combined = []
+  while (true) {
+    const response = await apiGet(path, { params: { page, limit } })
+    const root = response?.data?.data
+    const batch = extractTenantList(root)
+    const meta = extractTenantListPagination(root)
+    combined.push(...batch)
+    const total = meta?.total
+    if (batch.length === 0) {
+      break
+    }
+    if (typeof total === typeNames.number && combined.length >= total) {
+      break
+    }
+    if (batch.length < limit) {
+      break
+    }
+    page += 1
+  }
+
+  return combined.filter(r => r && typeof r === typeNames.object)
+}
+
+export function buildModuleIdToNameMap(moduleRows) {
+  const m = new Map()
+  if (!Array.isArray(moduleRows)) {
+    return m
+  }
+  for (const row of moduleRows) {
+    if (!row || typeof row !== typeNames.object) {
+      continue
+    }
+    const id = Number(row.id)
+    if (!Number.isFinite(id)) {
+      continue
+    }
+    const name = String(row.name ?? '').trim()
+
+    m.set(id, name || String(id))
+  }
+
+  return m
+}
+
+export function enrichPermissionsModuleNames(permissionRows, moduleRows) {
+  if (!Array.isArray(permissionRows)) {
+    return []
+  }
+  const pk = permissionFieldKeys
+  const byId = buildModuleIdToNameMap(moduleRows)
+
+  return permissionRows.map(p => {
+    if (!p || typeof p !== typeNames.object) {
+      return p
+    }
+    const existing = p[pk.moduleName]
+    if (existing) {
+      return p
+    }
+    const mid = p[pk.moduleId]
+    const n = Number(mid)
+    if (!Number.isFinite(n) || !byId.has(n)) {
+      return p
+    }
+
+    return {
+      ...p,
+      [pk.moduleName]: byId.get(n),
+    }
+  })
 }
 
 function normalizeTenantStatus(raw) {

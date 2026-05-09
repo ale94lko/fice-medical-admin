@@ -60,6 +60,7 @@
       v-model="addDialogOpen"
       :title-key="'newRole'"
       :fields="roleAddFields"
+      :initial-values="roleAddDialogInitialValues"
       :on-open="onRoleDialogOpen"
       :format-payload="formatRolePayload"
       :saving="addSaving"
@@ -195,10 +196,12 @@
 
 <script setup>
 import { onMounted, computed, ref, watch, reactive, nextTick } from 'vue'
+import { apiInstance } from 'boot/axios'
 import { useSiteStore } from 'stores/site-store.js'
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import {
+  apiPaths,
   protectedSystemRoleName,
   quasarNotifyTypes,
   quasarTableAlign,
@@ -207,13 +210,20 @@ import {
   roleListColumnKeys,
   siteBreakpoints,
   siteBreakpointsPx,
+  tenantFieldKeys,
 } from 'components/constants.js'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
-import { extractRoleTemplatePermissionIds } from 'components/helpers.js'
+import {
+  clonePermissionTreeForViewReadonly,
+  extractRoleTemplatePermissionIds,
+  fetchAllEnvelopeList,
+  mapTenant,
+} from 'components/helpers.js'
 import { useRoleAddForm } from 'src/composables/useRoleAddForm.js'
 
 const rk = roleFieldKeys
+const ttk = tenantFieldKeys
 
 const $q = useQuasar()
 const loading = ref(false)
@@ -227,6 +237,9 @@ const roleViewing = ref(null)
 const viewRoleTicked = ref([])
 let viewRoleTreeSeq = 0
 
+/** @type {import('vue').Ref<Map<number, string>>} */
+const tenantIdToLabel = ref(new Map())
+
 const siteStore = useSiteStore()
 const { t } = useI18n()
 
@@ -239,23 +252,20 @@ const {
   permissionsTreeLoading,
   permissionCodeToId,
   knownPermissionIds,
+  defaultNewRoleTenantId,
 } = useRoleAddForm()
 
-function clonePermissionTreeForViewReadonly(nodes) {
-  if (!Array.isArray(nodes)) {
-    return []
+const roleAddDialogInitialValues = computed(() => {
+  if (!addDialogOpen.value) {
+    return null
+  }
+  const id = defaultNewRoleTenantId.value
+  if (!Number.isFinite(Number(id))) {
+    return null
   }
 
-  return nodes.map(node => {
-    const children = node.children
-    const copy = { ...node, tickable: false }
-    if (Array.isArray(children) && children.length > 0) {
-      copy.children = clonePermissionTreeForViewReadonly(children)
-    }
-
-    return copy
-  })
-}
+  return { [rk.tenantId]: Number(id) }
+})
 
 const viewRolePermissionTreeNodes = computed(() =>
   clonePermissionTreeForViewReadonly(permissionTreeNodes.value),
@@ -288,6 +298,33 @@ function roleTablePaginationFromStore(paginationPayload) {
   }
 }
 
+async function loadTenantNameLookup() {
+  try {
+    const rawRows = await fetchAllEnvelopeList(
+      (path, cfg) => apiInstance.get(path, cfg),
+      apiPaths.tenantsList,
+    )
+    const next = new Map()
+    for (const row of rawRows) {
+      const mapped = mapTenant(row)
+      if (!mapped) {
+        continue
+      }
+      const id = Number(mapped.id)
+      if (!Number.isFinite(id)) {
+        continue
+      }
+      const label = String(
+        mapped[ttk.name] ?? mapped[ttk.domain] ?? '',
+      ).trim() || String(id)
+      next.set(id, label)
+    }
+    tenantIdToLabel.value = next
+  } catch {
+    tenantIdToLabel.value = new Map()
+  }
+}
+
 async function loadRoles(paginationPayload) {
   loading.value = true
   try {
@@ -311,6 +348,7 @@ function onTableRequest(props) {
 }
 
 onMounted(() => {
+  void loadTenantNameLookup()
   loadRoles(tablePagination.value)
 })
 
@@ -345,48 +383,66 @@ watch(
   },
 )
 
-const columns = computed(() => [
-  {
-    name: rk.name,
-    required: true,
-    label: t('name'),
-    align: quasarTableAlign.left,
-    field: row => row[rk.name],
-    sortable: true,
-  },
-  {
-    name: rk.description,
-    required: true,
-    label: t('description'),
-    align: quasarTableAlign.left,
-    field: row => row[rk.description] ?? '',
-    sortable: true,
-  },
-  {
-    name: rk.level,
-    required: true,
-    label: t('roleLevel'),
-    align: quasarTableAlign.left,
-    field: row => row[rk.level],
-    sortable: true,
-  },
-  {
-    name: rk.tenantId,
-    required: true,
-    label: t('tenantId'),
-    align: quasarTableAlign.left,
-    field: row => row[rk.tenantId] ?? '—',
-    sortable: false,
-  },
-  {
-    name: roleListColumnKeys.actions,
-    required: true,
-    label: t('actions'),
-    align: quasarTableAlign.center,
-    field: () => null,
-    sortable: false,
-  },
-])
+function roleTenantDisplayLabel(row, byId = tenantIdToLabel.value) {
+  const id = row?.[rk.tenantId]
+  if (id == null || id === '') {
+    return '—'
+  }
+  const n = Number(id)
+  if (!Number.isFinite(n)) {
+    return '—'
+  }
+  const label = byId.get(n)
+
+  return label ?? String(n)
+}
+
+const columns = computed(() => {
+  const tenantLabels = tenantIdToLabel.value
+
+  return [
+    {
+      name: rk.name,
+      required: true,
+      label: t('name'),
+      align: quasarTableAlign.left,
+      field: row => row[rk.name],
+      sortable: true,
+    },
+    {
+      name: rk.description,
+      required: true,
+      label: t('description'),
+      align: quasarTableAlign.left,
+      field: row => row[rk.description] ?? '',
+      sortable: true,
+    },
+    {
+      name: rk.level,
+      required: true,
+      label: t('roleLevel'),
+      align: quasarTableAlign.left,
+      field: row => row[rk.level],
+      sortable: true,
+    },
+    {
+      name: rk.tenantId,
+      required: true,
+      label: t('roleListTenantName'),
+      align: quasarTableAlign.left,
+      field: row => roleTenantDisplayLabel(row, tenantLabels),
+      sortable: false,
+    },
+    {
+      name: roleListColumnKeys.actions,
+      required: true,
+      label: t('actions'),
+      align: quasarTableAlign.center,
+      field: () => null,
+      sortable: false,
+    },
+  ]
+})
 
 const filterDialogOpen = ref(false)
 const filterDraft = reactive({
@@ -485,8 +541,8 @@ const roleDetailRows = computed(() => {
     },
     {
       key: rk.tenantId,
-      label: t('tenantId'),
-      value: r[rk.tenantId] != null ? String(r[rk.tenantId]) : '—',
+      label: t('roleListTenantName'),
+      value: roleTenantDisplayLabel(r),
     },
   ]
 })
@@ -539,12 +595,8 @@ function isProtectedRole(row) {
     return false
   }
   const name = String(row[rk.name] ?? '').toUpperCase()
-  if (name === protectedSystemRoleName) {
-    return true
-  }
-  const level = row[rk.level]
 
-  return level === -1 || level === '-1'
+  return name === protectedSystemRoleName
 }
 
 function getbadge(n) {

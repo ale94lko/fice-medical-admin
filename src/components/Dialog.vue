@@ -537,10 +537,10 @@ watch(
       return
     }
     resetForm()
-    applyInitialValues()
     if (typeof props.onOpen === typeNames.function) {
       await props.onOpen()
     }
+    applyInitialValues()
   },
 )
 

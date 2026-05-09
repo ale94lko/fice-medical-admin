@@ -12,10 +12,14 @@ import {
   coerceTenantMutationRoot,
   coerceUserMutationRoot,
   extractPlansList,
+  buildPermissionUpdateBody,
+  enrichPermissionsModuleNames,
   extractTenantList,
   extractTenantListPagination,
   extractTenantMutationResponse,
   extractUserMutationResponse,
+  fetchAllEnvelopeList,
+  mapPermission,
   mapPlanRow,
   mapRole,
   mapTenant,
@@ -38,6 +42,9 @@ export const useSiteStore = defineStore('site', {
     roleList: [],
     roleListPagination: null,
     roleListQuery: { page: 1, limit: 20 },
+    permissionList: [],
+    permissionListPagination: null,
+    permissionListQuery: { page: 1, limit: 20 },
     plans: [],
   }),
   getters: {
@@ -279,6 +286,73 @@ export const useSiteStore = defineStore('site', {
         await this.getRoleList()
       } catch (error) {
         console.error('Error deleting role:', error)
+        throw error
+      }
+    },
+    async getPermissionList(params = {}) {
+      try {
+        const page = Number(
+          params.page ?? this.permissionListQuery.page ?? 1,
+        )
+        const limit = Number(
+          params.limit ?? this.permissionListQuery.limit ?? 20,
+        )
+        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
+        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
+        this.permissionListQuery = { page: safePage, limit: safeLimit }
+
+        const apiPage = Math.max(0, safePage - 1)
+        const response = await apiInstance.get(apiPaths.permissionsList, {
+          params: { page: apiPage, limit: safeLimit },
+        })
+
+        let moduleRows = []
+        try {
+          moduleRows = await fetchAllEnvelopeList(
+            (path, cfg) => apiInstance.get(path, cfg),
+            apiPaths.modulesList,
+          )
+        } catch {
+          moduleRows = []
+        }
+
+        const root = response?.data?.data
+        if (!root) {
+          this.permissionList = []
+          this.permissionListPagination = null
+
+          return
+        }
+        const list = extractTenantList(root)
+        const mapped = list.map(mapPermission).filter(Boolean)
+
+        this.permissionList = enrichPermissionsModuleNames(
+          mapped,
+          moduleRows,
+        )
+        this.permissionListPagination = extractTenantListPagination(root)
+      } catch (error) {
+        console.error('Error fetching permissions:', error)
+        throw error
+      }
+    },
+    async updatePermission(id, payload) {
+      try {
+        const idNum = Number(id)
+        if (!Number.isFinite(idNum)) {
+          throw new Error('Invalid permission id')
+        }
+        const body = buildPermissionUpdateBody(payload)
+        await apiInstance.patch(apiPaths.permissionsUpdate, {
+          id: idNum,
+          ...body,
+        })
+        await this.getPermissionList({
+          page: this.permissionListQuery.page,
+          limit: this.permissionListQuery.limit,
+        })
+      } catch (error) {
+        console.error('Error updating permission:', error)
         throw error
       }
     },
