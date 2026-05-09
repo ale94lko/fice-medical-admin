@@ -94,7 +94,39 @@ export default {
   username: 'Nombre de usuario',
   tenants: 'Tenants',
   roles: 'Roles',
+  addRole: 'Añadir rol',
+  newRole: 'Nuevo rol',
+  viewRole: 'Ver rol',
+  viewRoleTitle: 'Detalle del rol',
+  roleListError: 'No se pudo cargar el listado de roles',
+  roleCreatedSuccess: 'Rol creado correctamente',
+  roleCreateError: 'No se pudo crear el rol',
+  roleDeletedSuccess: 'Rol eliminado correctamente',
+  roleDeleteError: 'No se pudo eliminar el rol',
+  deleteRoleTitle: 'Eliminar rol',
+  deleteRoleMessage:
+    '¿Eliminar permanentemente el rol «{name}»? '
+    + 'Esta acción no se puede deshacer.',
+  roleFiltersTitle: 'Filtrar roles',
+  roleFilterApply: 'Aplicar',
+  roleFilterClear: 'Limpiar todo',
+  roleLevel: 'Nivel',
+  tenantId: 'ID de tenant',
+  rolePermissionsLoadError:
+    'No se pudieron cargar módulos ni permisos del formulario. '
+    + 'Inténtalo de nuevo.',
   permissions: 'Permisos',
+  permissionsUncategorized: 'Otros',
+  permissionTreeEmpty: 'No hay permisos disponibles.',
+  roleTemplateFromExisting: 'Copiar permisos de un rol',
+  roleTemplateHint:
+    'Opcional. Al elegir un rol se cargan sus permisos como punto de partida.',
+  roleTemplateListLoadError:
+    'No se pudo cargar el listado de roles como plantilla. '
+    + 'Aún puedes marcar permisos a mano.',
+  roleTemplatePermissionsLoadError:
+    'No se pudieron cargar los permisos de ese rol. '
+    + 'Prueba con otro rol o marca los permisos manualmente.',
   client: 'Cliente',
   clients: 'Clientes',
   clientList: 'Listado de clientes',

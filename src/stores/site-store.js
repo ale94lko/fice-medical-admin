@@ -17,10 +17,12 @@ import {
   extractTenantMutationResponse,
   extractUserMutationResponse,
   mapPlanRow,
+  mapRole,
   mapTenant,
   mapUser,
   mergeTenantWithPayload,
   mergeUserWithPayload,
+  roleByIdPath,
   tenantByIdPath,
   userByIdPath,
 } from 'components/helpers.js'
@@ -33,6 +35,9 @@ export const useSiteStore = defineStore('site', {
     userList: [],
     userListPagination: null,
     userListQuery: { page: 1, limit: 20 },
+    roleList: [],
+    roleListPagination: null,
+    roleListQuery: { page: 1, limit: 20 },
     plans: [],
   }),
   getters: {
@@ -227,6 +232,55 @@ export const useSiteStore = defineStore('site', {
     },
     async deleteUser(id) {
       return this.updateUser(id, { [userFieldKeys.status]: 0 })
+    },
+    async getRoleList(params = {}) {
+      try {
+        const page = Number(params.page ?? this.roleListQuery.page ?? 1)
+        const limit = Number(params.limit ?? this.roleListQuery.limit ?? 20)
+        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
+        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
+        this.roleListQuery = { page: safePage, limit: safeLimit }
+
+        const apiPage = Math.max(0, safePage - 1)
+        const response = await apiInstance.get(apiPaths.rolesList, {
+          params: { page: apiPage, limit: safeLimit },
+        })
+
+        const root = response?.data?.data
+        if (!root) {
+          this.roleList = []
+          this.roleListPagination = null
+
+          return
+        }
+        const list = extractTenantList(root)
+
+        this.roleList = list
+          .map(mapRole)
+          .filter(Boolean)
+        this.roleListPagination = extractTenantListPagination(root)
+      } catch (error) {
+        console.error('Error fetching roles:', error)
+        throw error
+      }
+    },
+    async createRole(payload) {
+      try {
+        await apiInstance.post(apiPaths.rolesCreate, payload)
+        await this.getRoleList()
+      } catch (error) {
+        console.error('Error creating role:', error)
+        throw error
+      }
+    },
+    async deleteRole(id) {
+      try {
+        await apiInstance.delete(roleByIdPath(id))
+        await this.getRoleList()
+      } catch (error) {
+        console.error('Error deleting role:', error)
+        throw error
+      }
     },
   },
 })

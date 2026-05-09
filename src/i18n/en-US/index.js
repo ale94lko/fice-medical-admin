@@ -90,7 +90,36 @@ export default {
   username: 'Username',
   tenants: 'Tenants',
   roles: 'Roles',
+  addRole: 'Add role',
+  newRole: 'New role',
+  viewRole: 'View role',
+  viewRoleTitle: 'Role details',
+  roleListError: 'Could not load role list',
+  roleCreatedSuccess: 'Role created successfully',
+  roleCreateError: 'Could not create role',
+  roleDeletedSuccess: 'Role deleted successfully',
+  roleDeleteError: 'Could not delete role',
+  deleteRoleTitle: 'Delete role',
+  deleteRoleMessage: 'Permanently delete role "{name}"? This cannot be undone.',
+  roleFiltersTitle: 'Filter roles',
+  roleFilterApply: 'Apply',
+  roleFilterClear: 'Clear all',
+  roleLevel: 'Level',
+  tenantId: 'Tenant ID',
+  rolePermissionsLoadError:
+    'Could not load modules or permissions for the form. Try again.',
   permissions: 'Permissions',
+  permissionsUncategorized: 'Other',
+  permissionTreeEmpty: 'No permissions available.',
+  roleTemplateFromExisting: 'Copy permissions from role',
+  roleTemplateHint:
+    'Optional. Selecting a role loads its permissions as a starting point.',
+  roleTemplateListLoadError:
+    'Could not load the role list for templates. '
+    + 'You can still pick permissions manually.',
+  roleTemplatePermissionsLoadError:
+    'Could not load that role\'s permissions. '
+    + 'Try another role or pick manually.',
   client: 'Client',
   clients: 'Clients',
   clientList: 'Client list',

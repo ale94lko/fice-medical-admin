@@ -22,7 +22,9 @@ export const apiPaths = {
   usersList: '/user/v1',
   usersRegister: '/user/v1/register',
   rolesList: '/roles/v1',
+  rolesCreate: '/admin-tenant/v1/role/add',
   permissionsList: '/permissions/v1',
+  modulesList: '/modules/v1',
   oauthLogin: '/oauth/v1/login',
   oauthRefresh: '/oauth/v1/refresh',
   oauthResetPassword: '/oauth/v1/reset-password',
@@ -95,6 +97,7 @@ export const fieldTypes = {
   select: 'select',
   checkbox: 'checkbox',
   addressSuggest: 'addressSuggest',
+  permissionTree: 'permissionTree',
 }
 
 export const tenantFieldKeys = {
@@ -132,6 +135,44 @@ export const userFieldKeys = {
 export const userListColumnKeys = {
   actions: 'actions',
 }
+
+export const roleFieldKeys = {
+  name: 'name',
+  description: 'description',
+  permissions: 'permissions',
+  templateRoleId: 'templateRoleId',
+  level: 'level',
+  tenantId: 'tenantId',
+}
+
+export const roleListColumnKeys = {
+  actions: 'actions',
+}
+
+export const roleDetailNumericIdArrayKeys = [
+  'permission_ids',
+  'permissionIds',
+  'permissionIDs',
+]
+
+export const roleDetailPermissionEntryArrayKeys = [
+  'permissions',
+  'permission_list',
+  'permissionList',
+  'role_permissions',
+  'rolePermissions',
+  'permission_codes',
+  'permissionCodes',
+  'permission_names',
+  'permissionNames',
+]
+
+export const rolePermissionEnvelopeKeys = [
+  ...roleDetailNumericIdArrayKeys,
+  ...roleDetailPermissionEntryArrayKeys,
+]
+
+export const protectedSystemRoleName = 'SUPER_ADMIN'
 
 export const userFormDefaults = {
   statusActive: 1,
@@ -178,6 +219,7 @@ export const qSelectOptionKeys = {
 export const selectBehaviors = {
   default: 'default',
   menu: 'menu',
+  dialog: 'dialog',
 }
 
 export const quasarNotifyTypes = {

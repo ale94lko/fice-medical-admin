@@ -118,6 +118,45 @@
                 class="dialog-checkbox-field"
                 :disable="isFieldReadonly(field)"
                 :label="labelFor(field)"/>
+              <q-field
+                v-else-if="field.kind === fieldTypes.permissionTree"
+                outlined
+                stack-label
+                lazy-rules
+                class="full-width permission-tree-qfield"
+                :model-value="form[field.key]"
+                :label="labelFor(field)"
+                :hint="hintFor(field)"
+                :rules="rulesFor(field)"
+                :readonly="isFieldReadonly(field)">
+                <template #control>
+                  <div
+                    class="relative-position full-width permission-tree-scroll"
+                    :class="{
+                      'permission-tree-readonly': isFieldReadonly(field),
+                    }">
+                    <q-inner-loading
+                      :showing="loadingFor(field)"
+                      color="primary"/>
+                    <q-tree
+                      :nodes="treeNodesFor(field)"
+                      node-key="nodeKey"
+                      label-key="label"
+                      children-key="children"
+                      tick-strategy="leaf"
+                      dense
+                      no-connectors
+                      default-expand-all
+                      class="full-width q-pt-sm text-body2"
+                      v-model:ticked="form[field.key]"
+                      :no-nodes-label="
+                        field.treeNoNodesLabelKey
+                          ? t(field.treeNoNodesLabelKey)
+                          : undefined
+                      "/>
+                  </div>
+                </template>
+              </q-field>
               <q-select
                 v-else-if="field.kind === fieldTypes.select"
                 v-model="form[field.key]"
@@ -128,7 +167,7 @@
                 input-debounce="0"
                 :multiple="field.multiple === true"
                 :use-chips="field.multiple === true"
-                :behavior="field.selectBehavior || selectBehaviors.default"
+                :behavior="qSelectBehaviorInModal(field)"
                 :options="selectOptionsDisplayed(field)"
                 :option-label="field.optionLabel || qSelectOptionKeys.label"
                 :option-value="field.optionValue || qSelectOptionKeys.value"
@@ -138,10 +177,12 @@
                 :loading="loadingFor(field)"
                 :readonly="isFieldReadonly(field)"
                 :disable="disableFor(field)"
+                :clearable="field.clearable === true"
                 :use-input="field.useInput === true && !isFieldReadonly(field)"
                 :hide-selected="field.useInput === true"
                 :fill-input="field.useInput === true"
                 @filter="(val, update) => onSelectFilter(val, update, field)"
+                @update:model-value="v => onSelectModelValue(field, v)"
                 @blur="onFieldBlur(field)"/>
             </div>
           </div>
@@ -285,6 +326,14 @@ function showFieldRow(field) {
     || props.initialValues != null
 }
 
+function qSelectBehaviorInModal(field) {
+  if (field.multiple === true || field.useInput === true) {
+    return selectBehaviors.dialog
+  }
+
+  return field.selectBehavior || selectBehaviors.default
+}
+
 function isDialPrefixedPhoneField(field) {
   return field.kind === fieldTypes.input
     && Boolean(field.phoneDialFromCountryField)
@@ -303,6 +352,9 @@ function blankForKind(field) {
     }
 
     return null
+  }
+  if (field.kind === fieldTypes.permissionTree) {
+    return []
   }
   switch (field.kind) {
     case fieldTypes.textarea:
@@ -660,6 +712,15 @@ function optionsFor(field) {
   return unref(o) ?? []
 }
 
+function treeNodesFor(field) {
+  const n = field.treeNodes
+  if (typeof n === typeNames.function) {
+    return n() ?? []
+  }
+
+  return unref(n) ?? []
+}
+
 function selectOptionsDisplayed(field) {
   const all = optionsFor(field)
   if (!field.useInput) {
@@ -689,6 +750,13 @@ function onSelectFilter(val, update, field) {
   update(() => {
     selectFilterQueries[field.key] = val
   })
+}
+
+function onSelectModelValue(field, value) {
+  if (typeof field.afterModelUpdate !== 'function') {
+    return
+  }
+  void field.afterModelUpdate(form, value, field)
 }
 
 function loadingFor(field) {
@@ -775,5 +843,19 @@ async function submit() {
 
   .dialog-checkbox-field :deep(.q-checkbox__inner) {
     margin-left: -0.25em;
+  }
+
+  .permission-tree-scroll {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .permission-tree-readonly {
+    pointer-events: none;
+    opacity: 0.72;
+  }
+
+  .permission-tree-qfield :deep(.q-field__control) {
+    padding-top: 6px;
   }
 </style>

@@ -4,6 +4,10 @@ import {
   countryDialMetaByCode,
   officialTimezoneRows,
   tenantCountryToIso3166Alpha2,
+  roleDetailNumericIdArrayKeys,
+  roleDetailPermissionEntryArrayKeys,
+  roleFieldKeys,
+  rolePermissionEnvelopeKeys,
   tenantFieldKeys,
   tenantModelFallbacks,
   typeNames,
@@ -32,6 +36,63 @@ export function tenantByIdPath(id) {
 
 export function userByIdPath(id) {
   return `${apiPaths.usersList}/${encodeURIComponent(String(id))}`
+}
+
+export function roleByIdPath(id) {
+  return `${apiPaths.rolesList}/${encodeURIComponent(String(id))}`
+}
+
+export function mapRole(row) {
+  if (!row || typeof row !== typeNames.object) {
+    return null
+  }
+  const rk = roleFieldKeys
+  const id = row.id ?? row.role_id
+  if (id == null || id === '') {
+    return null
+  }
+  const levelRaw = row.level ?? row.role_level
+  const level = Number(levelRaw)
+
+  const mapped = {
+    id: Number(id),
+    [rk.tenantId]:
+      row.tenant_id != null && row.tenant_id !== ''
+        ? Number(row.tenant_id)
+        : null,
+    [rk.name]: String(row.name ?? row.role_name ?? '').trim(),
+    [rk.description]: String(row.description ?? row.role_description ?? '')
+      .trim(),
+    [rk.level]: Number.isFinite(level) ? level : null,
+  }
+  if (Array.isArray(row.permissions)) {
+    mapped[rk.permissions] = row.permissions
+  }
+  if (Array.isArray(row.permission_ids)) {
+    mapped['permission_ids'] = row.permission_ids
+  }
+  if (Array.isArray(row.permissionIds)) {
+    mapped.permissionIds = row.permissionIds
+  }
+
+  return mapped
+}
+
+export function buildRoleCreateBody(payload) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const rk = roleFieldKeys
+  const name = String(payload[rk.name] ?? '').trim()
+  const description = String(payload[rk.description] ?? '').trim()
+  const permissionIds = intIdList(payload[rk.permissions])
+
+  return {
+    name,
+    description,
+    // eslint-disable-next-line camelcase -- API contract
+    permissions_ids: permissionIds,
+  }
 }
 
 function pickExpiration(td, root) {
@@ -668,6 +729,171 @@ function intIdList(value) {
   }
 
   return value.map(x => Number(x)).filter(Number.isFinite)
+}
+
+function uniqueFiniteNumbers(values) {
+  return [...new Set(values.filter(Number.isFinite))]
+}
+
+function mergeRolePermissionEnvelopeFields(roleObj, envelope) {
+  if (!roleObj || !envelope || envelope === roleObj) {
+    return roleObj
+  }
+  const merged = { ...roleObj }
+  for (const k of rolePermissionEnvelopeKeys) {
+    if (envelope[k] == null) {
+      continue
+    }
+    const onRole = merged[k]
+    const useEnvelope =
+      onRole == null
+      || (Array.isArray(onRole)
+        && onRole.length === 0
+        && Array.isArray(envelope[k])
+        && envelope[k].length > 0)
+    if (useEnvelope) {
+      merged[k] = envelope[k]
+    }
+  }
+
+  return merged
+}
+
+function unwrapRoleDetailInner(payload) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return null
+  }
+  let inner =
+    payload.data != null && typeof payload.data === typeNames.object
+      ? payload.data
+      : payload
+  if (inner.role != null && typeof inner.role === typeNames.object) {
+    inner = mergeRolePermissionEnvelopeFields(inner.role, inner)
+  }
+
+  return inner
+}
+
+function permissionIdFromPrimitiveOrCode(p, map) {
+  const n = Number(p)
+  if (Number.isFinite(n)) {
+    return n
+  }
+  if (!map || p == null || typeof p !== 'string' || !String(p).trim()) {
+    return null
+  }
+  const hit = map.get(String(p).trim().toUpperCase())
+
+  return Number.isFinite(hit) ? hit : null
+}
+
+function collectPermissionIdsFromArray(perms, codeToIdMap) {
+  if (!Array.isArray(perms)) {
+    return []
+  }
+  const out = []
+  const map = codeToIdMap && codeToIdMap.size ? codeToIdMap : null
+  for (const p of perms) {
+    if (p == null) {
+      continue
+    }
+    if (typeof p === 'number' || typeof p === 'string') {
+      const id = permissionIdFromPrimitiveOrCode(p, map)
+      if (id != null) {
+        out.push(id)
+      }
+      continue
+    }
+    if (typeof p !== typeNames.object) {
+      continue
+    }
+    const nested = p.permission
+    const id =
+      p.id
+      ?? p.permission_id
+      ?? p.permissionId
+      ?? nested?.id
+    const n = Number(id)
+    if (Number.isFinite(n)) {
+      out.push(n)
+      continue
+    }
+    if (!map) {
+      continue
+    }
+    const codeRaw =
+      p.code
+      ?? p.permission_code
+      ?? p.name
+      ?? nested?.code
+      ?? nested?.name
+    if (codeRaw != null && String(codeRaw).trim()) {
+      const hit = map.get(String(codeRaw).trim().toUpperCase())
+      if (Number.isFinite(hit)) {
+        out.push(hit)
+      }
+    }
+  }
+
+  return intIdList(out)
+}
+
+export function buildPermissionCodeToIdMap(permissionRows) {
+  const m = new Map()
+  for (const row of permissionRows) {
+    if (!row || typeof row !== typeNames.object) {
+      continue
+    }
+    const id = Number(row.id ?? row.permission_id ?? row.permissionId)
+    if (!Number.isFinite(id)) {
+      continue
+    }
+    const keys = [
+      row.code,
+      row.permission_code,
+      row.slug,
+      row.name,
+      row.title,
+      row.display_name,
+    ]
+    for (const k of keys) {
+      if (k != null && String(k).trim()) {
+        m.set(String(k).trim().toUpperCase(), id)
+      }
+    }
+  }
+
+  return m
+}
+
+export function extractRoleTemplatePermissionIds(payload, codeToIdMap) {
+  const inner = unwrapRoleDetailInner(payload)
+  if (!inner) {
+    return []
+  }
+  const fromDirectParts = []
+  for (const k of roleDetailNumericIdArrayKeys) {
+    const arr = inner[k]
+    if (Array.isArray(arr) && arr.length) {
+      fromDirectParts.push(...intIdList(arr))
+    }
+  }
+  const fromDirect = uniqueFiniteNumbers(fromDirectParts)
+
+  const fromListParts = []
+  for (const k of roleDetailPermissionEntryArrayKeys) {
+    const arr = inner[k]
+    if (Array.isArray(arr) && arr.length) {
+      fromListParts.push(...collectPermissionIdsFromArray(arr, codeToIdMap))
+    }
+  }
+  const fromList = uniqueFiniteNumbers(fromListParts)
+
+  return uniqueFiniteNumbers([...fromDirect, ...fromList])
+}
+
+export function extractPermissionIdsFromRoleDetailPayload(payload) {
+  return extractRoleTemplatePermissionIds(payload, null)
 }
 
 export function buildUserRegisterBody(payload) {
