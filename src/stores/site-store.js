@@ -3,7 +3,6 @@ import { apiInstance } from 'boot/axios'
 import {
   apiPaths,
   tenantFieldKeys,
-  tenantsListQueryParams,
   userFieldKeys,
 } from 'components/constants.js'
 import {
@@ -84,7 +83,6 @@ export const useSiteStore = defineStore('site', {
           params: {
             page: apiPage,
             limit: safeLimit,
-            ...tenantsListQueryParams,
           },
         })
 

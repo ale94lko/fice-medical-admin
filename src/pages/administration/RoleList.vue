@@ -221,7 +221,6 @@ import {
   siteBreakpoints,
   siteBreakpointsPx,
   tenantFieldKeys,
-  tenantsListQueryParams,
 } from 'components/constants.js'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
@@ -338,7 +337,6 @@ async function loadTenantNameLookup() {
     const rawRows = await fetchAllEnvelopeList(
       (path, cfg) => apiInstance.get(path, cfg),
       apiPaths.tenantsList,
-      tenantsListQueryParams,
     )
     const next = new Map()
     for (const row of rawRows) {

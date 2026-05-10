@@ -12,7 +12,6 @@ import {
   roleFieldKeys,
   selectBehaviors,
   tenantFieldKeys,
-  tenantsListQueryParams,
 } from 'components/constants.js'
 import {
   buildPermissionCodeToIdMap,
@@ -293,7 +292,7 @@ export function useRoleAddForm(editingRoleRef) {
     try {
       const tenantRawRows = await fetchAllPaginatedRaw(
         apiPaths.tenantsList,
-        tenantsListQueryParams,
+        { active: true },
       )
       const ttk = tenantFieldKeys
       const mapped = tenantRawRows.map(mapTenant).filter(Boolean)
