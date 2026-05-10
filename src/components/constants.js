@@ -25,6 +25,7 @@ export const apiPaths = {
   usersRegister: '/user/v1/register',
   rolesList: '/roles/v1',
   rolesCreate: '/admin-tenant/v1/role/add',
+  rolesUpdate: '/admin-tenant/v1/role/update',
   permissionsList: '/permissions/v1',
   permissionsUpdate: '/permissions/v1/update',
   modulesList: '/modules/v1',

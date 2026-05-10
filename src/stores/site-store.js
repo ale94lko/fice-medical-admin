@@ -285,6 +285,18 @@ export const useSiteStore = defineStore('site', {
         throw error
       }
     },
+    async updateRole(payload) {
+      try {
+        await apiInstance.patch(apiPaths.rolesUpdate, payload)
+        await this.getRoleList({
+          page: this.roleListQuery.page,
+          limit: this.roleListQuery.limit,
+        })
+      } catch (error) {
+        console.error('Error updating role:', error)
+        throw error
+      }
+    },
     async deleteRole(id) {
       try {
         await apiInstance.delete(roleByIdPath(id))

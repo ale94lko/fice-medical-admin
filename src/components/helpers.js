@@ -143,15 +143,34 @@ export function buildRoleCreateBody(payload) {
   const body = {
     name,
     description,
-    // eslint-disable-next-line camelcase -- API contract
-    permissions_ids: permissionIds,
+    permissionIds,
   }
   if (Number.isFinite(tenantIdNum)) {
-    // eslint-disable-next-line camelcase -- API contract
-    body.tenant_id = tenantIdNum
+    body.tenantId = tenantIdNum
   }
 
   return body
+}
+
+export function buildRoleUpdateBody(payload, roleId) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const rk = roleFieldKeys
+  const id = Number(roleId ?? payload.id)
+  if (!Number.isFinite(id)) {
+    return {}
+  }
+  const name = String(payload[rk.name] ?? '').trim()
+  const description = String(payload[rk.description] ?? '').trim()
+  const permissionIds = intIdList(payload[rk.permissions])
+
+  return {
+    id,
+    name,
+    description,
+    permissionIds,
+  }
 }
 
 export function buildPermissionUpdateBody(payload) {
@@ -1065,18 +1084,16 @@ export function buildUserRegisterBody(payload) {
     payload.allowedSubtenantIds ?? payload.allowed_subtenant_ids,
   )
 
-  /* eslint-disable camelcase */
   const body = {
     username,
     password,
     status: Number.isFinite(status) ? status : 1,
-    change_password: changePassword !== false && changePassword !== 0,
+    changePassword: changePassword !== false && changePassword !== 0,
     roles,
     permissions,
     modules,
-    allowed_subtenant_ids: allowedSub,
+    allowedSubtenantIds: allowedSub,
   }
-  /* eslint-enable camelcase */
   if (description.length > 0) {
     body.description = description
   }

@@ -18,7 +18,7 @@
           no-caps
           color="primary"
           icon="add"
-          :disable="loading || addSaving || deleteSaving"
+          :disable="loading || roleFormSaving || deleteSaving"
           :label="t('addRole')"
           @click="addRole"/>
         <q-space />
@@ -40,9 +40,19 @@
             icon="visibility"
             color="primary"
             :size="siteBreakpoints.SM"
-            :disable="addSaving || deleteSaving"
+            :disable="roleFormSaving || deleteSaving"
             :aria-label="t('viewRole')"
             @click="openViewRole(props.row)"/>
+          <q-btn
+            v-if="!isProtectedRole(props.row)"
+            flat
+            round
+            icon="edit"
+            color="primary"
+            :size="siteBreakpoints.SM"
+            :disable="roleFormSaving || deleteSaving"
+            :aria-label="t('editRole')"
+            @click="openEditRole(props.row)"/>
           <q-btn
             v-if="!isProtectedRole(props.row)"
             flat
@@ -50,21 +60,21 @@
             icon="delete"
             color="primary"
             :size="siteBreakpoints.SM"
-            :disable="deleteSaving"
+            :disable="deleteSaving || roleFormSaving"
             @click="deleteRow(props.row)"/>
         </q-td>
       </template>
     </q-table>
 
     <Dialog
-      v-model="addDialogOpen"
-      :title-key="'newRole'"
+      v-model="roleFormDialogOpen"
+      :title="roleFormDialogTitle"
       :fields="roleAddFields"
-      :initial-values="roleAddDialogInitialValues"
-      :on-open="onRoleDialogOpen"
+      :initial-values="roleFormInitialValues"
+      :on-open="onRoleFormDialogOpen"
       :format-payload="formatRolePayload"
-      :saving="addSaving"
-      @save="onSaveRole"/>
+      :saving="roleFormSaving"
+      @save="onSaveRoleForm"/>
 
     <q-dialog
       v-model="filterDialogOpen"
@@ -228,8 +238,9 @@ const ttk = tenantFieldKeys
 
 const $q = useQuasar()
 const loading = ref(false)
-const addDialogOpen = ref(false)
-const addSaving = ref(false)
+const roleEditingRow = ref(null)
+const roleFormDialogOpen = ref(false)
+const roleFormSaving = ref(false)
 const deleteConfirmOpen = ref(false)
 const rolePendingDelete = ref(null)
 const deleteSaving = ref(false)
@@ -254,19 +265,40 @@ const {
   permissionCodeToId,
   knownPermissionIds,
   defaultNewRoleTenantId,
-} = useRoleAddForm()
+} = useRoleAddForm(roleEditingRow)
 
-const roleAddDialogInitialValues = computed(() => {
-  if (!addDialogOpen.value) {
+const roleFormDialogTitle = computed(() =>
+  roleEditingRow.value ? t('editRole') : t('newRole'),
+)
+
+const roleFormInitialValues = computed(() => {
+  if (!roleFormDialogOpen.value) {
     return null
   }
-  const id = defaultNewRoleTenantId.value
-  if (!Number.isFinite(Number(id))) {
-    return null
+  const editRow = roleEditingRow.value
+  if (!editRow) {
+    const id = defaultNewRoleTenantId.value
+    if (!Number.isFinite(Number(id))) {
+      return null
+    }
+
+    return { [rk.tenantId]: Number(id) }
   }
 
-  return { [rk.tenantId]: Number(id) }
+  return {
+    [rk.name]: editRow[rk.name] ?? '',
+    [rk.description]: editRow[rk.description] ?? '',
+    [rk.permissions]: extractRoleTemplatePermissionIds(
+      { data: editRow },
+      permissionCodeToId.value,
+    ),
+  }
 })
+
+async function onRoleFormDialogOpen() {
+  await onRoleDialogOpen()
+  await nextTick()
+}
 
 const viewRolePermissionTreeNodes = computed(() =>
   clonePermissionTreeForViewReadonly(permissionTreeNodes.value),
@@ -348,6 +380,12 @@ async function loadRoles(paginationPayload) {
 function onTableRequest(props) {
   return loadRoles(props.pagination)
 }
+
+watch(roleFormDialogOpen, open => {
+  if (!open) {
+    roleEditingRow.value = null
+  }
+})
 
 onMounted(() => {
   void loadTenantNameLookup()
@@ -562,33 +600,49 @@ const windowWidth = computed(() => $q.screen.width)
 const showGrid = computed(() => windowWidth.value <= siteBreakpointsPx.XXS)
 
 function addRole() {
-  addDialogOpen.value = true
+  roleEditingRow.value = null
+  roleFormDialogOpen.value = true
 }
 
-async function onSaveRole(payload) {
-  addSaving.value = true
+function openEditRole(row) {
+  roleEditingRow.value = row
+  roleFormDialogOpen.value = true
+}
+
+async function onSaveRoleForm(payload) {
+  roleFormSaving.value = true
+  const isEdit = Boolean(roleEditingRow.value?.id)
   try {
-    await siteStore.createRole(payload)
-    $q.notify({
-      type: quasarNotifyTypes.positive,
-      message: t('roleCreatedSuccess'),
-    })
-    addDialogOpen.value = false
+    if (isEdit) {
+      await siteStore.updateRole(payload)
+      $q.notify({
+        type: quasarNotifyTypes.positive,
+        message: t('roleUpdatedSuccess'),
+      })
+    } else {
+      await siteStore.createRole(payload)
+      $q.notify({
+        type: quasarNotifyTypes.positive,
+        message: t('roleCreatedSuccess'),
+      })
+    }
+    roleFormDialogOpen.value = false
     tablePagination.value = roleTablePaginationFromStore(
       tablePagination.value,
     )
   } catch (error) {
+    const fallbackKey = isEdit ? 'roleUpdateError' : 'roleCreateError'
     const msg =
       error?.response?.data?.message
       || error?.response?.data?.error
       || error?.message
-      || t('roleCreateError')
+      || t(fallbackKey)
     $q.notify({
       type: quasarNotifyTypes.negative,
       message: String(msg),
     })
   } finally {
-    addSaving.value = false
+    roleFormSaving.value = false
   }
 }
 

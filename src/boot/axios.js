@@ -1,6 +1,6 @@
 import { defineBoot } from '#q-app/wrappers'
 import axios from 'axios'
-import { apiPaths, defaultTenant } from 'components/constants.js'
+import { apiPaths, defaultTenant, typeNames } from 'components/constants.js'
 import { extractOAuthTokenPayload } from 'components/helpers.js'
 import {
   readStoredExpireAt,
@@ -10,6 +10,7 @@ import {
   writeStoredRefreshToken,
   writeStoredToken,
 } from '../utils/auth-local-storage.js'
+import { deepMapRequestKeysToSnakeCase } from '../utils/request-key-case.js'
 
 const api = axios.create({
   baseURL: 'https://7646-79-112-108-239.ngrok-free.app',
@@ -89,8 +90,7 @@ async function performRefresh() {
   if (!refreshJwt) {
     throw new Error('no refresh token')
   }
-  // eslint-disable-next-line camelcase -- API contract
-  const body = { refresh_token: refreshJwt }
+  const body = { refreshToken: refreshJwt }
   const res = await api.post(
     apiPaths.oauthRefresh,
     body,
@@ -138,6 +138,17 @@ api.interceptors.request.use(
       if (t2) {
         config.headers.Authorization = `Bearer ${t2}`
       }
+    }
+
+    if (
+      config.data != null
+      && typeof config.data === typeNames.object
+      && !(config.data instanceof FormData)
+      && !(config.data instanceof URLSearchParams)
+      && !(config.data instanceof Blob)
+      && !(config.data instanceof ArrayBuffer)
+    ) {
+      config.data = deepMapRequestKeysToSnakeCase(config.data)
     }
 
     return config

@@ -1,4 +1,4 @@
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, unref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import { apiInstance } from 'boot/axios'
@@ -17,6 +17,7 @@ import {
 import {
   buildPermissionCodeToIdMap,
   buildRoleCreateBody,
+  buildRoleUpdateBody,
   extractRoleTemplatePermissionIds,
   extractTenantList,
   extractTenantListPagination,
@@ -204,10 +205,17 @@ function mapRoleRowsToTemplateSelectData(roleRows, nameKey, codeToIdMap) {
   return { options, permissionIdsByRoleId }
 }
 
-export function useRoleAddForm() {
+export function useRoleAddForm(editingRoleRef) {
   const { t } = useI18n()
   const $q = useQuasar()
   const rk = roleFieldKeys
+
+  const isEditMode = computed(() => {
+    const row = unref(editingRoleRef)
+    const id = row?.id ?? row?.role_id
+
+    return id != null && id !== '' && Number.isFinite(Number(id))
+  })
 
   const permissionTreeNodes = ref([])
   const permissionsTreeLoading = ref(false)
@@ -271,6 +279,15 @@ export function useRoleAddForm() {
 
   async function onDialogOpen() {
     await loadPermissionCatalog()
+
+    if (isEditMode.value) {
+      tenantSelectOptions.value = []
+      defaultNewRoleTenantId.value = null
+      roleTemplateOptions.value = []
+      templatePermissionIdsByRoleId.value = new Map()
+
+      return
+    }
 
     roleTenantsLoading.value = true
     try {
@@ -386,7 +403,7 @@ export function useRoleAddForm() {
     const requiredRule = val =>
       (!!val && String(val).trim().length > 0) || t('fieldRequired')
 
-    return [
+    const baseFields = [
       {
         key: rk.name,
         kind: fieldTypes.input,
@@ -434,9 +451,23 @@ export function useRoleAddForm() {
         autogrow: false,
       },
     ]
+
+    if (isEditMode.value) {
+      return baseFields.filter(
+        f => f.key !== rk.tenantId && f.key !== rk.templateRoleId,
+      )
+    }
+
+    return baseFields
   })
 
   function formatRolePayload(form) {
+    const row = unref(editingRoleRef)
+    const id = row?.id ?? row?.role_id
+    if (id != null && id !== '' && Number.isFinite(Number(id))) {
+      return buildRoleUpdateBody(form, Number(id))
+    }
+
     return buildRoleCreateBody(form)
   }
 

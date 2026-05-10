@@ -1,8 +1,8 @@
 <template>
   <q-input
     outlined
-    lazy-rules
     v-model="model"
+    :lazy-rules="'ondemand'"
     :data-testid="props.testId"
     :type="props.type"
     :label="props.label"

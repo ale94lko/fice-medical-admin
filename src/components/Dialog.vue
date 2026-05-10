@@ -13,8 +13,10 @@
       <q-form
         ref="formRef"
         class="q-gutter-none"
+        greedy
         autocomplete="off"
-        @submit.prevent="submit">
+        @submit.prevent="submit"
+        @validation-error="onFormValidationError">
         <q-card-section
           class="q-px-xl q-py-md modal-body"
           :style="{ maxHeight: bodyMaxHeight, overflowY: cssOverflow.auto }">
@@ -28,7 +30,7 @@
                 v-if="showPhoneField(field)"
                 :model-value="form[field.key]"
                 outlined
-                lazy-rules
+                :lazy-rules="'ondemand'"
                 :readonly="isFieldReadonly(field)"
                 :type="field.inputType || htmlInputTypes.text"
                 :name="field.inputName"
@@ -41,7 +43,7 @@
               <q-input
                 v-else-if="isDialPrefixedPhoneField(field)"
                 outlined
-                lazy-rules
+                :lazy-rules="'ondemand'"
                 :type="htmlInputTypes.text"
                 :inputmode="htmlInputModes.tel"
                 :autocomplete="htmlAutocomplete.telNational"
@@ -72,7 +74,7 @@
                 <q-input
                   v-model="form[field.key]"
                   outlined
-                  lazy-rules
+                  :lazy-rules="'ondemand'"
                   :readonly="isFieldReadonly(field)"
                   :label="labelFor(field)"
                   :hint="addressSuggestHint(field)"
@@ -103,6 +105,7 @@
                 v-model="form[field.key]"
                 outlined
                 input-class="dialog-textarea-inner"
+                :lazy-rules="'ondemand'"
                 :type="htmlInputTypes.textarea"
                 :readonly="isFieldReadonly(field)"
                 :rows="field.rows == null ? 3 : field.rows"
@@ -122,8 +125,8 @@
                 v-else-if="field.kind === fieldTypes.permissionTree"
                 outlined
                 stack-label
-                lazy-rules
                 class="full-width permission-tree-qfield"
+                :lazy-rules="'ondemand'"
                 :model-value="form[field.key]"
                 :label="labelFor(field)"
                 :hint="hintFor(field)"
@@ -163,8 +166,8 @@
                 outlined
                 emit-value
                 map-options
-                lazy-rules
                 input-debounce="0"
+                :lazy-rules="'ondemand'"
                 :multiple="field.multiple === true"
                 :use-chips="field.multiple === true"
                 :behavior="qSelectBehaviorInModal(field)"
@@ -213,7 +216,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch, computed, unref } from 'vue'
+import { reactive, ref, watch, computed, unref, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import {
@@ -541,6 +544,8 @@ watch(
       await props.onOpen()
     }
     applyInitialValues()
+    await nextTick()
+    formRef.value?.resetValidation()
   },
 )
 
@@ -799,11 +804,17 @@ function snapshotForm() {
   return out
 }
 
-async function submit() {
-  const valid = await formRef.value?.validate()
-  if (!valid) {
-    return
-  }
+function onFormValidationError() {
+  $q.notify({
+    type: quasarNotifyTypes.negative,
+    icon: 'error',
+    message: t('formValidationFixAllErrors'),
+    position: 'top',
+    timeout: 5000,
+  })
+}
+
+function submit() {
   const payload = typeof props.formatPayload === typeNames.function
     ? props.formatPayload(form)
     : snapshotForm()
