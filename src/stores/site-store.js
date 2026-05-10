@@ -8,7 +8,7 @@ import {
 import {
   buildTenantRequestBody,
   buildUserRegisterBody,
-  buildUserRequestBody,
+  buildUserUpdateBody,
   coerceTenantMutationRoot,
   coerceUserMutationRoot,
   extractPlansList,
@@ -162,6 +162,18 @@ export const useSiteStore = defineStore('site', {
     async deleteTenant(id) {
       return this.updateTenant(id, { [tenantFieldKeys.status]: 0 })
     },
+    async getUserById(id) {
+      try {
+        const response = await apiInstance.get(userByIdPath(id))
+        const raw = extractUserMutationResponse(response.data)
+        const root = coerceUserMutationRoot(raw) ?? raw
+
+        return mapUser(root)
+      } catch (error) {
+        console.error('Error fetching user:', error)
+        throw error
+      }
+    },
     async getUserList(params = {}) {
       try {
         const page = Number(params.page ?? this.userListQuery.page ?? 1)
@@ -211,9 +223,9 @@ export const useSiteStore = defineStore('site', {
     },
     async updateUser(id, payload) {
       try {
-        const body = buildUserRequestBody(payload)
-        const response = await apiInstance.patch(
-          userByIdPath(id),
+        const body = buildUserUpdateBody(id, payload)
+        const response = await apiInstance.post(
+          apiPaths.usersUpdate,
           body,
         )
         const raw = extractUserMutationResponse(response.data)
@@ -241,7 +253,14 @@ export const useSiteStore = defineStore('site', {
       }
     },
     async deleteUser(id) {
-      return this.updateUser(id, { [userFieldKeys.status]: 0 })
+      const row = this.userList.find(
+        u => String(u.id) === String(id),
+      )
+      const base = row
+        ? { ...row, [userFieldKeys.status]: 0 }
+        : { id, [userFieldKeys.status]: 0 }
+
+      return this.updateUser(id, base)
     },
     async getRoleList(params = {}) {
       try {

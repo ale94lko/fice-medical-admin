@@ -20,7 +20,10 @@
           no-caps
           color="primary"
           icon="add"
-          :disable="loading || addSaving || deleteSaving"
+          :disable="
+            loading || addSaving || deleteSaving || passwordChangeSaving
+          "
+          :title="t('addUser')"
           :label="t('addUser')"
           @click="addUser"/>
         <q-space />
@@ -29,7 +32,8 @@
           class="text-teal-10"
           icon="filter_alt"
           badge-color="primary"
-          :disable="loading || deleteSaving"
+          :disable="loading || deleteSaving || passwordChangeSaving"
+          :title="t('filters')"
           :label="t('filters')"
           :badge="getbadge(activeUserFilterCount)"
           @click="openUserFilters"/>
@@ -42,9 +46,21 @@
             icon="visibility"
             color="primary"
             :size="siteBreakpoints.SM"
-            :disable="addSaving || deleteSaving"
+            :disable="addSaving || deleteSaving || passwordChangeSaving"
+            :title="t('viewUser')"
             :aria-label="t('viewUser')"
             @click="openViewUser(props.row)"/>
+          <q-btn
+            v-if="!isPrimarySuperadmin(props.row)"
+            flat
+            round
+            icon="vpn_key"
+            color="primary"
+            :size="siteBreakpoints.SM"
+            :disable="addSaving || deleteSaving || passwordChangeSaving"
+            :title="t('changeUserPassword')"
+            :aria-label="t('changeUserPassword')"
+            @click="openChangePassword(props.row)"/>
           <q-btn
             v-if="!isPrimarySuperadmin(props.row)"
             flat
@@ -52,7 +68,9 @@
             icon="edit"
             color="primary"
             :size="siteBreakpoints.SM"
-            :disable="addSaving || deleteSaving"
+            :disable="addSaving || deleteSaving || passwordChangeSaving"
+            :title="t('editUser')"
+            :aria-label="t('editUser')"
             @click="editRow(props.row)"/>
           <q-btn
             v-if="showDeleteAction(props.row)"
@@ -61,7 +79,9 @@
             icon="delete"
             color="primary"
             :size="siteBreakpoints.SM"
-            :disable="deleteSaving"
+            :disable="deleteSaving || passwordChangeSaving"
+            :title="t('deleteUserTitle')"
+            :aria-label="t('deleteUserTitle')"
             @click="deleteRow(props.row)"/>
         </q-td>
       </template>
@@ -72,7 +92,6 @@
       :title-key="userDialogTitleKey"
       :fields="userAddFields"
       :initial-values="userDialogInitialValues"
-      :editable-keys-when-edit="userDialogEditableKeys"
       :on-open="onUserDialogOpen"
       :format-payload="formatUserDialogPayload"
       :saving="addSaving"
@@ -91,6 +110,8 @@
             round
             dense
             icon="close"
+            :title="t('close')"
+            :aria-label="t('close')"
             @click="closeUserFilterDialog"/>
         </q-toolbar>
         <q-card-section class="column q-gutter-md q-px-lg q-py-md">
@@ -113,10 +134,23 @@
             clearable
             emit-value
             map-options
-            :options="statusFilterOptions"
+            :behavior="selectBehaviors.menu"
+            :options="statusFilterDisplayedOptions"
             :option-label="qSelectOptionKeys.label"
             :option-value="qSelectOptionKeys.value"
-            :label="t('status')"/>
+            :label="t('status')"
+            @popup-show="onUserStatusFilterPopupShow">
+            <template #before-options>
+              <div class="user-filter-select-search q-pa-sm bg-white">
+                <q-input
+                  v-model="userStatusFilterSearchNeedle"
+                  dense
+                  outlined
+                  clearable
+                  :placeholder="t('selectOptionsSearchPlaceholder')"/>
+              </div>
+            </template>
+          </q-select>
         </q-card-section>
         <q-separator />
         <q-card-actions align="center" class="q-pa-md">
@@ -125,6 +159,7 @@
             padding="7px 30px"
             color="secondary"
             class="text-teal-10"
+            :title="t('userFilterClear')"
             :label="t('userFilterClear')"
             @click="clearUserFilters"/>
           <q-btn
@@ -132,6 +167,7 @@
             class="primary-action"
             color="primary"
             padding="7px 30px"
+            :title="t('userFilterApply')"
             :label="t('userFilterApply')"
             @click="applyUserFilters"/>
         </q-card-actions>
@@ -148,6 +184,74 @@
       @cancel="onCancelDeleteUser"/>
 
     <q-dialog
+      v-model="passwordDialogOpen"
+      persistent
+      :transition-show="quasarTransitions.scale"
+      :transition-hide="quasarTransitions.scale">
+      <q-card v-if="userPasswordTarget" class="user-password-card">
+        <q-toolbar class="q-px-md bg-teal-10 text-white">
+          <q-toolbar-title>{{ t('changeUserPasswordTitle') }}</q-toolbar-title>
+          <q-btn
+            flat
+            round
+            dense
+            icon="close"
+            :disable="passwordChangeSaving"
+            :title="t('close')"
+            :aria-label="t('close')"
+            @click="closePasswordDialog"/>
+        </q-toolbar>
+        <q-form
+          ref="passwordFormRef"
+          class="q-px-lg q-py-md q-gutter-md"
+          greedy
+          autocomplete="off"
+          @submit.prevent="onSubmitPasswordChange">
+          <div class="text-body2 text-grey-8">
+            {{
+              userPasswordTarget[uk.username]
+                || userPasswordTarget[uk.email]
+            }}
+          </div>
+          <q-input
+            v-model="passwordChangeDraft.password"
+            outlined
+            dense
+            type="password"
+            :label="t('password')"
+            :rules="[passwordChangeRequiredRule]"/>
+          <q-input
+            v-model="passwordChangeDraft.confirm"
+            outlined
+            dense
+            type="password"
+            :label="t('userPasswordConfirm')"
+            :rules="passwordConfirmRules"/>
+          <q-card-actions align="center" class="q-pt-sm q-pb-md">
+            <q-btn
+              no-caps
+              padding="7px 30px"
+              color="secondary"
+              class="text-teal-10"
+              :title="t('cancel')"
+              :label="t('cancel')"
+              :disable="passwordChangeSaving"
+              @click="closePasswordDialog"/>
+            <q-btn
+              no-caps
+              class="primary-action"
+              color="primary"
+              padding="7px 30px"
+              type="submit"
+              :title="t('save')"
+              :label="t('save')"
+              :loading="passwordChangeSaving"/>
+          </q-card-actions>
+        </q-form>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog
       v-model="viewUserDialogOpen"
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
@@ -159,6 +263,8 @@
             round
             dense
             icon="close"
+            :title="t('close')"
+            :aria-label="t('close')"
             @click="closeViewUser"/>
         </q-toolbar>
         <q-card-section class="user-view-body q-px-lg q-py-md">
@@ -178,6 +284,7 @@
             no-caps
             padding="7px 30px"
             color="primary"
+            :title="t('close')"
             :label="t('close')"
             @click="closeViewUser"
           />
@@ -198,6 +305,7 @@ import {
   quasarNotifyTypes,
   quasarTableAlign,
   quasarTransitions,
+  selectBehaviors,
   siteBreakpoints,
   siteBreakpointsPx,
   userFieldKeys,
@@ -205,11 +313,9 @@ import {
 } from 'components/constants.js'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
-import {
-  USER_EDITABLE_KEYS_ON_EDIT,
-  useUserAddForm,
-} from 'src/composables/useUserAddForm.js'
+import { useUserAddForm } from 'src/composables/useUserAddForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
+import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const uk = userFieldKeys
@@ -224,6 +330,14 @@ const deleteSaving = ref(false)
 const userBeingEdited = ref(null)
 const viewUserDialogOpen = ref(false)
 const userViewing = ref(null)
+const passwordDialogOpen = ref(false)
+const userPasswordTarget = ref(null)
+const passwordChangeSaving = ref(false)
+const passwordFormRef = ref(null)
+const passwordChangeDraft = reactive({
+  password: '',
+  confirm: '',
+})
 
 const siteStore = useSiteStore()
 const { t } = useI18n()
@@ -231,34 +345,50 @@ const { t } = useI18n()
 const {
   fields: userAddFields,
   formatUserPayload,
-  formatUserUpdatePayload,
   onDialogOpen: onUserDialogOpen,
 } = useUserAddForm(userBeingEdited)
 
+function passwordChangeRequiredRule(val) {
+  return (!!val && String(val).trim().length > 0) || t('fieldRequired')
+}
+
+const passwordConfirmRules = computed(() => [
+  passwordChangeRequiredRule,
+  val => String(val ?? '').trim()
+    === String(passwordChangeDraft.password ?? '').trim()
+    || t('userPasswordMismatch'),
+])
+
 function formatUserDialogPayload(form) {
-  if (!userBeingEdited.value) {
-    return formatUserPayload(form)
-  }
-  return formatUserUpdatePayload(form)
+  return formatUserPayload(form)
 }
 
 const userDialogTitleKey = computed(() =>
   userBeingEdited.value ? 'editUser' : 'newUser',
 )
 
-const userDialogEditableKeys = computed(() =>
-  userBeingEdited.value ? USER_EDITABLE_KEYS_ON_EDIT : null,
-)
-
 function userRowToFormSeed(row) {
   if (!row) {
     return null
   }
+  const roles = Array.isArray(row[uk.roles])
+    ? row[uk.roles].map(x => Number(x)).filter(Number.isFinite)
+    : []
+  const permissions = Array.isArray(row[uk.permissions])
+    ? row[uk.permissions].map(x => Number(x)).filter(Number.isFinite)
+    : []
+  const desc = String(row[uk.description] ?? '').trim()
+  const cp = row[uk.changePassword]
+  const changePassword = cp === true || cp === 1 || cp === '1'
+
   return {
     [uk.username]: row[uk.username] ?? '',
     [uk.email]: row[uk.email] ?? '',
-    [uk.password]: '',
     [uk.status]: row[uk.status] === 0 || row[uk.status] === '0' ? 0 : 1,
+    [uk.roles]: roles,
+    [uk.permissions]: permissions,
+    [uk.description]: desc,
+    [uk.changePassword]: changePassword,
   }
 }
 
@@ -279,6 +409,70 @@ watch(viewUserDialogOpen, open => {
     userViewing.value = null
   }
 })
+
+watch(passwordDialogOpen, open => {
+  if (!open) {
+    userPasswordTarget.value = null
+    passwordChangeDraft.password = ''
+    passwordChangeDraft.confirm = ''
+    passwordFormRef.value?.resetValidation?.()
+  }
+})
+
+function openChangePassword(row) {
+  if (isPrimarySuperadmin(row)) {
+    return
+  }
+  userPasswordTarget.value = row
+  passwordChangeDraft.password = ''
+  passwordChangeDraft.confirm = ''
+  passwordDialogOpen.value = true
+}
+
+function closePasswordDialog() {
+  if (passwordChangeSaving.value) {
+    return
+  }
+  passwordDialogOpen.value = false
+}
+
+async function onSubmitPasswordChange() {
+  const row = userPasswordTarget.value
+  if (!row?.id) {
+    return
+  }
+  const valid = await passwordFormRef.value?.validate?.()
+  if (valid !== true) {
+    return
+  }
+  const pw = String(passwordChangeDraft.password).trim()
+  if (!pw.length) {
+    return
+  }
+  passwordChangeSaving.value = true
+  try {
+    await siteStore.updateUser(row.id, { ...row, password: pw })
+    $q.notify({
+      type: quasarNotifyTypes.positive,
+      message: t('userPasswordChangeSuccess'),
+    })
+    passwordDialogOpen.value = false
+  } catch (error) {
+    const msg =
+      error?.response?.data?.message
+      || error?.response?.data?.error
+      || error?.message
+      || t('userPasswordChangeError')
+    if (!isAuthSessionEndUIError(error)) {
+      $q.notify({
+        type: quasarNotifyTypes.negative,
+        message: String(msg),
+      })
+    }
+  } finally {
+    passwordChangeSaving.value = false
+  }
+}
 
 function dashText(v) {
   const s = String(v ?? '').trim()
@@ -441,6 +635,23 @@ const statusFilterOptions = computed(() => [
   { label: t('tenantStatusInactive'), value: 0 },
 ])
 
+const userStatusFilterSearchNeedle = ref('')
+
+const statusFilterDisplayedOptions = computed(() =>
+  filterLabelValueOptions(
+    statusFilterOptions.value,
+    userStatusFilterSearchNeedle.value,
+  ),
+)
+
+function onUserStatusFilterPopupShow() {
+  userStatusFilterSearchNeedle.value = ''
+}
+
+function resetUserFilterSelectSearch() {
+  userStatusFilterSearchNeedle.value = ''
+}
+
 function syncDraftFromApplied() {
   filterDraft[uk.username] = filterApplied[uk.username]
   filterDraft[uk.email] = filterApplied[uk.email]
@@ -497,11 +708,13 @@ const activeUserFilterCount = computed(() => {
 })
 
 function openUserFilters() {
+  resetUserFilterSelectSearch()
   syncDraftFromApplied()
   filterDialogOpen.value = true
 }
 
 function closeUserFilterDialog() {
+  resetUserFilterSelectSearch()
   syncDraftFromApplied()
   filterDialogOpen.value = false
 }
@@ -598,11 +811,25 @@ async function onSaveUser(payload) {
   }
 }
 
-function editRow(row) {
+async function editRow(row) {
   if (isPrimarySuperadmin(row)) {
     return
   }
-  userBeingEdited.value = row
+  let seed = row
+  try {
+    const detail = await siteStore.getUserById(row.id)
+    if (detail) {
+      seed = { ...row, ...detail }
+    }
+  } catch (error) {
+    if (!isAuthSessionEndUIError(error)) {
+      $q.notify({
+        type: quasarNotifyTypes.negative,
+        message: t('userDetailLoadError'),
+      })
+    }
+  }
+  userBeingEdited.value = seed
   addDialogOpen.value = true
 }
 
@@ -652,7 +879,7 @@ async function onConfirmDeleteUser() {
 </script>
 
 <style scoped>
-  :deep(tbody tr.user-row--status-zero td) {
+  :deep(tbody tr.user-row--status-zero td:not(:last-child)) {
     background-color: rgba(244, 67, 54, 0.12) !important;
   }
 
@@ -672,6 +899,15 @@ async function onConfirmDeleteUser() {
   .user-view-card {
     min-width: min(400px, 100vw - 24px);
     max-width: min(560px, 100vw - 24px);
+  }
+
+  .user-password-card {
+    min-width: min(400px, 100vw - 24px);
+    max-width: min(480px, 100vw - 24px);
+  }
+
+  .user-password-card .primary-action {
+    margin-left: 16px;
   }
 
   .user-view-body {

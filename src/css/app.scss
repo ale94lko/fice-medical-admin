@@ -29,18 +29,19 @@ input:-webkit-autofill {
 
   &.table {
     thead tr:last-child th:last-child {
-      background-color: $white;
+      background-color: $white !important;
     }
 
     td:last-child {
-      background-color: $white;
+      background-color: $white !important;
     }
 
     th:last-child,
     td:last-child {
       position: sticky;
       right: 0;
-      z-index: 1;
+      z-index: 2;
+      box-shadow: -6px 0 10px -6px rgba(0, 0, 0, 0.12);
     }
   }
 }

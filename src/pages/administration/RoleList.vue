@@ -19,6 +19,7 @@
           color="primary"
           icon="add"
           :disable="loading || roleFormSaving || deleteSaving"
+          :title="t('addRole')"
           :label="t('addRole')"
           @click="addRole"/>
         <q-space />
@@ -28,6 +29,7 @@
           icon="filter_alt"
           badge-color="primary"
           :disable="loading || deleteSaving"
+          :title="t('filters')"
           :label="t('filters')"
           :badge="getbadge(activeRoleFilterCount)"
           @click="openRoleFilters"/>
@@ -41,6 +43,7 @@
             color="primary"
             :size="siteBreakpoints.SM"
             :disable="roleFormSaving || deleteSaving"
+            :title="t('viewRole')"
             :aria-label="t('viewRole')"
             @click="openViewRole(props.row)"/>
           <q-btn
@@ -51,6 +54,7 @@
             color="primary"
             :size="siteBreakpoints.SM"
             :disable="roleFormSaving || deleteSaving"
+            :title="t('editRole')"
             :aria-label="t('editRole')"
             @click="openEditRole(props.row)"/>
           <q-btn
@@ -61,6 +65,8 @@
             color="primary"
             :size="siteBreakpoints.SM"
             :disable="deleteSaving || roleFormSaving"
+            :title="t('deleteRoleTitle')"
+            :aria-label="t('deleteRoleTitle')"
             @click="deleteRow(props.row)"/>
         </q-td>
       </template>
@@ -89,6 +95,8 @@
             round
             dense
             icon="close"
+            :title="t('close')"
+            :aria-label="t('close')"
             @click="closeRoleFilterDialog"/>
         </q-toolbar>
         <q-card-section class="column q-gutter-md q-px-lg q-py-md">
@@ -112,6 +120,7 @@
             padding="7px 30px"
             color="secondary"
             class="text-teal-10"
+            :title="t('roleFilterClear')"
             :label="t('roleFilterClear')"
             @click="clearRoleFilters"/>
           <q-btn
@@ -119,6 +128,7 @@
             class="primary-action"
             color="primary"
             padding="7px 30px"
+            :title="t('roleFilterApply')"
             :label="t('roleFilterApply')"
             @click="applyRoleFilters"/>
         </q-card-actions>
@@ -146,6 +156,8 @@
             round
             dense
             icon="close"
+            :title="t('close')"
+            :aria-label="t('close')"
             @click="closeViewRole"/>
         </q-toolbar>
         <q-card-section class="role-view-body q-px-lg q-py-md">
@@ -195,9 +207,9 @@
             no-caps
             padding="7px 30px"
             color="primary"
+            :title="t('close')"
             :label="t('close')"
-            @click="closeViewRole"
-          />
+            @click="closeViewRole"/>
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -250,7 +262,6 @@ const roleViewing = ref(null)
 const viewRoleTicked = ref([])
 let viewRoleTreeSeq = 0
 
-/** @type {import('vue').Ref<Map<number, string>>} */
 const tenantIdToLabel = ref(new Map())
 
 const siteStore = useSiteStore()

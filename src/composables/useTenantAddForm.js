@@ -127,7 +127,6 @@ export function useTenantAddForm() {
         rules: [selectRequiredRule],
         options: timezoneOptions,
         defaultValue: tenantFormDefaults.timezonePicker,
-        useInput: true,
       },
       {
         key: tk.locale,

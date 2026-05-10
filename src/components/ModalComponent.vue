@@ -19,16 +19,16 @@
           v-if="cancelText"
           color="secondary"
           class="text-teal-10"
+          :title="cancelText"
           :label="cancelText"
-          @click="onCancel"
-        />
+          @click="onCancel"/>
         <q-btn
           no-caps
           class="primary-action"
           color="primary"
+          :title="confirmText"
           :label="confirmText"
-          @click="onConfirm"
-        />
+          @click="onConfirm"/>
       </q-card-actions>
     </q-card>
   </q-dialog>

@@ -821,20 +821,77 @@ export function coerceUserMutationRoot(raw) {
     : null
 }
 
+function intIdsFromMixedIdList(mixed) {
+  if (!Array.isArray(mixed)) {
+    return []
+  }
+  const nums = []
+  for (const item of mixed) {
+    if (item != null && typeof item === typeNames.object) {
+      const n = Number(
+        item.id
+          ?? item.role_id
+          ?? item.roleId
+          ?? item.permission_id
+          ?? item.permissionId,
+      )
+      if (Number.isFinite(n)) {
+        nums.push(n)
+      }
+    } else {
+      const n = Number(item)
+      if (Number.isFinite(n)) {
+        nums.push(n)
+      }
+    }
+  }
+
+  return uniqueFiniteNumbers(nums).sort((a, b) => a - b)
+}
+
 export function mapUser(user) {
   if (!user || typeof user !== typeNames.object) {
     return null
   }
   const uk = userFieldKeys
+  const roles = intIdsFromMixedIdList(
+    user.roles ?? user.role_ids ?? user.roleIds,
+  )
+  const permissions = intIdsFromMixedIdList(
+    user.permissions ?? user.permission_ids ?? user.permissionIds,
+  )
+  const description = String(user.description ?? '').trim()
+  const hasChangePassword = Object.prototype.hasOwnProperty.call(
+    user,
+    'change_password',
+  ) || Object.prototype.hasOwnProperty.call(user, 'changePassword')
+    || Object.prototype.hasOwnProperty.call(
+      user,
+      'require_password_change',
+    )
+  const changePasswordRaw = hasChangePassword
+    ? (user.change_password ?? user.changePassword
+      ?? user.require_password_change)
+    : undefined
 
-  return {
+  const out = {
     id: user.id ?? user.user_id,
     [uk.username]: user.username ?? user.user_name ?? '',
     [uk.email]: user.email ?? user.user_email ?? '',
     [uk.status]: normalizeUserStatus(
       user.status ?? user.user_status ?? user.account_status,
     ),
+    [uk.roles]: roles,
+    [uk.permissions]: permissions,
+    [uk.description]: description,
   }
+  if (hasChangePassword) {
+    out[uk.changePassword] = changePasswordRaw !== false
+      && changePasswordRaw !== 0
+      && changePasswordRaw !== '0'
+  }
+
+  return out
 }
 
 export function mergeUserWithPayload(mapped, payload) {
@@ -854,7 +911,7 @@ export function mergeUserWithPayload(mapped, payload) {
     return String(fromPayload ?? '').trim()
   }
 
-  return {
+  const next = {
     ...mapped,
     [uk.username]: pickStr(mapped[uk.username], payload[uk.username]),
     [uk.email]: pickStr(mapped[uk.email], payload[uk.email]),
@@ -862,31 +919,78 @@ export function mergeUserWithPayload(mapped, payload) {
       mapped[uk.status] ?? payload[uk.status],
     ),
   }
+  if (Array.isArray(payload.roles)) {
+    next[uk.roles] = intIdList(payload.roles)
+  }
+  if (Array.isArray(payload.permissions)) {
+    next[uk.permissions] = intIdList(payload.permissions)
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'description')) {
+    next[uk.description] = String(payload.description ?? '').trim()
+  } else if (Object.prototype.hasOwnProperty.call(payload, uk.description)) {
+    next[uk.description] = String(payload[uk.description] ?? '').trim()
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'changePassword')) {
+    next[uk.changePassword] = Boolean(payload.changePassword)
+  }
+
+  return next
 }
 
-export function buildUserRequestBody(payload) {
+export function buildUserUpdateBody(userId, payload) {
   if (!payload || typeof payload !== typeNames.object) {
     return {}
   }
-  const body = {}
   const uk = userFieldKeys
-  if (Object.prototype.hasOwnProperty.call(payload, uk.username)) {
-    body.username = String(payload[uk.username] ?? '').trim()
+  const idNum = Number(userId)
+  if (!Number.isFinite(idNum)) {
+    return {}
   }
-  if (Object.prototype.hasOwnProperty.call(payload, uk.email)) {
-    body.email = String(payload[uk.email] ?? '').trim()
+  const username =
+    String(payload[uk.username] ?? '').trim()
+    || String(payload[uk.email] ?? '').trim()
+  const email = String(payload[uk.email] ?? '').trim()
+  const pw = String(payload[uk.password] ?? '').trim()
+  const status = Number(payload[uk.status])
+  const description = String(
+    payload.description ?? payload[uk.description] ?? '',
+  ).trim()
+  const roles = intIdList(payload.roles)
+  const permissions = intIdList(payload.permissions)
+  const modules = intIdList(payload.modules)
+  const allowedSub = intIdList(
+    payload.allowedSubtenantIds ?? payload.allowed_subtenant_ids,
+  )
+  const tenantRaw = payload.tenantId ?? payload.tenant_id
+  const tenantId = Number(tenantRaw)
+  const hasChangePassword = Object.prototype.hasOwnProperty.call(
+    payload,
+    'changePassword',
+  ) || Object.prototype.hasOwnProperty.call(payload, 'change_password')
+  const changePassword = hasChangePassword
+    ? payload.changePassword !== false && payload.changePassword !== 0
+    : false
+
+  const body = {
+    userId: idNum,
+    newUser: false,
+    username,
+    email,
+    status: Number.isFinite(status) ? status : 1,
+    changePassword,
+    roles,
+    permissions,
+    modules,
+    allowedSubtenantIds: allowedSub,
   }
-  if (Object.prototype.hasOwnProperty.call(payload, uk.password)) {
-    const pw = String(payload[uk.password] ?? '').trim()
-    if (pw.length > 0) {
-      body.password = pw
-    }
+  if (pw.length > 0) {
+    body.password = pw
   }
-  if (Object.prototype.hasOwnProperty.call(payload, uk.status)) {
-    const n = Number(payload[uk.status])
-    if (Number.isFinite(n)) {
-      body.status = n
-    }
+  if (description.length > 0) {
+    body.description = description
+  }
+  if (Number.isFinite(tenantId)) {
+    body.tenantId = tenantId
   }
 
   return body

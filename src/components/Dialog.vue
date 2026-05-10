@@ -8,7 +8,16 @@
     <q-card class="modal-card" :style="cardStyle">
       <q-toolbar class="q-px-md bg-teal-10 text-white">
         <q-toolbar-title>{{ titleText }}</q-toolbar-title>
-        <q-btn flat round dense icon="close" :disable="saving" @click="close" />
+        <q-btn
+          flat
+          round
+          dense
+          icon="close"
+          :disable="saving"
+          :title="t('close')"
+          :aria-label="t('close')"
+          @click="close"
+        />
       </q-toolbar>
       <q-form
         ref="formRef"
@@ -166,7 +175,6 @@
                 outlined
                 emit-value
                 map-options
-                input-debounce="0"
                 :lazy-rules="'ondemand'"
                 :multiple="field.multiple === true"
                 :use-chips="field.multiple === true"
@@ -181,12 +189,27 @@
                 :readonly="isFieldReadonly(field)"
                 :disable="disableFor(field)"
                 :clearable="field.clearable === true"
-                :use-input="field.useInput === true && !isFieldReadonly(field)"
-                :hide-selected="field.useInput === true"
-                :fill-input="field.useInput === true"
-                @filter="(val, update) => onSelectFilter(val, update, field)"
+                @popup-show="() => onSelectPopupShow(field)"
                 @update:model-value="v => onSelectModelValue(field, v)"
-                @blur="onFieldBlur(field)"/>
+                @blur="onFieldBlur(field)">
+                <template
+                  v-if="!isFieldReadonly(field)"
+                  #before-options>
+                  <div class="select-options-search-wrap q-pa-sm bg-white">
+                    <q-input
+                      dense
+                      outlined
+                      clearable
+                      :model-value="
+                        String(selectFilterQueries[field.key] ?? '')
+                      "
+                      :placeholder="t('selectOptionsSearchPlaceholder')"
+                      @update:model-value="
+                        v => onSelectSearchInput(field, v)
+                      "/>
+                  </div>
+                </template>
+              </q-select>
             </div>
           </div>
         </q-card-section>
@@ -197,6 +220,7 @@
             padding="7px 30px"
             color="secondary"
             class="text-teal-10"
+            :title="t(cancelKey)"
             :label="t(cancelKey)"
             :disable="saving"
             @click="close"
@@ -206,6 +230,7 @@
             class="primary-action"
             color="primary"
             :type="htmlButtonTypes.submit"
+            :title="t(submitKey)"
             :label="t(submitKey)"
             :loading="saving"
           />
@@ -330,11 +355,7 @@ function showFieldRow(field) {
 }
 
 function qSelectBehaviorInModal(field) {
-  if (field.multiple === true || field.useInput === true) {
-    return selectBehaviors.dialog
-  }
-
-  return field.selectBehavior || selectBehaviors.default
+  return field.selectBehavior || selectBehaviors.menu
 }
 
 function isDialPrefixedPhoneField(field) {
@@ -728,7 +749,7 @@ function treeNodesFor(field) {
 
 function selectOptionsDisplayed(field) {
   const all = optionsFor(field)
-  if (!field.useInput) {
+  if (isFieldReadonly(field)) {
     return all
   }
   const labelKey = field.optionLabel || qSelectOptionKeys.label
@@ -746,15 +767,18 @@ function selectOptionsDisplayed(field) {
   })
 }
 
-function onSelectFilter(val, update, field) {
-  if (!field.useInput) {
-    update(() => {})
-
+function onSelectPopupShow(field) {
+  if (isFieldReadonly(field)) {
     return
   }
-  update(() => {
-    selectFilterQueries[field.key] = val
-  })
+  selectFilterQueries[field.key] = ''
+}
+
+function onSelectSearchInput(field, val) {
+  if (isFieldReadonly(field)) {
+    return
+  }
+  selectFilterQueries[field.key] = val ?? ''
 }
 
 function onSelectModelValue(field, value) {
@@ -841,6 +865,13 @@ function submit() {
   .dialog-field-row {
     width: 100%;
     min-width: 0;
+  }
+
+  .select-options-search-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   }
 
   .dialog-checkbox-field.q-checkbox.row.inline {

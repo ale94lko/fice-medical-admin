@@ -21,6 +21,7 @@
           icon="filter_alt"
           badge-color="primary"
           :disable="loading || editSaving"
+          :title="t('filters')"
           :label="t('filters')"
           :badge="getbadge(activePermissionFilterCount)"
           @click="openPermissionFilters"/>
@@ -34,6 +35,7 @@
             color="primary"
             :size="siteBreakpoints.SM"
             :disable="loading || editSaving"
+            :title="t('viewPermission')"
             :aria-label="t('viewPermission')"
             @click="openViewPermission(props.row)"/>
           <q-btn
@@ -43,6 +45,7 @@
             color="primary"
             :size="siteBreakpoints.SM"
             :disable="loading || editSaving"
+            :title="t('editPermission')"
             :aria-label="t('editPermission')"
             @click="openEditPermission(props.row)"/>
         </q-td>
@@ -71,6 +74,8 @@
             round
             dense
             icon="close"
+            :title="t('close')"
+            :aria-label="t('close')"
             @click="closePermissionFilterDialog"/>
         </q-toolbar>
         <q-card-section class="column q-gutter-md q-px-lg q-py-md">
@@ -93,12 +98,24 @@
             clearable
             emit-value
             map-options
-            :options="moduleFilterOptions"
+            :options="moduleFilterDisplayedOptions"
             :option-label="qSelectOptionKeys.label"
             :option-value="qSelectOptionKeys.value"
             :label="t('permissionModule')"
             :loading="modulesFilterLoading"
-            :behavior="selectBehaviors.menu"/>
+            :behavior="selectBehaviors.menu"
+            @popup-show="onModuleFilterPopupShow">
+            <template #before-options>
+              <div class="permission-filter-select-search q-pa-sm bg-white">
+                <q-input
+                  v-model="moduleFilterSearchNeedle"
+                  dense
+                  outlined
+                  clearable
+                  :placeholder="t('selectOptionsSearchPlaceholder')"/>
+              </div>
+            </template>
+          </q-select>
         </q-card-section>
         <q-separator />
         <q-card-actions align="center" class="q-pa-md">
@@ -107,6 +124,7 @@
             padding="7px 30px"
             color="secondary"
             class="text-teal-10"
+            :title="t('roleFilterClear')"
             :label="t('roleFilterClear')"
             @click="clearPermissionFilters"/>
           <q-btn
@@ -114,6 +132,7 @@
             class="primary-action"
             color="primary"
             padding="7px 30px"
+            :title="t('roleFilterApply')"
             :label="t('roleFilterApply')"
             @click="applyPermissionFilters"/>
         </q-card-actions>
@@ -132,6 +151,8 @@
             round
             dense
             icon="close"
+            :title="t('close')"
+            :aria-label="t('close')"
             @click="closeViewPermission"/>
         </q-toolbar>
         <q-card-section class="permission-view-body q-px-lg q-py-md">
@@ -151,6 +172,7 @@
             no-caps
             padding="7px 30px"
             color="primary"
+            :title="t('close')"
             :label="t('close')"
             @click="closeViewPermission"
           />
@@ -182,6 +204,7 @@ import { apiInstance } from 'boot/axios'
 import Dialog from 'components/Dialog.vue'
 import { usePermissionEditForm } from 'src/composables/usePermissionEditForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
+import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const pk = permissionFieldKeys
@@ -273,7 +296,24 @@ watch(viewPermissionDialogOpen, open => {
 
 const filterDialogOpen = ref(false)
 const moduleFilterOptions = ref([])
+const moduleFilterSearchNeedle = ref('')
 const modulesFilterLoading = ref(false)
+
+const moduleFilterDisplayedOptions = computed(() =>
+  filterLabelValueOptions(
+    moduleFilterOptions.value,
+    moduleFilterSearchNeedle.value,
+  ),
+)
+
+function onModuleFilterPopupShow() {
+  moduleFilterSearchNeedle.value = ''
+}
+
+function resetPermissionFilterSelectSearch() {
+  moduleFilterSearchNeedle.value = ''
+}
+
 const filterDraft = reactive({
   [pk.name]: '',
   [pk.description]: '',
@@ -364,12 +404,14 @@ const activePermissionFilterCount = computed(() => {
 })
 
 async function openPermissionFilters() {
+  resetPermissionFilterSelectSearch()
   syncDraftFromApplied()
   filterDialogOpen.value = true
   await loadModuleFilterOptions()
 }
 
 function closePermissionFilterDialog() {
+  resetPermissionFilterSelectSearch()
   syncDraftFromApplied()
   filterDialogOpen.value = false
 }

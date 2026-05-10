@@ -21,6 +21,7 @@ export const apiPaths = {
   tenantsCreate: '/admin-tenant/v1/tenants/create',
   usersList: '/user/v1',
   usersRegister: '/user/v1/register',
+  usersUpdate: '/admin-tenant/v1/users/update',
   rolesList: '/roles/v1',
   rolesCreate: '/admin-tenant/v1/role/add',
   rolesUpdate: '/admin-tenant/v1/role/update',

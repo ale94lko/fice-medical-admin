@@ -21,6 +21,7 @@
           color="primary"
           icon="add"
           :disable="loading || addSaving || deleteSaving"
+          :title="t('addTenant')"
           :label="t('addTenant')"
           @click="addTenant"/>
         <q-space />
@@ -30,6 +31,7 @@
           icon="filter_alt"
           badge-color="primary"
           :disable="loading || deleteSaving"
+          :title="t('filters')"
           :label="t('filters')"
           :badge="getbadge(activeTenantFilterCount)"
           @click="openTenantFilters"/>
@@ -43,6 +45,7 @@
             color="primary"
             :size="siteBreakpoints.SM"
             :disable="addSaving || deleteSaving"
+            :title="t('viewTenant')"
             :aria-label="t('viewTenant')"
             @click="openViewTenant(props.row)"/>
           <q-btn
@@ -53,6 +56,8 @@
             color="primary"
             :size="siteBreakpoints.SM"
             :disable="addSaving || deleteSaving"
+            :title="t('editTenant')"
+            :aria-label="t('editTenant')"
             @click="editRow(props.row)"/>
           <q-btn
             v-if="!isTenantStatusZero(props.row) && !isMainTenant(props.row)"
@@ -62,6 +67,8 @@
             color="primary"
             :size="siteBreakpoints.SM"
             :disable="deleteSaving"
+            :title="t('deleteTenantTitle')"
+            :aria-label="t('deleteTenantTitle')"
             @click="deleteRow(props.row)"/>
         </q-td>
       </template>
@@ -76,8 +83,7 @@
       :on-open="onTenantDialogOpen"
       :format-payload="formatTenantDialogPayload"
       :saving="addSaving"
-      @save="onSaveTenant"
-    />
+      @save="onSaveTenant"/>
 
     <q-dialog
       v-model="filterDialogOpen"
@@ -92,8 +98,9 @@
             round
             dense
             icon="close"
-            @click="closeTenantFilterDialog"
-          />
+            :title="t('close')"
+            :aria-label="t('close')"
+            @click="closeTenantFilterDialog"/>
         </q-toolbar>
         <q-card-section class="column q-gutter-md q-px-lg q-py-md">
           <q-input
@@ -115,10 +122,23 @@
             clearable
             emit-value
             map-options
-            :options="planFilterOptions"
+            :behavior="selectBehaviors.menu"
+            :options="planFilterDisplayedOptions"
             :option-label="qSelectOptionKeys.label"
             :option-value="qSelectOptionKeys.value"
-            :label="t('planName')"/>
+            :label="t('planName')"
+            @popup-show="onPlanFilterPopupShow">
+            <template #before-options>
+              <div class="tenant-filter-select-search q-pa-sm bg-white">
+                <q-input
+                  v-model="planFilterSearchNeedle"
+                  dense
+                  outlined
+                  clearable
+                  :placeholder="t('selectOptionsSearchPlaceholder')"/>
+              </div>
+            </template>
+          </q-select>
           <q-select
             v-model="filterDraft[tk.status]"
             outlined
@@ -126,10 +146,23 @@
             clearable
             emit-value
             map-options
-            :options="statusFilterOptions"
+            :behavior="selectBehaviors.menu"
+            :options="statusFilterDisplayedOptions"
             :option-label="qSelectOptionKeys.label"
             :option-value="qSelectOptionKeys.value"
-            :label="t('status')"/>
+            :label="t('status')"
+            @popup-show="onStatusFilterPopupShow">
+            <template #before-options>
+              <div class="tenant-filter-select-search q-pa-sm bg-white">
+                <q-input
+                  v-model="statusFilterSearchNeedle"
+                  dense
+                  outlined
+                  clearable
+                  :placeholder="t('selectOptionsSearchPlaceholder')"/>
+              </div>
+            </template>
+          </q-select>
         </q-card-section>
         <q-separator />
         <q-card-actions align="center" class="q-pa-md">
@@ -138,6 +171,7 @@
             padding="7px 30px"
             color="secondary"
             class="text-teal-10"
+            :title="t('tenantFilterClear')"
             :label="t('tenantFilterClear')"
             @click="clearTenantFilters"/>
           <q-btn
@@ -145,6 +179,7 @@
             class="primary-action"
             color="primary"
             padding="7px 30px"
+            :title="t('tenantFilterApply')"
             :label="t('tenantFilterApply')"
             @click="applyTenantFilters"/>
         </q-card-actions>
@@ -158,8 +193,7 @@
       :confirm-text="t('confirm')"
       :cancel-text="t('cancel')"
       @confirm="onConfirmDeleteTenant"
-      @cancel="onCancelDeleteTenant"
-    />
+      @cancel="onCancelDeleteTenant"/>
 
     <q-dialog
       v-model="viewTenantDialogOpen"
@@ -173,6 +207,8 @@
             round
             dense
             icon="close"
+            :title="t('close')"
+            :aria-label="t('close')"
             @click="closeViewTenant"/>
         </q-toolbar>
         <q-card-section class="tenant-view-body q-px-lg q-py-md">
@@ -192,9 +228,9 @@
             no-caps
             padding="7px 30px"
             color="primary"
+            :title="t('close')"
             :label="t('close')"
-            @click="closeViewTenant"
-          />
+            @click="closeViewTenant"/>
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -213,6 +249,7 @@ import {
   quasarNotifyTypes,
   quasarTableAlign,
   quasarTransitions,
+  selectBehaviors,
   siteBreakpoints,
   siteBreakpointsPx,
   tenantFieldKeys,
@@ -234,6 +271,7 @@ import {
   useTenantAddForm,
 } from 'src/composables/useTenantAddForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
+import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const tk = tenantFieldKeys
@@ -537,6 +575,36 @@ const statusFilterOptions = computed(() => [
   { label: t('tenantStatusInactive'), value: 0 },
 ])
 
+const planFilterSearchNeedle = ref('')
+const statusFilterSearchNeedle = ref('')
+
+const planFilterDisplayedOptions = computed(() =>
+  filterLabelValueOptions(
+    planFilterOptions.value,
+    planFilterSearchNeedle.value,
+  ),
+)
+
+const statusFilterDisplayedOptions = computed(() =>
+  filterLabelValueOptions(
+    statusFilterOptions.value,
+    statusFilterSearchNeedle.value,
+  ),
+)
+
+function onPlanFilterPopupShow() {
+  planFilterSearchNeedle.value = ''
+}
+
+function onStatusFilterPopupShow() {
+  statusFilterSearchNeedle.value = ''
+}
+
+function resetTenantFilterSelectSearch() {
+  planFilterSearchNeedle.value = ''
+  statusFilterSearchNeedle.value = ''
+}
+
 function syncDraftFromApplied() {
   filterDraft[tk.name] = filterApplied[tk.name]
   filterDraft[tk.domain] = filterApplied[tk.domain]
@@ -623,11 +691,13 @@ async function openTenantFilters() {
       return
     }
   }
+  resetTenantFilterSelectSearch()
   syncDraftFromApplied()
   filterDialogOpen.value = true
 }
 
 function closeTenantFilterDialog() {
+  resetTenantFilterSelectSearch()
   syncDraftFromApplied()
   filterDialogOpen.value = false
 }
@@ -795,7 +865,7 @@ async function onConfirmDeleteTenant() {
 </script>
 
 <style scoped>
-  :deep(tbody tr.tenant-row--status-zero td) {
+  :deep(tbody tr.tenant-row--status-zero td:not(:last-child)) {
     background-color: rgba(244, 67, 54, 0.12) !important;
   }
 

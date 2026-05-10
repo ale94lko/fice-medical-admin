@@ -24,6 +24,7 @@ export default {
   cancel: 'Cancelar',
   formValidationFixAllErrors:
     'Corrige todos los errores de validación antes de continuar',
+  selectOptionsSearchPlaceholder: 'Buscar…',
   welcome: 'Bienvenido, {name}!',
   dashboard: 'Panel',
   administration: 'Administración',
@@ -34,6 +35,9 @@ export default {
   viewUser: 'Ver usuario',
   viewUserTitle: 'Detalle del usuario',
   userListError: 'No se pudo cargar el listado de usuarios',
+  userDetailLoadError:
+    'No se pudieron cargar los datos del usuario; '
+    + 'el formulario puede estar incompleto',
   userCreatedSuccess: 'Usuario creado correctamente',
   userUpdatedSuccess: 'Usuario actualizado correctamente',
   userCreateError: 'No se pudo crear el usuario',
@@ -47,6 +51,12 @@ export default {
   userFiltersTitle: 'Filtrar usuarios',
   userFilterApply: 'Aplicar',
   userFilterClear: 'Limpiar todo',
+  changeUserPassword: 'Cambiar contraseña',
+  changeUserPasswordTitle: 'Cambiar contraseña',
+  userPasswordConfirm: 'Confirmar contraseña',
+  userPasswordMismatch: 'Las contraseñas no coinciden',
+  userPasswordChangeSuccess: 'Contraseña actualizada correctamente',
+  userPasswordChangeError: 'No se pudo actualizar la contraseña',
   userPasswordLeaveBlankHint:
     'Déjalo en blanco para mantener la contraseña actual',
   userRolesPermissionsLoadError:
