@@ -1,6 +1,12 @@
 import { defineBoot } from '#q-app/wrappers'
 import axios from 'axios'
-import { apiPaths, defaultTenant, typeNames } from 'components/constants.js'
+import { Notify } from 'quasar'
+import {
+  apiPaths,
+  defaultTenant,
+  quasarNotifyTypes,
+  typeNames,
+} from 'components/constants.js'
 import { extractOAuthTokenPayload } from 'components/helpers.js'
 import {
   readStoredExpireAt,
@@ -10,7 +16,15 @@ import {
   writeStoredRefreshToken,
   writeStoredToken,
 } from '../utils/auth-local-storage.js'
+import {
+  beginSessionExpiredUiSuppression,
+  isInvalidRefreshTokenError,
+  markErrorAsSessionLogoutHandled,
+} from '../utils/api-session-error.js'
 import { deepMapRequestKeysToSnakeCase } from '../utils/request-key-case.js'
+import { i18nGlobalT } from './i18n.js'
+
+let lastSessionExpiredNotifyAt = 0
 
 const api = axios.create({
   baseURL: 'https://7646-79-112-108-239.ngrok-free.app',
@@ -125,6 +139,17 @@ async function clearSessionFromApi() {
 }
 
 async function clearSessionAndRedirectToLogin() {
+  beginSessionExpiredUiSuppression()
+  const now = Date.now()
+  if (now - lastSessionExpiredNotifyAt > 600) {
+    lastSessionExpiredNotifyAt = now
+    Notify.create({
+      type: quasarNotifyTypes.negative,
+      message: i18nGlobalT('sessionExpiredRelogin'),
+      position: 'top',
+      timeout: 6000,
+    })
+  }
   await clearSessionFromApi()
   try {
     const { useAuthStore } = await import('stores/auth-store.js')
@@ -135,12 +160,6 @@ async function clearSessionAndRedirectToLogin() {
   } catch {
     // Router may not be mounted yet
   }
-}
-
-function isRefreshEndpointAuthFailure(error) {
-  const st = error.response?.status
-
-  return st === 401 || st === 400
 }
 
 api.interceptors.request.use(
@@ -180,7 +199,7 @@ api.interceptors.response.use(
   async error => {
     const cfg = error.config
     if (cfg?.__refreshCall) {
-      if (isRefreshEndpointAuthFailure(error)) {
+      if (isInvalidRefreshTokenError(error)) {
         await clearSessionAndRedirectToLogin()
       }
 
@@ -195,8 +214,6 @@ api.interceptors.response.use(
 
     const refreshJwt = await getRefreshJwtForRequest()
     if (!refreshJwt) {
-      await clearSessionAndRedirectToLogin()
-
       return Promise.reject(error)
     }
 
@@ -207,8 +224,8 @@ api.interceptors.response.use(
 
       return api(cfg)
     } catch (refreshErr) {
-      if (isRefreshEndpointAuthFailure(refreshErr)) {
-        await clearSessionAndRedirectToLogin()
+      if (isInvalidRefreshTokenError(refreshErr)) {
+        markErrorAsSessionLogoutHandled(error)
       }
 
       return Promise.reject(error)

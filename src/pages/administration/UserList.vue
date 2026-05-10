@@ -209,6 +209,7 @@ import {
   USER_EDITABLE_KEYS_ON_EDIT,
   useUserAddForm,
 } from 'src/composables/useUserAddForm.js'
+import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const uk = userFieldKeys
@@ -365,11 +366,13 @@ async function loadUsers(paginationPayload) {
       limit: paginationPayload.rowsPerPage,
     })
     tablePagination.value = userTablePaginationFromStore(paginationPayload)
-  } catch {
-    $q.notify({
-      type: quasarNotifyTypes.negative,
-      message: t('userListError'),
-    })
+  } catch (error) {
+    if (!isAuthSessionEndUIError(error)) {
+      $q.notify({
+        type: quasarNotifyTypes.negative,
+        message: t('userListError'),
+      })
+    }
   } finally {
     loading.value = false
   }

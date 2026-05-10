@@ -17,6 +17,8 @@ export default {
     + 'reset your password.',
   backToLogin: 'Back to login',
   invalidCredentials: 'Invalid credentials, please try again.',
+  sessionExpiredRelogin:
+    'Your session has expired. Please sign in again.',
   save: 'Save',
   confirm: 'Confirm',
   cancel: 'Cancel',

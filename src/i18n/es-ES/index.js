@@ -17,6 +17,8 @@ export default {
     + 'contraseña.',
   backToLogin: 'Volver a Iniciar sesión',
   invalidCredentials: 'Credenciales inválidas, intente de nuevo.',
+  sessionExpiredRelogin:
+    'La session expiró, por favor inicia session de nuevo',
   save: 'Guardar',
   confirm: 'Confirmar',
   cancel: 'Cancelar',

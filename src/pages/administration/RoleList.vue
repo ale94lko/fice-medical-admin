@@ -232,6 +232,7 @@ import {
   mapTenant,
 } from 'components/helpers.js'
 import { useRoleAddForm } from 'src/composables/useRoleAddForm.js'
+import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const rk = roleFieldKeys
@@ -368,11 +369,13 @@ async function loadRoles(paginationPayload) {
       limit: paginationPayload.rowsPerPage,
     })
     tablePagination.value = roleTablePaginationFromStore(paginationPayload)
-  } catch {
-    $q.notify({
-      type: quasarNotifyTypes.negative,
-      message: t('roleListError'),
-    })
+  } catch (error) {
+    if (!isAuthSessionEndUIError(error)) {
+      $q.notify({
+        type: quasarNotifyTypes.negative,
+        message: t('roleListError'),
+      })
+    }
   } finally {
     loading.value = false
   }

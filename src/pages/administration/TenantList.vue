@@ -233,6 +233,7 @@ import {
   TENANT_EDITABLE_KEYS_ON_EDIT,
   useTenantAddForm,
 } from 'src/composables/useTenantAddForm.js'
+import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const tk = tenantFieldKeys
@@ -436,11 +437,13 @@ async function loadTenants(paginationPayload) {
       limit: paginationPayload.rowsPerPage,
     })
     tablePagination.value = tenantTablePaginationFromStore(paginationPayload)
-  } catch {
-    $q.notify({
-      type: quasarNotifyTypes.negative,
-      message: t('tenantListError'),
-    })
+  } catch (error) {
+    if (!isAuthSessionEndUIError(error)) {
+      $q.notify({
+        type: quasarNotifyTypes.negative,
+        message: t('tenantListError'),
+      })
+    }
   } finally {
     loading.value = false
   }

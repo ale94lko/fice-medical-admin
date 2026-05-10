@@ -181,6 +181,7 @@ import { fetchAllEnvelopeList } from 'components/helpers.js'
 import { apiInstance } from 'boot/axios'
 import Dialog from 'components/Dialog.vue'
 import { usePermissionEditForm } from 'src/composables/usePermissionEditForm.js'
+import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const pk = permissionFieldKeys
@@ -238,11 +239,13 @@ async function loadPermissions(paginationPayload) {
     tablePagination.value = permissionTablePaginationFromStore(
       paginationPayload,
     )
-  } catch {
-    $q.notify({
-      type: quasarNotifyTypes.negative,
-      message: t('permissionListError'),
-    })
+  } catch (error) {
+    if (!isAuthSessionEndUIError(error)) {
+      $q.notify({
+        type: quasarNotifyTypes.negative,
+        message: t('permissionListError'),
+      })
+    }
   } finally {
     loading.value = false
   }
