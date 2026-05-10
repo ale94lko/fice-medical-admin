@@ -8,7 +8,7 @@
       :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
       :title="t('roles')"
-      :rows="filteredRows"
+      :rows="sortedTableRows"
       :columns="columns"
       :loading="loading"
       :rows-per-page-label="t('rowsPerPage')"
@@ -232,6 +232,7 @@ import {
   mapTenant,
 } from 'components/helpers.js'
 import { useRoleAddForm } from 'src/composables/useRoleAddForm.js'
+import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const rk = roleFieldKeys
 const ttk = tenantFieldKeys
@@ -471,7 +472,7 @@ const columns = computed(() => {
       label: t('roleListTenantName'),
       align: quasarTableAlign.left,
       field: row => roleTenantDisplayLabel(row, tenantLabels),
-      sortable: false,
+      sortable: true,
     },
     {
       name: roleListColumnKeys.actions,
@@ -515,6 +516,17 @@ const filteredRows = computed(() => {
   }
 
   return list
+})
+
+const sortedTableRows = computed(() => {
+  const p = tablePagination.value
+
+  return sortRowsByColumns(
+    filteredRows.value,
+    p.sortBy,
+    p.descending,
+    columns.value,
+  )
 })
 
 const activeRoleFilterCount = computed(() => {

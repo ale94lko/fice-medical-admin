@@ -8,7 +8,7 @@
       :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
       :title="t('tenants')"
-      :rows="filteredRows"
+      :rows="sortedTableRows"
       :columns="columns"
       :loading="loading"
       :table-row-class-fn="tenantRowClass"
@@ -233,6 +233,7 @@ import {
   TENANT_EDITABLE_KEYS_ON_EDIT,
   useTenantAddForm,
 } from 'src/composables/useTenantAddForm.js'
+import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const tk = tenantFieldKeys
 
@@ -476,7 +477,7 @@ const columns = computed(() => [
     label: t('planName'),
     align: quasarTableAlign.left,
     field: row => row[tk.planName],
-    sortable: false,
+    sortable: true,
   },
   {
     name: tk.contactEmail,
@@ -496,7 +497,7 @@ const columns = computed(() => [
         row[tk.country] ?? countryCodeUsa,
         row[tk.contactPhone] ?? '',
       ),
-    sortable: false,
+    sortable: true,
   },
   {
     name: tenantListColumnKeys.actions,
@@ -507,6 +508,7 @@ const columns = computed(() => [
     sortable: false,
   },
 ])
+
 const filterDialogOpen = ref(false)
 const filterDraft = reactive({
   [tk.name]: '',
@@ -571,6 +573,17 @@ const filteredRows = computed(() => {
   }
 
   return list
+})
+
+const sortedTableRows = computed(() => {
+  const p = tablePagination.value
+
+  return sortRowsByColumns(
+    filteredRows.value,
+    p.sortBy,
+    p.descending,
+    columns.value,
+  )
 })
 
 const activeTenantFilterCount = computed(() => {

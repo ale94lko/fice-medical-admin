@@ -124,6 +124,25 @@ async function clearSessionFromApi() {
   useAuthStore().clearSession()
 }
 
+async function clearSessionAndRedirectToLogin() {
+  await clearSessionFromApi()
+  try {
+    const { useAuthStore } = await import('stores/auth-store.js')
+    const r = useAuthStore().router
+    if (r && typeof r.replace === 'function') {
+      await r.replace({ path: '/login' }).catch(() => {})
+    }
+  } catch {
+    // Router may not be mounted yet
+  }
+}
+
+function isRefreshEndpointAuthFailure(error) {
+  const st = error.response?.status
+
+  return st === 401 || st === 400
+}
+
 api.interceptors.request.use(
   async config => {
     config.headers = config.headers || {}
@@ -161,6 +180,10 @@ api.interceptors.response.use(
   async error => {
     const cfg = error.config
     if (cfg?.__refreshCall) {
+      if (isRefreshEndpointAuthFailure(error)) {
+        await clearSessionAndRedirectToLogin()
+      }
+
       return Promise.reject(error)
     }
     if (!isUnauthorizedError(error) || !cfg || cfg.__retryAfterRefresh) {
@@ -172,7 +195,7 @@ api.interceptors.response.use(
 
     const refreshJwt = await getRefreshJwtForRequest()
     if (!refreshJwt) {
-      await clearSessionFromApi()
+      await clearSessionAndRedirectToLogin()
 
       return Promise.reject(error)
     }
@@ -183,8 +206,10 @@ api.interceptors.response.use(
       stripAuthorizationHeader(cfg)
 
       return api(cfg)
-    } catch {
-      await clearSessionFromApi()
+    } catch (refreshErr) {
+      if (isRefreshEndpointAuthFailure(refreshErr)) {
+        await clearSessionAndRedirectToLogin()
+      }
 
       return Promise.reject(error)
     }

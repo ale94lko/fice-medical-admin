@@ -8,7 +8,7 @@
       :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
       :title="t('users')"
-      :rows="filteredRows"
+      :rows="sortedTableRows"
       :columns="columns"
       :loading="loading"
       :table-row-class-fn="userRowClass"
@@ -209,6 +209,7 @@ import {
   USER_EDITABLE_KEYS_ON_EDIT,
   useUserAddForm,
 } from 'src/composables/useUserAddForm.js'
+import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const uk = userFieldKeys
 
@@ -404,11 +405,10 @@ const columns = computed(() => [
     required: true,
     label: t('status'),
     align: quasarTableAlign.left,
-    field: row =>
-      rowStatusBucket(row) === 1
-        ? t('tenantStatusActive')
-        : t('tenantStatusInactive'),
-    sortable: false,
+    field: row => rowStatusBucket(row),
+    format: val =>
+      val === 1 ? t('tenantStatusActive') : t('tenantStatusInactive'),
+    sortable: true,
   },
   {
     name: userListColumnKeys.actions,
@@ -464,6 +464,17 @@ const filteredRows = computed(() => {
   }
 
   return list
+})
+
+const sortedTableRows = computed(() => {
+  const p = tablePagination.value
+
+  return sortRowsByColumns(
+    filteredRows.value,
+    p.sortBy,
+    p.descending,
+    columns.value,
+  )
 })
 
 const activeUserFilterCount = computed(() => {

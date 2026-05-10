@@ -8,7 +8,7 @@
       :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
       :title="t('permissions')"
-      :rows="filteredRows"
+      :rows="sortedTableRows"
       :columns="columns"
       :loading="loading"
       :rows-per-page-label="t('rowsPerPage')"
@@ -181,6 +181,7 @@ import { fetchAllEnvelopeList } from 'components/helpers.js'
 import { apiInstance } from 'boot/axios'
 import Dialog from 'components/Dialog.vue'
 import { usePermissionEditForm } from 'src/composables/usePermissionEditForm.js'
+import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const pk = permissionFieldKeys
 
@@ -422,7 +423,7 @@ const columns = computed(() => [
 
       return n ? String(n) : '—'
     },
-    sortable: false,
+    sortable: true,
   },
   {
     name: permissionListColumnKeys.actions,
@@ -433,6 +434,17 @@ const columns = computed(() => [
     sortable: false,
   },
 ])
+
+const sortedTableRows = computed(() => {
+  const p = tablePagination.value
+
+  return sortRowsByColumns(
+    filteredRows.value,
+    p.sortBy,
+    p.descending,
+    columns.value,
+  )
+})
 
 function dashText(v) {
   const s = String(v ?? '').trim()
