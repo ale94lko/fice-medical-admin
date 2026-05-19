@@ -4,6 +4,8 @@ export default {
   networkError: 'Network error, please try again later.',
   email: 'Email',
   password: 'Password',
+  showPassword: 'Show password',
+  hidePassword: 'Hide password',
   signIn: 'Sign in',
   signOut: 'Sign out',
   confirmSignOut: 'Are you sure you want to sign out?',
@@ -57,6 +59,8 @@ export default {
   userRolesPermissionsLoadError:
     'Could not load roles or permissions. Try again.',
   userRequirePasswordChange: 'Require password change',
+  userAllowedSubTenants: 'Sub-tenants',
+  userSubtenantsLoadError: 'Could not load sub-tenants for this tenant',
   yes: 'Yes',
   no: 'No',
   description: 'Description',

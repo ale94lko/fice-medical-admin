@@ -7,17 +7,23 @@ import {
   fieldTypes,
   htmlAutocomplete,
   htmlInputTypes,
+  qSelectOptionKeys,
   quasarNotifyTypes,
   selectBehaviors,
   roleFieldKeys,
+  tenantFieldKeys,
   userFieldKeys,
   userFormDefaults,
 } from 'components/constants.js'
 import {
   buildPermissionCodeToIdMap,
   extractRoleTemplatePermissionIds,
+  isMainTenant,
   mapRole,
+  mapTenant,
   roleByIdPath,
+  rolesByTenantPath,
+  tenantSubTenantsPath,
 } from 'components/helpers.js'
 import {
   buildPermissionTreeNodes,
@@ -25,39 +31,228 @@ import {
 } from 'src/utils/permission-catalog-tree.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const uk = userFieldKeys
+const rk = roleFieldKeys
 
-export function useUserAddForm(editingRef) {
-  const { t } = useI18n()
-  const $q = useQuasar()
-  const uk = userFieldKeys
-  const rk = roleFieldKeys
+function resolveDefaultUserTenantId(mappedTenants, tenantKey) {
+  const key = String(tenantKey ?? '').trim().toLowerCase()
+  const ttk = tenantFieldKeys
+  const list = (mappedTenants || []).filter(Boolean)
+  if (key) {
+    for (const tenant of list) {
+      const domain = String(tenant[ttk.domain] ?? '').trim().toLowerCase()
+      const name = String(tenant[ttk.name] ?? '').trim().toLowerCase()
+      const schema = String(tenant[ttk.schemaName] ?? '').trim().toLowerCase()
+      const idNum = Number(tenant.id)
+      if (!Number.isFinite(idNum)) {
+        continue
+      }
+      if (domain === key || name === key || schema === key) {
+        return idNum
+      }
+    }
+  }
+  const first = list.find(row => Number.isFinite(Number(row.id)))
 
-  const rolesOptions = ref([])
-  const rolesListLoading = ref(false)
-  const permissionTreeNodes = ref([])
-  const permissionsTreeLoading = ref(false)
-  const permissionCodeToId = ref(new Map())
-  const knownPermissionIds = ref(new Set())
-  const rolePermissionIdsByRoleId = ref(new Map())
-  let rolesPermissionFetchSeq = 0
+  return first ? Number(first.id) : null
+}
+
+function mapTenantsToSelectOptions(mappedTenants) {
+  const ttk = tenantFieldKeys
+
+  return (mappedTenants || [])
+    .map(row => {
+      const idNum = Number(row.id)
+      if (!Number.isFinite(idNum)) {
+        return null
+      }
+      const label = String(
+        row[ttk.name] ?? row[ttk.domain] ?? `#${idNum}`,
+      ).trim() || String(idNum)
+
+      return { label, value: idNum }
+    })
+    .filter(Boolean)
+}
+
+function mapRoleRowsToUserSelectData(roleRows, nameKey, codeToIdMap) {
+  const options = []
+  const permissionIdsByRoleId = new Map()
+  for (const row of roleRows) {
+    const mapped = mapRole(row)
+    if (!mapped) {
+      continue
+    }
+    const raw = extractRoleTemplatePermissionIds(
+      { data: row },
+      codeToIdMap,
+    )
+    permissionIdsByRoleId.set(mapped.id, raw)
+    const labelBase = String(mapped[nameKey] ?? mapped.id ?? '').trim()
+    options.push({
+      label: labelBase || String(mapped.id),
+      value: mapped.id,
+    })
+  }
+  options.sort((a, b) => a.label.localeCompare(b.label))
+
+  return { options, permissionIdsByRoleId }
+}
+
+function mapSubtenantRowsToSelectOptions(rows) {
+  return (rows || [])
+    .map(row => {
+      const idNum = Number(row?.id)
+      if (!Number.isFinite(idNum)) {
+        return null
+      }
+      const name = String(row?.name ?? '').trim()
+      const code = String(row?.code ?? '').trim()
+      let label = name || code || String(idNum)
+      if (name && code) {
+        label = `${name} (${code})`
+      }
+
+      return { label, value: idNum }
+    })
+    .filter(Boolean)
+}
+
+function extractSubtenantList(root) {
+  if (!root) {
+    return []
+  }
+  if (Array.isArray(root)) {
+    return root
+  }
+  if (Array.isArray(root.items)) {
+    return root.items
+  }
+
+  return []
+}
+
+function extractRoleList(root) {
+  return extractSubtenantList(root)
+}
+
+function createUserAddFormCatalog() {
+  return {
+    rolesOptions: ref([]),
+    rolesListLoading: ref(false),
+    tenantSelectOptions: ref([]),
+    userTenantsLoading: ref(false),
+    defaultNewUserTenantId: ref(null),
+    subtenantSelectOptions: ref([]),
+    subtenantsLoading: ref(false),
+    permissionTreeNodes: ref([]),
+    permissionsTreeLoading: ref(false),
+    permissionCodeToId: ref(new Map()),
+    knownPermissionIds: ref(new Set()),
+    rolePermissionIdsByRoleId: ref(new Map()),
+  }
+}
+
+function clearFormPermissions(form) {
+  const cur = form[uk.permissions]
+  if (Array.isArray(cur)) {
+    cur.splice(0, cur.length)
+  } else {
+    form[uk.permissions] = []
+  }
+}
+
+function writeFormPermissions(form, merged) {
+  const cur = form[uk.permissions]
+  if (Array.isArray(cur)) {
+    cur.splice(0, cur.length, ...merged)
+  } else {
+    form[uk.permissions] = merged.slice()
+  }
+}
+
+function clearFormSubtenantIds(form) {
+  const cur = form[uk.allowedSubtenantIds]
+  if (Array.isArray(cur)) {
+    cur.splice(0, cur.length)
+  } else {
+    form[uk.allowedSubtenantIds] = []
+  }
+}
+
+function clearFormRoles(form) {
+  const cur = form[uk.roles]
+  if (Array.isArray(cur)) {
+    cur.splice(0, cur.length)
+  } else {
+    form[uk.roles] = []
+  }
+  clearFormPermissions(form)
+}
+
+function formatUserFormPayload(form, editingRef) {
+  const roles = Array.isArray(form[uk.roles])
+    ? form[uk.roles].map(x => Number(x)).filter(Number.isFinite)
+    : []
+  const permissions = Array.isArray(form[uk.permissions])
+    ? form[uk.permissions].map(x => Number(x)).filter(Number.isFinite)
+    : []
+  const allowedSubtenantIds = Array.isArray(form[uk.allowedSubtenantIds])
+    ? form[uk.allowedSubtenantIds].map(x => Number(x)).filter(Number.isFinite)
+    : []
+
+  const tenantId = Number(form[uk.tenantId])
+
+  const out = {
+    [uk.username]: String(form[uk.username] ?? '').trim(),
+    [uk.status]: Number(form[uk.status]),
+    description: String(form[uk.description] ?? '').trim(),
+    changePassword: Boolean(form[uk.changePassword]),
+    roles,
+    permissions,
+    modules: [],
+    allowedSubtenantIds,
+  }
+  if (Number.isFinite(tenantId)) {
+    out[uk.tenantId] = tenantId
+  }
+  if (!editingRef?.value) {
+    out[uk.password] = String(form[uk.password] ?? '').trim()
+  }
+
+  return out
+}
+
+function createUserAddFormLoaders(ctx) {
+  const {
+    t,
+    $q,
+    catalog,
+    editingRef,
+    rolesPermissionFetchSeqRef,
+    subtenantFetchSeqRef,
+    rolesLoadSeqRef,
+  } = ctx
 
   async function loadPermissionCatalog(opts = {}) {
-    if (opts.force !== true && permissionTreeNodes.value.length > 0) {
+    if (opts.force !== true && catalog.permissionTreeNodes.value.length > 0) {
       return
     }
-    permissionsTreeLoading.value = true
+    catalog.permissionsTreeLoading.value = true
     try {
       const [moduleRows, permissionRows] = await Promise.all([
         fetchAllPaginatedRaw(apiPaths.modulesList),
         fetchAllPaginatedRaw(apiPaths.permissionsList),
       ])
-      permissionTreeNodes.value = buildPermissionTreeNodes(
+      catalog.permissionTreeNodes.value = buildPermissionTreeNodes(
         moduleRows,
         permissionRows,
         t,
       )
-      permissionCodeToId.value = buildPermissionCodeToIdMap(permissionRows)
-      knownPermissionIds.value = new Set(
+      catalog.permissionCodeToId.value = buildPermissionCodeToIdMap(
+        permissionRows,
+      )
+      catalog.knownPermissionIds.value = new Set(
         permissionRows
           .map(row => {
             const id = Number(
@@ -69,15 +264,15 @@ export function useUserAddForm(editingRef) {
           .filter(id => id != null),
       )
     } catch {
-      permissionTreeNodes.value = []
-      permissionCodeToId.value = new Map()
-      knownPermissionIds.value = new Set()
+      catalog.permissionTreeNodes.value = []
+      catalog.permissionCodeToId.value = new Map()
+      catalog.knownPermissionIds.value = new Set()
       $q.notify({
         type: quasarNotifyTypes.negative,
         message: t('rolePermissionsLoadError'),
       })
     } finally {
-      permissionsTreeLoading.value = false
+      catalog.permissionsTreeLoading.value = false
     }
   }
 
@@ -86,37 +281,19 @@ export function useUserAddForm(editingRef) {
 
     return extractRoleTemplatePermissionIds(
       res.data,
-      permissionCodeToId.value,
+      catalog.permissionCodeToId.value,
     )
   }
 
-  function clearFormPermissions(form) {
-    const cur = form[uk.permissions]
-    if (Array.isArray(cur)) {
-      cur.splice(0, cur.length)
-    } else {
-      form[uk.permissions] = []
-    }
-  }
-
-  function writeFormPermissions(form, merged) {
-    const cur = form[uk.permissions]
-    if (Array.isArray(cur)) {
-      cur.splice(0, cur.length, ...merged)
-    } else {
-      form[uk.permissions] = merged.slice()
-    }
-  }
-
   async function resolveRolePermissionIds(roleId, seq) {
-    let perms = rolePermissionIdsByRoleId.value.get(roleId)
+    let perms = catalog.rolePermissionIdsByRoleId.value.get(roleId)
     if (Array.isArray(perms) && perms.length > 0) {
       return { perms, stale: false }
     }
     try {
       perms = await fetchRolePermissionIds(roleId)
     } catch {
-      if (seq === rolesPermissionFetchSeq) {
+      if (seq === rolesPermissionFetchSeqRef.current) {
         $q.notify({
           type: quasarNotifyTypes.warning,
           message: t('roleTemplatePermissionsLoadError'),
@@ -125,10 +302,10 @@ export function useUserAddForm(editingRef) {
 
       return { perms: [], stale: false }
     }
-    if (seq !== rolesPermissionFetchSeq) {
+    if (seq !== rolesPermissionFetchSeqRef.current) {
       return { perms: [], stale: true }
     }
-    rolePermissionIdsByRoleId.value.set(roleId, perms)
+    catalog.rolePermissionIdsByRoleId.value.set(roleId, perms)
 
     return { perms, stale: false }
   }
@@ -137,7 +314,7 @@ export function useUserAddForm(editingRef) {
     const ids = Array.isArray(roleIds)
       ? roleIds.map(x => Number(x)).filter(Number.isFinite)
       : []
-    const seq = ++rolesPermissionFetchSeq
+    const seq = ++rolesPermissionFetchSeqRef.current
 
     if (ids.length === 0) {
       clearFormPermissions(form)
@@ -160,7 +337,7 @@ export function useUserAddForm(editingRef) {
       }
     }
 
-    const allowed = knownPermissionIds.value
+    const allowed = catalog.knownPermissionIds.value
     const merged = [...aggregated].filter(
       pid => !allowed.size || allowed.has(pid),
     )
@@ -169,51 +346,142 @@ export function useUserAddForm(editingRef) {
     await nextTick()
   }
 
-  async function onDialogOpen() {
-    rolePermissionIdsByRoleId.value = new Map()
-    await loadPermissionCatalog()
-
-    rolesListLoading.value = true
+  async function loadUserTenantOptions() {
+    catalog.userTenantsLoading.value = true
     try {
-      const roleRows = await fetchAllPaginatedRaw(apiPaths.rolesList)
-      const options = []
-      const permissionIdsByRoleId = new Map()
-      for (const row of roleRows) {
-        const mapped = mapRole(row)
-        if (!mapped) {
-          continue
-        }
-        const raw = extractRoleTemplatePermissionIds(
-          { data: row },
-          permissionCodeToId.value,
-        )
-        permissionIdsByRoleId.set(mapped.id, raw)
-        const labelBase = String(
-          mapped[rk.name] ?? mapped.id ?? '',
-        ).trim()
-        options.push({
-          label: labelBase || String(mapped.id),
-          value: mapped.id,
-        })
-      }
-      options.sort((a, b) => a.label.localeCompare(b.label))
-      rolesOptions.value = options
-      rolePermissionIdsByRoleId.value = permissionIdsByRoleId
+      const tenantRawRows = await fetchAllPaginatedRaw(
+        apiPaths.tenantsList,
+        { active: true },
+      )
+      const mapped = tenantRawRows
+        .map(mapTenant)
+        .filter(Boolean)
+        .filter(t => !isMainTenant(t))
+      catalog.tenantSelectOptions.value = mapTenantsToSelectOptions(mapped)
+      catalog.defaultNewUserTenantId.value =
+        resolveDefaultUserTenantId(mapped, '')
     } catch {
-      rolesOptions.value = []
-      rolePermissionIdsByRoleId.value = new Map()
+      catalog.tenantSelectOptions.value = []
+      catalog.defaultNewUserTenantId.value = null
       $q.notify({
-        type: quasarNotifyTypes.negative,
-        message: t('userRolesPermissionsLoadError'),
+        type: quasarNotifyTypes.warning,
+        message: t('tenantListError'),
       })
     } finally {
-      rolesListLoading.value = false
+      catalog.userTenantsLoading.value = false
     }
   }
 
-  const fields = computed(() => {
-    const requiredRule = val =>
-      (!!val && String(val).trim().length > 0) || t('fieldRequired')
+  async function loadSubtenantsForTenant(tenantId) {
+    const id = Number(tenantId)
+    if (!Number.isFinite(id)) {
+      catalog.subtenantSelectOptions.value = []
+
+      return
+    }
+    const seq = ++subtenantFetchSeqRef.current
+    catalog.subtenantsLoading.value = true
+    try {
+      const res = await apiInstance.get(tenantSubTenantsPath(id))
+      const list = extractSubtenantList(res.data?.data)
+      if (seq !== subtenantFetchSeqRef.current) {
+        return
+      }
+      catalog.subtenantSelectOptions.value = mapSubtenantRowsToSelectOptions(
+        list,
+      )
+    } catch {
+      if (seq !== subtenantFetchSeqRef.current) {
+        return
+      }
+      catalog.subtenantSelectOptions.value = []
+      $q.notify({
+        type: quasarNotifyTypes.warning,
+        message: t('userSubtenantsLoadError'),
+      })
+    } finally {
+      if (seq === subtenantFetchSeqRef.current) {
+        catalog.subtenantsLoading.value = false
+      }
+    }
+  }
+
+  async function loadRolesForTenant(tenantId) {
+    const id = Number(tenantId)
+    if (!Number.isFinite(id)) {
+      catalog.rolesOptions.value = []
+      catalog.rolePermissionIdsByRoleId.value = new Map()
+
+      return
+    }
+    const seq = ++rolesLoadSeqRef.current
+    catalog.rolesListLoading.value = true
+    try {
+      const res = await apiInstance.get(rolesByTenantPath(id))
+      const roleRows = extractRoleList(res.data?.data)
+      if (seq !== rolesLoadSeqRef.current) {
+        return
+      }
+      const { options, permissionIdsByRoleId } = mapRoleRowsToUserSelectData(
+        roleRows,
+        rk.name,
+        catalog.permissionCodeToId.value,
+      )
+      catalog.rolesOptions.value = options
+      catalog.rolePermissionIdsByRoleId.value = permissionIdsByRoleId
+    } catch {
+      if (seq !== rolesLoadSeqRef.current) {
+        return
+      }
+      catalog.rolesOptions.value = []
+      catalog.rolePermissionIdsByRoleId.value = new Map()
+      $q.notify({
+        type: quasarNotifyTypes.warning,
+        message: t('userRolesPermissionsLoadError'),
+      })
+    } finally {
+      if (seq === rolesLoadSeqRef.current) {
+        catalog.rolesListLoading.value = false
+      }
+    }
+  }
+
+  async function afterTenantSelected(form, tenantId) {
+    clearFormSubtenantIds(form)
+    clearFormRoles(form)
+    await loadSubtenantsForTenant(tenantId)
+    await loadRolesForTenant(tenantId)
+    await nextTick()
+  }
+
+  async function onDialogOpen() {
+    rolesLoadSeqRef.current += 1
+    catalog.rolePermissionIdsByRoleId.value = new Map()
+    catalog.rolesOptions.value = []
+    catalog.subtenantSelectOptions.value = []
+    await loadPermissionCatalog()
+    await loadUserTenantOptions()
+    const editRow = editingRef?.value
+    const tenantToLoad =
+      editRow?.[uk.tenantId] ?? catalog.defaultNewUserTenantId.value
+    if (Number.isFinite(Number(tenantToLoad))) {
+      await loadSubtenantsForTenant(Number(tenantToLoad))
+      await loadRolesForTenant(Number(tenantToLoad))
+    }
+  }
+
+  return {
+    loadPermissionCatalog,
+    afterRolesSelected,
+    afterTenantSelected,
+    onDialogOpen,
+  }
+}
+
+function createUserAddFormFields(ctx) {
+  const { t, catalog, editingRef, loaders } = ctx
+
+  return computed(() => {
     const selectRequiredRule = val =>
       (val === 0 || val === 1 || val === '0' || val === '1')
       || t('fieldRequired')
@@ -229,22 +497,18 @@ export function useUserAddForm(editingRef) {
       (!!val && String(val).trim().length > 0) || t('fieldRequired')
     const rolesRule = val =>
       (Array.isArray(val) && val.length > 0) || t('fieldRequired')
+    const tenantSelectRule = val =>
+      (val != null && val !== '' && Number.isFinite(Number(val)))
+      || t('fieldRequired')
+    const optionalSelectSpacerRule = () => true
 
     const identityFields = [
       {
         key: uk.username,
         kind: fieldTypes.input,
-        labelKey: uk.username,
-        inputName: 'fice-user-register-username',
-        autocomplete: htmlAutocomplete.off,
-        rules: [requiredRule],
-      },
-      {
-        key: uk.email,
-        kind: fieldTypes.input,
         labelKey: 'email',
         inputType: htmlInputTypes.email,
-        inputName: 'fice-user-register-email',
+        inputName: 'fice-user-register-username',
         autocomplete: htmlAutocomplete.off,
         rules: [emailRule],
       },
@@ -257,6 +521,33 @@ export function useUserAddForm(editingRef) {
       inputName: 'fice-user-register-password',
       autocomplete: htmlAutocomplete.newPassword,
       rules: [passwordRule],
+    }
+    const tenantField = {
+      key: uk.tenantId,
+      kind: fieldTypes.select,
+      labelKey: 'tenants',
+      rules: [tenantSelectRule],
+      options: () => catalog.tenantSelectOptions.value,
+      optionLabel: qSelectOptionKeys.label,
+      optionValue: qSelectOptionKeys.value,
+      loading: catalog.userTenantsLoading,
+      selectBehavior: selectBehaviors.menu,
+      afterModelUpdate: loaders.afterTenantSelected,
+    }
+    const subtenantField = {
+      key: uk.allowedSubtenantIds,
+      kind: fieldTypes.select,
+      labelKey: 'userAllowedSubTenants',
+      multiple: true,
+      clearable: true,
+      defaultValue: [],
+      rules: [optionalSelectSpacerRule],
+      options: () => catalog.subtenantSelectOptions.value,
+      optionLabel: qSelectOptionKeys.label,
+      optionValue: qSelectOptionKeys.value,
+      loading: catalog.subtenantsLoading,
+      selectBehavior: selectBehaviors.menu,
+      disable: form => !Number.isFinite(Number(form[uk.tenantId])),
     }
     const statusField = {
       key: uk.status,
@@ -272,8 +563,14 @@ export function useUserAddForm(editingRef) {
       ],
     }
     const baseFields = isEdit
-      ? [...identityFields, statusField]
-      : [...identityFields, passwordField, statusField]
+      ? [...identityFields, statusField, tenantField, subtenantField]
+      : [
+        ...identityFields,
+        passwordField,
+        tenantField,
+        subtenantField,
+        statusField,
+      ]
 
     return [
       ...baseFields,
@@ -285,17 +582,18 @@ export function useUserAddForm(editingRef) {
         multiple: true,
         defaultValue: [],
         rules: [rolesRule],
-        options: () => rolesOptions.value,
-        loading: rolesListLoading,
-        afterModelUpdate: afterRolesSelected,
+        options: () => catalog.rolesOptions.value,
+        loading: catalog.rolesListLoading,
+        disable: form => !Number.isFinite(Number(form[uk.tenantId])),
+        afterModelUpdate: loaders.afterRolesSelected,
       },
       {
         key: uk.permissions,
         kind: fieldTypes.permissionTree,
         labelKey: 'permissions',
         defaultValue: [],
-        treeNodes: () => permissionTreeNodes.value,
-        loading: permissionsTreeLoading,
+        treeNodes: () => catalog.permissionTreeNodes.value,
+        loading: catalog.permissionsTreeLoading,
         treeNoNodesLabelKey: 'permissionTreeEmpty',
       },
       {
@@ -314,40 +612,30 @@ export function useUserAddForm(editingRef) {
       },
     ]
   })
+}
 
-  function formatUserPayload(form) {
-    const roles = Array.isArray(form[uk.roles])
-      ? form[uk.roles]
-        .map(x => Number(x))
-        .filter(Number.isFinite)
-      : []
-    const permissions = Array.isArray(form[uk.permissions])
-      ? form[uk.permissions]
-        .map(x => Number(x))
-        .filter(Number.isFinite)
-      : []
-
-    const out = {
-      [uk.username]: String(form[uk.username] ?? '').trim(),
-      [uk.email]: String(form[uk.email] ?? '').trim(),
-      [uk.status]: Number(form[uk.status]),
-      description: String(form[uk.description] ?? '').trim(),
-      changePassword: Boolean(form[uk.changePassword]),
-      roles,
-      permissions,
-      modules: [],
-      allowedSubtenantIds: [],
-    }
-    if (!editingRef?.value) {
-      out[uk.password] = String(form[uk.password] ?? '').trim()
-    }
-
-    return out
-  }
+export function useUserAddForm(editingRef) {
+  const { t } = useI18n()
+  const $q = useQuasar()
+  const catalog = createUserAddFormCatalog()
+  const rolesPermissionFetchSeqRef = { current: 0 }
+  const subtenantFetchSeqRef = { current: 0 }
+  const rolesLoadSeqRef = { current: 0 }
+  const loaders = createUserAddFormLoaders({
+    t,
+    $q,
+    catalog,
+    editingRef,
+    rolesPermissionFetchSeqRef,
+    subtenantFetchSeqRef,
+    rolesLoadSeqRef,
+  })
+  const fields = createUserAddFormFields({ t, catalog, editingRef, loaders })
 
   return {
     fields,
-    formatUserPayload,
-    onDialogOpen,
+    formatUserPayload: form => formatUserFormPayload(form, editingRef),
+    onDialogOpen: loaders.onDialogOpen,
+    defaultNewUserTenantId: catalog.defaultNewUserTenantId,
   }
 }

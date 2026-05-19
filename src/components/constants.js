@@ -19,9 +19,10 @@ export const apiPaths = {
   plans: '/plans/v1',
   tenantsList: '/admin-tenant/v1/tenants',
   tenantsCreate: '/admin-tenant/v1/tenants/create',
-  usersList: '/user/v1',
-  usersRegister: '/user/v1/register',
+  usersList: '/admin-tenant/v1/users',
+  usersRegister: '/admin-tenant/v1/users/register',
   usersUpdate: '/admin-tenant/v1/users/update',
+  usersChangePassword: '/admin-tenant/v1/users/change-password',
   rolesList: '/roles/v1',
   rolesCreate: '/admin-tenant/v1/role/add',
   rolesUpdate: '/admin-tenant/v1/role/update',
@@ -133,6 +134,8 @@ export const userFieldKeys = {
   changePassword: 'changePassword',
   roles: 'roles',
   permissions: 'permissions',
+  tenantId: 'tenantId',
+  allowedSubtenantIds: 'allowedSubtenantIds',
 }
 
 export const userListColumnKeys = {

@@ -7,6 +7,7 @@ import {
 } from 'components/constants.js'
 import {
   buildTenantRequestBody,
+  buildUserChangePasswordBody,
   buildUserRegisterBody,
   buildUserUpdateBody,
   coerceTenantMutationRoot,
@@ -182,9 +183,9 @@ export const useSiteStore = defineStore('site', {
         const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
         this.userListQuery = { page: safePage, limit: safeLimit }
 
-        const apiPage = Math.max(0, safePage - 1)
+        const offset = (safePage - 1) * safeLimit
         const response = await apiInstance.get(apiPaths.usersList, {
-          params: { page: apiPage, limit: safeLimit },
+          params: { offset, limit: safeLimit },
         })
 
         const userRoot = response?.data?.data
@@ -218,6 +219,16 @@ export const useSiteStore = defineStore('site', {
         return created
       } catch (error) {
         console.error('Error creating user:', error)
+        throw error
+      }
+    },
+    async changeUserPassword(payload) {
+      try {
+        const body = buildUserChangePasswordBody(payload)
+        await apiInstance.patch(apiPaths.usersChangePassword, body)
+        return true
+      } catch (error) {
+        console.error('Error changing user password:', error)
         throw error
       }
     },

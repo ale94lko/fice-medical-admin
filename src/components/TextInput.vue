@@ -4,17 +4,28 @@
     v-model="model"
     :lazy-rules="'ondemand'"
     :data-testid="props.testId"
-    :type="props.type"
+    :type="resolvedType"
     :label="props.label"
     :rules="props.rules || []">
     <template v-slot:prepend v-if="iconLeft">
       <q-icon :name="iconLeft" class="input-icon"/>
     </template>
+    <template v-if="isPasswordField" #append>
+      <PasswordToggleIcon
+        :show-plain="showPlainPassword"
+        @toggle="showPlainPassword = !showPlainPassword"
+      />
+    </template>
   </q-input>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import PasswordToggleIcon from './PasswordToggleIcon.vue'
+import {
+  isPasswordInputType,
+  passwordFieldInputType,
+} from 'src/composables/usePasswordVisibility.js'
 
 const props = defineProps({
   type: {
@@ -39,7 +50,17 @@ const props = defineProps({
   },
 })
 
-const model = ref('')
+const model = defineModel({ type: String, default: '' })
+
+const showPlainPassword = ref(false)
+
+const isPasswordField = computed(() => isPasswordInputType(props.type))
+
+const resolvedType = computed(() =>
+  isPasswordField.value
+    ? passwordFieldInputType(showPlainPassword.value)
+    : props.type,
+)
 </script>
 
 <style scoped>

@@ -41,14 +41,27 @@
                 outlined
                 :lazy-rules="'ondemand'"
                 :readonly="isFieldReadonly(field)"
-                :type="field.inputType || htmlInputTypes.text"
+                :type="passwordVisibility.resolvedInputType(
+                  field.key,
+                  field.inputType || htmlInputTypes.text,
+                )"
                 :name="field.inputName"
                 :autocomplete="plainInputAutocomplete(field)"
                 :label="labelFor(field)"
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
                 @blur="onFieldBlur(field)"
-                @update:model-value="v => onPlainInputField(field, v)"/>
+                @update:model-value="v => onPlainInputField(field, v)">
+                <template
+                  v-if="isPasswordInputType(field.inputType)
+                    && !isFieldReadonly(field)"
+                  #append>
+                  <PasswordToggleIcon
+                    :show-plain="passwordVisibility.isPlainVisible(field.key)"
+                    @toggle="passwordVisibility.toggle(field.key)"
+                  />
+                </template>
+              </q-input>
               <q-input
                 v-else-if="isDialPrefixedPhoneField(field)"
                 outlined
@@ -272,15 +285,22 @@ import {
   parseNationalPhoneDigits,
 } from './helpers.js'
 import UsFlagIcon from './UsFlagIcon.vue'
+import PasswordToggleIcon from './PasswordToggleIcon.vue'
 import {
   searchTenantAddressSuggestions,
 } from 'src/services/tenant-address-search.js'
+import {
+  isPasswordInputType,
+  usePasswordVisibilityByKey,
+} from 'src/composables/usePasswordVisibility.js'
 
 defineOptions({ name: 'AppDialog' })
 
 const PHONE_FLAG_BY_COUNTRY = {
   USA: UsFlagIcon,
 }
+
+const passwordVisibility = usePasswordVisibilityByKey()
 
 const DIAL_PHONE_NAV_KEYS = new Set(phoneInputNavKeys)
 
@@ -558,6 +578,7 @@ watch(
   async open => {
     if (!open) {
       clearAddressSuggestState()
+      passwordVisibility.clear()
       return
     }
     resetForm()

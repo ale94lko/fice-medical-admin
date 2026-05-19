@@ -4,6 +4,8 @@ export default {
   networkError: 'Error de red, intenta de nuevo más tarde.',
   email: 'Correo electrónico',
   password: 'Contraseña',
+  showPassword: 'Mostrar contraseña',
+  hidePassword: 'Ocultar contraseña',
   signIn: 'Iniciar sesión',
   signOut: 'Cerrar sesión',
   confirmSignOut: '¿Seguro que deseas cerrar sesión?',
@@ -62,6 +64,9 @@ export default {
   userRolesPermissionsLoadError:
     'No se pudieron cargar roles o permisos. Intenta de nuevo.',
   userRequirePasswordChange: 'Exigir cambio de contraseña',
+  userAllowedSubTenants: 'Sub-tenants',
+  userSubtenantsLoadError:
+    'No se pudieron cargar los sub-tenants de este tenant',
   yes: 'Sí',
   no: 'No',
   description: 'Descripción',

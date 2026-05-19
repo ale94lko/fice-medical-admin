@@ -120,12 +120,6 @@
             outlined
             dense
             clearable
-            :label="t('username')"/>
-          <q-input
-            v-model="filterDraft[uk.email]"
-            outlined
-            dense
-            clearable
             :label="t('email')"/>
           <q-select
             v-model="filterDraft[uk.status]"
@@ -208,25 +202,54 @@
           autocomplete="off"
           @submit.prevent="onSubmitPasswordChange">
           <div class="text-body2 text-grey-8">
-            {{
-              userPasswordTarget[uk.username]
-                || userPasswordTarget[uk.email]
-            }}
+            {{ userPasswordTarget[uk.username] }}
           </div>
           <q-input
             v-model="passwordChangeDraft.password"
             outlined
             dense
-            type="password"
+            name="fice-admin-user-change-password"
+            :autocomplete="htmlAutocomplete.newPassword"
+            :type="passwordFieldVisibility.resolvedInputType(
+              passwordVisibilityKey.password,
+              htmlInputTypes.password,
+            )"
             :label="t('password')"
-            :rules="[passwordChangeRequiredRule]"/>
+            :rules="[passwordChangeRequiredRule]">
+            <template #append>
+              <PasswordToggleIcon
+                :show-plain="passwordFieldVisibility.isPlainVisible(
+                  passwordVisibilityKey.password,
+                )"
+                @toggle="passwordFieldVisibility.toggle(
+                  passwordVisibilityKey.password,
+                )"
+              />
+            </template>
+          </q-input>
           <q-input
             v-model="passwordChangeDraft.confirm"
             outlined
             dense
-            type="password"
+            name="fice-admin-user-change-password-confirm"
+            :autocomplete="htmlAutocomplete.off"
+            :type="passwordFieldVisibility.resolvedInputType(
+              passwordVisibilityKey.confirm,
+              htmlInputTypes.password,
+            )"
             :label="t('userPasswordConfirm')"
-            :rules="passwordConfirmRules"/>
+            :rules="passwordConfirmRules">
+            <template #append>
+              <PasswordToggleIcon
+                :show-plain="passwordFieldVisibility.isPlainVisible(
+                  passwordVisibilityKey.confirm,
+                )"
+                @toggle="passwordFieldVisibility.toggle(
+                  passwordVisibilityKey.confirm,
+                )"
+              />
+            </template>
+          </q-input>
           <q-card-actions align="center" class="q-pt-sm q-pb-md">
             <q-btn
               no-caps
@@ -296,10 +319,12 @@
 
 <script setup>
 import { onMounted, computed, ref, watch, reactive } from 'vue'
+import { apiInstance } from 'boot/axios'
 import { useSiteStore } from 'stores/site-store.js'
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import {
+  apiPaths,
   primarySuperadminUser,
   qSelectOptionKeys,
   quasarNotifyTypes,
@@ -308,19 +333,28 @@ import {
   selectBehaviors,
   siteBreakpoints,
   siteBreakpointsPx,
+  tenantFieldKeys,
+  htmlAutocomplete,
+  htmlInputTypes,
   userFieldKeys,
   userListColumnKeys,
 } from 'components/constants.js'
+import PasswordToggleIcon from 'components/PasswordToggleIcon.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
+import { fetchAllEnvelopeList, mapTenant } from 'components/helpers.js'
 import { useUserAddForm } from 'src/composables/useUserAddForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
+import { usePasswordVisibilityByKey }
+  from 'src/composables/usePasswordVisibility.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const uk = userFieldKeys
+const ttk = tenantFieldKeys
 
 const $q = useQuasar()
+const tenantIdToLabel = ref(new Map())
 const loading = ref(false)
 const addDialogOpen = ref(false)
 const addSaving = ref(false)
@@ -338,6 +372,11 @@ const passwordChangeDraft = reactive({
   password: '',
   confirm: '',
 })
+const passwordFieldVisibility = usePasswordVisibilityByKey()
+const passwordVisibilityKey = {
+  password: 'user-password',
+  confirm: 'user-password-confirm',
+}
 
 const siteStore = useSiteStore()
 const { t } = useI18n()
@@ -346,6 +385,7 @@ const {
   fields: userAddFields,
   formatUserPayload,
   onDialogOpen: onUserDialogOpen,
+  defaultNewUserTenantId,
 } = useUserAddForm(userBeingEdited)
 
 function passwordChangeRequiredRule(val) {
@@ -377,26 +417,39 @@ function userRowToFormSeed(row) {
   const permissions = Array.isArray(row[uk.permissions])
     ? row[uk.permissions].map(x => Number(x)).filter(Number.isFinite)
     : []
+  const allowedSubtenantIds = Array.isArray(row[uk.allowedSubtenantIds])
+    ? row[uk.allowedSubtenantIds].map(x => Number(x)).filter(Number.isFinite)
+    : []
   const desc = String(row[uk.description] ?? '').trim()
   const cp = row[uk.changePassword]
   const changePassword = cp === true || cp === 1 || cp === '1'
 
+  const tenantRaw = row[uk.tenantId]
+  const tenantId = Number(tenantRaw)
+
   return {
     [uk.username]: row[uk.username] ?? '',
-    [uk.email]: row[uk.email] ?? '',
     [uk.status]: row[uk.status] === 0 || row[uk.status] === '0' ? 0 : 1,
     [uk.roles]: roles,
     [uk.permissions]: permissions,
     [uk.description]: desc,
     [uk.changePassword]: changePassword,
+    [uk.allowedSubtenantIds]: allowedSubtenantIds,
+    ...(Number.isFinite(tenantId) ? { [uk.tenantId]: tenantId } : {}),
   }
 }
 
-const userDialogInitialValues = computed(() =>
-  userBeingEdited.value
-    ? userRowToFormSeed(userBeingEdited.value)
-    : null,
-)
+const userDialogInitialValues = computed(() => {
+  if (userBeingEdited.value) {
+    return userRowToFormSeed(userBeingEdited.value)
+  }
+  const id = defaultNewUserTenantId.value
+  if (!Number.isFinite(Number(id))) {
+    return null
+  }
+
+  return { [uk.tenantId]: Number(id) }
+})
 
 watch(addDialogOpen, open => {
   if (!open) {
@@ -415,6 +468,7 @@ watch(passwordDialogOpen, open => {
     userPasswordTarget.value = null
     passwordChangeDraft.password = ''
     passwordChangeDraft.confirm = ''
+    passwordFieldVisibility.clear()
     passwordFormRef.value?.resetValidation?.()
   }
 })
@@ -451,7 +505,11 @@ async function onSubmitPasswordChange() {
   }
   passwordChangeSaving.value = true
   try {
-    await siteStore.updateUser(row.id, { ...row, password: pw })
+    await siteStore.changeUserPassword({
+      [uk.username]: row[uk.username],
+      [uk.password]: pw,
+      [uk.changePassword]: true,
+    })
     $q.notify({
       type: quasarNotifyTypes.positive,
       message: t('userPasswordChangeSuccess'),
@@ -500,6 +558,17 @@ function isPrimarySuperadmin(row) {
   return username === key || email === key
 }
 
+function userTenantDisplayText(row, tenantLabels = tenantIdToLabel.value) {
+  const n = Number(row?.[uk.tenantId])
+  if (!Number.isFinite(n)) {
+    return '—'
+  }
+  const name = tenantLabels.get(n)
+  const label = name ? String(name).trim() : '—'
+
+  return `${n} - ${label}`
+}
+
 const userDetailRows = computed(() => {
   const r = userViewing.value
   if (!r) {
@@ -510,8 +579,12 @@ const userDetailRows = computed(() => {
     : t('tenantStatusInactive')
 
   return [
-    { key: uk.username, label: t('username'), value: dashText(r[uk.username]) },
-    { key: uk.email, label: t('email'), value: dashText(r[uk.email]) },
+    { key: uk.username, label: t('email'), value: dashText(r[uk.username]) },
+    {
+      key: uk.tenantId,
+      label: t('roleListTenantName'),
+      value: userTenantDisplayText(r),
+    },
     { key: uk.status, label: t('status'), value: statusText },
   ]
 })
@@ -552,6 +625,33 @@ function userTablePaginationFromStore(paginationPayload) {
   }
 }
 
+async function loadTenantNameLookup() {
+  try {
+    const rawRows = await fetchAllEnvelopeList(
+      (path, cfg) => apiInstance.get(path, cfg),
+      apiPaths.tenantsList,
+    )
+    const next = new Map()
+    for (const row of rawRows) {
+      const mapped = mapTenant(row)
+      if (!mapped) {
+        continue
+      }
+      const id = Number(mapped.id)
+      if (!Number.isFinite(id)) {
+        continue
+      }
+      const label = String(
+        mapped[ttk.name] ?? mapped[ttk.domain] ?? '',
+      ).trim() || String(id)
+      next.set(id, label)
+    }
+    tenantIdToLabel.value = next
+  } catch {
+    tenantIdToLabel.value = new Map()
+  }
+}
+
 async function loadUsers(paginationPayload) {
   loading.value = true
   try {
@@ -577,55 +677,68 @@ function onTableRequest(props) {
 }
 
 onMounted(() => {
+  void loadTenantNameLookup()
   loadUsers(tablePagination.value)
 })
 
-const columns = computed(() => [
-  {
-    name: uk.username,
-    required: true,
-    label: t('username'),
-    align: quasarTableAlign.left,
-    field: row => row[uk.username],
-    sortable: true,
-  },
-  {
-    name: uk.email,
-    required: true,
-    label: t('email'),
-    align: quasarTableAlign.left,
-    field: row => row[uk.email],
-    sortable: true,
-  },
-  {
-    name: uk.status,
-    required: true,
-    label: t('status'),
-    align: quasarTableAlign.left,
-    field: row => rowStatusBucket(row),
-    format: val =>
-      val === 1 ? t('tenantStatusActive') : t('tenantStatusInactive'),
-    sortable: true,
-  },
-  {
-    name: userListColumnKeys.actions,
-    required: true,
-    label: t('actions'),
-    align: quasarTableAlign.center,
-    field: row => row.actions,
-    sortable: false,
-  },
-])
+const columns = computed(() => {
+  const tenantLabels = tenantIdToLabel.value
+
+  return [
+    {
+      name: uk.username,
+      required: true,
+      label: t('email'),
+      align: quasarTableAlign.left,
+      field: row => row[uk.username],
+      sortable: true,
+    },
+    {
+      name: uk.tenantId,
+      required: true,
+      label: t('roleListTenantName'),
+      align: quasarTableAlign.left,
+      field: row => {
+        const n = Number(row?.[uk.tenantId])
+        return Number.isFinite(n) ? n : null
+      },
+      format: val => {
+        if (val == null) {
+          return '—'
+        }
+
+        return userTenantDisplayText({ [uk.tenantId]: val }, tenantLabels)
+      },
+      sortable: true,
+    },
+    {
+      name: uk.status,
+      required: true,
+      label: t('status'),
+      align: quasarTableAlign.left,
+      field: row => rowStatusBucket(row),
+      format: val =>
+        val === 1 ? t('tenantStatusActive') : t('tenantStatusInactive'),
+      sortable: true,
+    },
+    {
+      name: userListColumnKeys.actions,
+      required: true,
+      label: t('actions'),
+      align: quasarTableAlign.center,
+      field: row => row.actions,
+      sortable: false,
+    },
+  ]
+})
 
 const filterDialogOpen = ref(false)
 const filterDraft = reactive({
   [uk.username]: '',
-  [uk.email]: '',
   [uk.status]: null,
 })
 const filterApplied = reactive({
   [uk.username]: '',
-  [uk.email]: '',
   [uk.status]: null,
 })
 
@@ -654,23 +767,16 @@ function resetUserFilterSelectSearch() {
 
 function syncDraftFromApplied() {
   filterDraft[uk.username] = filterApplied[uk.username]
-  filterDraft[uk.email] = filterApplied[uk.email]
   filterDraft[uk.status] = filterApplied[uk.status]
 }
 
 const filteredRows = computed(() => {
   let list = siteStore.userList
   const f = filterApplied
-  const userQ = String(f[uk.username] ?? '').trim().toLowerCase()
-  if (userQ) {
-    list = list.filter(r =>
-      String(r[uk.username] ?? '').toLowerCase().includes(userQ),
-    )
-  }
-  const emailQ = String(f[uk.email] ?? '').trim().toLowerCase()
+  const emailQ = String(f[uk.username] ?? '').trim().toLowerCase()
   if (emailQ) {
     list = list.filter(r =>
-      String(r[uk.email] ?? '').toLowerCase().includes(emailQ),
+      String(r[uk.username] ?? '').toLowerCase().includes(emailQ),
     )
   }
   if (f[uk.status] === 0 || f[uk.status] === 1) {
@@ -697,9 +803,6 @@ const activeUserFilterCount = computed(() => {
   if (String(f[uk.username] ?? '').trim()) {
     n += 1
   }
-  if (String(f[uk.email] ?? '').trim()) {
-    n += 1
-  }
   if (f[uk.status] === 0 || f[uk.status] === 1) {
     n += 1
   }
@@ -721,7 +824,6 @@ function closeUserFilterDialog() {
 
 function applyUserFilters() {
   filterApplied[uk.username] = String(filterDraft[uk.username] ?? '').trim()
-  filterApplied[uk.email] = String(filterDraft[uk.email] ?? '').trim()
   const st = filterDraft[uk.status]
   filterApplied[uk.status] =
     st === 0 || st === 1 ? Number(st) : null
@@ -730,10 +832,8 @@ function applyUserFilters() {
 
 function clearUserFilters() {
   filterDraft[uk.username] = ''
-  filterDraft[uk.email] = ''
   filterDraft[uk.status] = null
   filterApplied[uk.username] = ''
-  filterApplied[uk.email] = ''
   filterApplied[uk.status] = null
   filterDialogOpen.value = false
 }
@@ -755,7 +855,7 @@ const deleteUserMessage = computed(() => {
   }
 
   return t('deleteUserMessage', {
-    name: row[uk.username] || row[uk.email] || row.id,
+    name: row[uk.username] || row.id,
   })
 })
 

@@ -1,6 +1,7 @@
 import {
   apiPaths,
   countryCodeUsa,
+  defaultTenant,
   countryDialMetaByCode,
   officialTimezoneRows,
   tenantCountryToIso3166Alpha2,
@@ -35,12 +36,20 @@ export function tenantByIdPath(id) {
   return `${apiPaths.tenantsList}/${encodeURIComponent(String(id))}`
 }
 
+export function tenantSubTenantsPath(id) {
+  return `${tenantByIdPath(id)}/sub-tenants`
+}
+
 export function userByIdPath(id) {
   return `${apiPaths.usersList}/${encodeURIComponent(String(id))}`
 }
 
 export function roleByIdPath(id) {
   return `${apiPaths.rolesList}/${encodeURIComponent(String(id))}`
+}
+
+export function rolesByTenantPath(tenantId) {
+  return `/admin-tenant/v1/role/tenant/${encodeURIComponent(String(tenantId))}`
 }
 
 export function permissionByIdPath(id) {
@@ -642,6 +651,19 @@ export function extractTenantMutationResponse(data) {
   return root
 }
 
+export function isMainTenant(row) {
+  if (!row || typeof row !== typeNames.object) {
+    return false
+  }
+  const ttk = tenantFieldKeys
+  const key = String(defaultTenant).toLowerCase()
+  const name = String(row[ttk.name] ?? '').trim().toLowerCase()
+  const domain = String(row[ttk.domain] ?? '').trim().toLowerCase()
+  const schema = String(row[ttk.schemaName] ?? '').trim().toLowerCase()
+
+  return name === key || domain === key || schema === key
+}
+
 export function mapTenant(tenant) {
   if (!tenant || typeof tenant !== typeNames.object) {
     return null
@@ -860,6 +882,9 @@ export function mapUser(user) {
   const permissions = intIdsFromMixedIdList(
     user.permissions ?? user.permission_ids ?? user.permissionIds,
   )
+  const allowedSubtenantIds = intIdsFromMixedIdList(
+    user.allowed_subtenant_ids ?? user.allowedSubtenantIds,
+  )
   const description = String(user.description ?? '').trim()
   const hasChangePassword = Object.prototype.hasOwnProperty.call(
     user,
@@ -874,6 +899,9 @@ export function mapUser(user) {
       ?? user.require_password_change)
     : undefined
 
+  const tenantRaw = user.tenant_id ?? user.tenantId
+  const tenantIdNum = Number(tenantRaw)
+
   const out = {
     id: user.id ?? user.user_id,
     [uk.username]: user.username ?? user.user_name ?? '',
@@ -884,6 +912,10 @@ export function mapUser(user) {
     [uk.roles]: roles,
     [uk.permissions]: permissions,
     [uk.description]: description,
+    [uk.allowedSubtenantIds]: allowedSubtenantIds,
+  }
+  if (Number.isFinite(tenantIdNum)) {
+    out[uk.tenantId] = tenantIdNum
   }
   if (hasChangePassword) {
     out[uk.changePassword] = changePasswordRaw !== false
@@ -925,6 +957,11 @@ export function mergeUserWithPayload(mapped, payload) {
   if (Array.isArray(payload.permissions)) {
     next[uk.permissions] = intIdList(payload.permissions)
   }
+  if (Array.isArray(payload.allowedSubtenantIds)) {
+    next[uk.allowedSubtenantIds] = intIdList(payload.allowedSubtenantIds)
+  } else if (Array.isArray(payload.allowed_subtenant_ids)) {
+    next[uk.allowedSubtenantIds] = intIdList(payload.allowed_subtenant_ids)
+  }
   if (Object.prototype.hasOwnProperty.call(payload, 'description')) {
     next[uk.description] = String(payload.description ?? '').trim()
   } else if (Object.prototype.hasOwnProperty.call(payload, uk.description)) {
@@ -932,6 +969,11 @@ export function mergeUserWithPayload(mapped, payload) {
   }
   if (Object.prototype.hasOwnProperty.call(payload, 'changePassword')) {
     next[uk.changePassword] = Boolean(payload.changePassword)
+  }
+  const tenantRaw = payload[uk.tenantId] ?? payload.tenant_id
+  const tenantIdNum = Number(tenantRaw)
+  if (Number.isFinite(tenantIdNum)) {
+    next[uk.tenantId] = tenantIdNum
   }
 
   return next
@@ -1169,6 +1211,27 @@ export function extractPermissionIdsFromRoleDetailPayload(payload) {
   return extractRoleTemplatePermissionIds(payload, null)
 }
 
+export function buildUserChangePasswordBody(payload) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const uk = userFieldKeys
+  const username =
+    String(payload[uk.username] ?? '').trim()
+    || String(payload[uk.email] ?? '').trim()
+  const password = String(payload[uk.password] ?? payload.password ?? '').trim()
+  const requireChange = payload[uk.changePassword] ?? payload.change_password
+  const changePassword = requireChange !== false && requireChange !== 0
+
+  const body = {
+    username,
+    password,
+  }
+  body['change_password'] = changePassword
+
+  return body
+}
+
 export function buildUserRegisterBody(payload) {
   if (!payload || typeof payload !== typeNames.object) {
     return {}
@@ -1187,19 +1250,25 @@ export function buildUserRegisterBody(payload) {
   const allowedSub = intIdList(
     payload.allowedSubtenantIds ?? payload.allowed_subtenant_ids,
   )
+  const tenantRaw = payload[uk.tenantId] ?? payload.tenant_id
+  const tenantId = Number(tenantRaw)
 
   const body = {
     username,
     password,
     status: Number.isFinite(status) ? status : 1,
-    changePassword: changePassword !== false && changePassword !== 0,
     roles,
     permissions,
     modules,
-    allowedSubtenantIds: allowedSub,
   }
+  body['change_password'] = changePassword !== false && changePassword !== 0
+  body['new_user'] = true
+  body['allowed_subtenant_ids'] = allowedSub
   if (description.length > 0) {
     body.description = description
+  }
+  if (Number.isFinite(tenantId)) {
+    body['tenant_id'] = tenantId
   }
 
   return body
