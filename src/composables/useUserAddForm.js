@@ -19,6 +19,7 @@ import {
   buildPermissionCodeToIdMap,
   extractRoleTemplatePermissionIds,
   isMainTenant,
+  isValidEmail,
   mapRole,
   mapTenant,
   roleByIdPath,
@@ -32,7 +33,6 @@ import {
   filterPermissionTreeByModuleIds,
 } from 'src/utils/permission-catalog-tree.js'
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const uk = userFieldKeys
 const rk = roleFieldKeys
 
@@ -551,7 +551,7 @@ function createUserAddFormFields(ctx) {
       if (!v) {
         return t('fieldRequired')
       }
-      return EMAIL_RE.test(v) || t('invalidEmail')
+      return isValidEmail(v) || t('invalidEmail')
     }
     const isEdit = Boolean(editingRef?.value)
     const passwordRule = val =>
@@ -571,6 +571,7 @@ function createUserAddFormFields(ctx) {
         inputType: htmlInputTypes.email,
         inputName: 'fice-user-register-username',
         autocomplete: htmlAutocomplete.off,
+        lazyRules: false,
         rules: [emailRule],
       },
     ]

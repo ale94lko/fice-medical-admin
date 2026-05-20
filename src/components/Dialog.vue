@@ -23,8 +23,9 @@
         ref="formRef"
         class="q-gutter-none"
         greedy
+        novalidate
         autocomplete="off"
-        @submit.prevent="submit"
+        @submit.prevent="onFormSubmit"
         @validation-error="onFormValidationError">
         <q-card-section
           class="q-px-xl q-py-md modal-body"
@@ -39,7 +40,8 @@
                 v-if="showPhoneField(field)"
                 :model-value="form[field.key]"
                 outlined
-                :lazy-rules="'ondemand'"
+                :lazy-rules="lazyRulesFor(field)"
+                :reactive-rules="hasRules(field)"
                 :readonly="isFieldReadonly(field)"
                 :type="passwordVisibility.resolvedInputType(
                   field.key,
@@ -65,7 +67,8 @@
               <q-input
                 v-else-if="isDialPrefixedPhoneField(field)"
                 outlined
-                :lazy-rules="'ondemand'"
+                :lazy-rules="lazyRulesFor(field)"
+                :reactive-rules="hasRules(field)"
                 :type="htmlInputTypes.text"
                 :inputmode="htmlInputModes.tel"
                 :autocomplete="htmlAutocomplete.telNational"
@@ -96,7 +99,8 @@
                 <q-input
                   v-model="form[field.key]"
                   outlined
-                  :lazy-rules="'ondemand'"
+                  :lazy-rules="lazyRulesFor(field)"
+                  :reactive-rules="hasRules(field)"
                   :readonly="isFieldReadonly(field)"
                   :label="labelFor(field)"
                   :hint="addressSuggestHint(field)"
@@ -127,7 +131,8 @@
                 v-model="form[field.key]"
                 outlined
                 input-class="dialog-textarea-inner"
-                :lazy-rules="'ondemand'"
+                :lazy-rules="lazyRulesFor(field)"
+                :reactive-rules="hasRules(field)"
                 :type="htmlInputTypes.textarea"
                 :readonly="isFieldReadonly(field)"
                 :rows="field.rows == null ? 3 : field.rows"
@@ -148,7 +153,8 @@
                 outlined
                 stack-label
                 class="full-width permission-tree-qfield"
-                :lazy-rules="'ondemand'"
+                :lazy-rules="lazyRulesFor(field)"
+                :reactive-rules="hasRules(field)"
                 :model-value="form[field.key]"
                 :label="labelFor(field)"
                 :hint="hintFor(field)"
@@ -189,7 +195,8 @@
                 outlined
                 emit-value
                 map-options
-                :lazy-rules="'ondemand'"
+                :lazy-rules="lazyRulesFor(field)"
+                :reactive-rules="hasRules(field)"
                 :multiple="field.multiple === true"
                 :use-chips="field.multiple === true"
                 :behavior="qSelectBehaviorInModal(field)"
@@ -735,6 +742,21 @@ function plainInputAutocomplete(field) {
   return undefined
 }
 
+function hasRules(field) {
+  return Boolean(rulesFor(field)?.length)
+}
+
+function lazyRulesFor(field) {
+  if (field.lazyRules === false) {
+    return false
+  }
+  if (field.inputType === htmlInputTypes.email) {
+    return false
+  }
+
+  return 'ondemand'
+}
+
 function rulesFor(field) {
   const list = []
   if (field.rules?.length) {
@@ -865,7 +887,12 @@ function onFormValidationError() {
   })
 }
 
-function submit() {
+async function onFormSubmit() {
+  const valid = await formRef.value?.validate()
+  if (!valid) {
+    onFormValidationError()
+    return
+  }
   const payload = typeof props.formatPayload === typeNames.function
     ? props.formatPayload(form)
     : snapshotForm()

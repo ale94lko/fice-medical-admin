@@ -23,6 +23,15 @@ export function isEmpty(value) {
   return value === null || value === undefined || value === ''
 }
 
+export function isValidEmail(value) {
+  const v = String(value ?? '').trim()
+  if (!v) {
+    return false
+  }
+
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+}
+
 export function sanitizeTenantDomainInput(raw) {
   let s = String(raw ?? '').replace(/[^a-zA-Z0-9_]/g, '')
   while (s.length > 0 && /[0-9]/.test(s[0])) {
