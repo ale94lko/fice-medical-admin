@@ -58,7 +58,6 @@
             <q-item-section>{{ t('dashboard') }}</q-item-section>
           </q-item>
           <q-expansion-item
-            v-if="accordionMenu"
             v-model="administrationMenu"
             :content-inset-level="1"
             :label="t('administration')"
@@ -93,51 +92,6 @@
               <q-item-section>{{ t('permissions') }}</q-item-section>
             </q-item>
           </q-expansion-item>
-          <q-item clickable v-ripple v-else>
-            <q-item-section avatar>
-              <q-icon name="manage_accounts" />
-            </q-item-section>
-            <q-item-section>Administration</q-item-section>
-            <q-item-section side>
-              <q-icon v-if="administrationMenu" name="chevron_left" />
-              <q-icon v-else name="chevron_right" />
-            </q-item-section>
-            <q-menu
-              fit
-              anchor="top end"
-              self="top left"
-              class="app-drawer-submenu"
-              v-model="administrationMenu">
-              <q-item
-                clickable
-                v-ripple
-                to="/tenants"
-                :active-class="activeClass">
-                <q-item-section>{{ t('tenants') }}</q-item-section>
-              </q-item>
-              <q-item
-                clickable
-                v-ripple
-                to="/users"
-                :active-class="activeClass">
-                <q-item-section>{{ t('users') }}</q-item-section>
-              </q-item>
-              <q-item
-                clickable
-                v-ripple
-                to="/roles"
-                :active-class="activeClass">
-                <q-item-section>{{ t('roles') }}</q-item-section>
-              </q-item>
-              <q-item
-                clickable
-                v-ripple
-                to="/permissions"
-                :active-class="activeClass">
-                <q-item-section>{{ t('permissions') }}</q-item-section>
-              </q-item>
-            </q-menu>
-          </q-item>
         </q-list>
       </q-scroll-area>
       <div
@@ -176,7 +130,7 @@ import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from 'stores/auth-store.js'
-import { siteBreakpoints, siteBreakpointsPx } from 'components/constants.js'
+import { siteBreakpointsPx } from 'components/constants.js'
 import { useI18n } from 'vue-i18n'
 import ModalComponent from 'components/ModalComponent.vue'
 
@@ -199,12 +153,8 @@ const administrationMenu = ref(null)
 // Computed
 const windowWidth = computed(() => $q.screen.width)
 
-const mobileView = computed(() => $q.screen.name === siteBreakpoints.XS)
 const extraSmallView = computed(
   () => windowWidth.value <= siteBreakpointsPx.XXS
-)
-const accordionMenu = computed(
-  () => (extraSmallView.value || mobileView.value) && sidebarExpanded.value
 )
 const activeClass = computed(() => 'app-nav-item--active')
 
