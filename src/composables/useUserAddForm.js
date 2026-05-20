@@ -27,7 +27,9 @@ import {
 } from 'components/helpers.js'
 import {
   buildPermissionTreeNodes,
+  collectPermissionIdsFromTree,
   fetchAllPaginatedRaw,
+  filterPermissionTreeByModuleIds,
 } from 'src/utils/permission-catalog-tree.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -136,6 +138,37 @@ function extractRoleList(root) {
   return extractSubtenantList(root)
 }
 
+function buildTenantPlanModuleIdsMap(mappedTenants) {
+  const map = new Map()
+  for (const tenant of mappedTenants || []) {
+    const id = Number(tenant?.id)
+    if (!Number.isFinite(id)) {
+      continue
+    }
+    const moduleIds = Array.isArray(tenant.planModuleIds)
+      ? tenant.planModuleIds
+        .map(x => Number(x))
+        .filter(Number.isFinite)
+      : []
+    map.set(id, moduleIds)
+  }
+
+  return map
+}
+
+function pruneFormPermissionsToAllowed(form, allowedIds) {
+  const cur = form[uk.permissions]
+  if (!Array.isArray(cur)) {
+    return
+  }
+  const next = cur
+    .map(x => Number(x))
+    .filter(id => Number.isFinite(id) && allowedIds.has(id))
+  if (next.length !== cur.length) {
+    writeFormPermissions(form, next)
+  }
+}
+
 function createUserAddFormCatalog() {
   return {
     rolesOptions: ref([]),
@@ -143,8 +176,10 @@ function createUserAddFormCatalog() {
     tenantSelectOptions: ref([]),
     userTenantsLoading: ref(false),
     defaultNewUserTenantId: ref(null),
+    tenantPlanModuleIdsByTenantId: ref(new Map()),
     subtenantSelectOptions: ref([]),
     subtenantsLoading: ref(false),
+    allPermissionTreeNodes: ref([]),
     permissionTreeNodes: ref([]),
     permissionsTreeLoading: ref(false),
     permissionCodeToId: ref(new Map()),
@@ -234,8 +269,26 @@ function createUserAddFormLoaders(ctx) {
     rolesLoadSeqRef,
   } = ctx
 
+  function applyTenantPermissionFilter(tenantId, form) {
+    const id = Number(tenantId)
+    const moduleIds = Number.isFinite(id)
+      ? catalog.tenantPlanModuleIdsByTenantId.value.get(id) ?? []
+      : []
+    const filtered = filterPermissionTreeByModuleIds(
+      catalog.allPermissionTreeNodes.value,
+      moduleIds,
+    )
+    catalog.permissionTreeNodes.value = filtered
+    catalog.knownPermissionIds.value = collectPermissionIdsFromTree(filtered)
+    if (form) {
+      pruneFormPermissionsToAllowed(form, catalog.knownPermissionIds.value)
+    }
+  }
+
   async function loadPermissionCatalog(opts = {}) {
-    if (opts.force !== true && catalog.permissionTreeNodes.value.length > 0) {
+    const catalogLoaded =
+      catalog.allPermissionTreeNodes.value.length > 0
+    if (opts.force !== true && catalogLoaded) {
       return
     }
     catalog.permissionsTreeLoading.value = true
@@ -244,26 +297,18 @@ function createUserAddFormLoaders(ctx) {
         fetchAllPaginatedRaw(apiPaths.modulesList),
         fetchAllPaginatedRaw(apiPaths.permissionsList),
       ])
-      catalog.permissionTreeNodes.value = buildPermissionTreeNodes(
+      catalog.allPermissionTreeNodes.value = buildPermissionTreeNodes(
         moduleRows,
         permissionRows,
         t,
       )
+      catalog.permissionTreeNodes.value = []
       catalog.permissionCodeToId.value = buildPermissionCodeToIdMap(
         permissionRows,
       )
-      catalog.knownPermissionIds.value = new Set(
-        permissionRows
-          .map(row => {
-            const id = Number(
-              row.id ?? row.permission_id ?? row.permissionId,
-            )
-
-            return Number.isFinite(id) ? id : null
-          })
-          .filter(id => id != null),
-      )
+      catalog.knownPermissionIds.value = new Set()
     } catch {
+      catalog.allPermissionTreeNodes.value = []
       catalog.permissionTreeNodes.value = []
       catalog.permissionCodeToId.value = new Map()
       catalog.knownPermissionIds.value = new Set()
@@ -358,10 +403,13 @@ function createUserAddFormLoaders(ctx) {
         .filter(Boolean)
         .filter(t => !isMainTenant(t))
       catalog.tenantSelectOptions.value = mapTenantsToSelectOptions(mapped)
+      catalog.tenantPlanModuleIdsByTenantId.value =
+        buildTenantPlanModuleIdsMap(mapped)
       catalog.defaultNewUserTenantId.value =
         resolveDefaultUserTenantId(mapped, '')
     } catch {
       catalog.tenantSelectOptions.value = []
+      catalog.tenantPlanModuleIdsByTenantId.value = new Map()
       catalog.defaultNewUserTenantId.value = null
       $q.notify({
         type: quasarNotifyTypes.warning,
@@ -449,6 +497,7 @@ function createUserAddFormLoaders(ctx) {
   async function afterTenantSelected(form, tenantId) {
     clearFormSubtenantIds(form)
     clearFormRoles(form)
+    applyTenantPermissionFilter(tenantId, form)
     await loadSubtenantsForTenant(tenantId)
     await loadRolesForTenant(tenantId)
     await nextTick()
@@ -465,8 +514,19 @@ function createUserAddFormLoaders(ctx) {
     const tenantToLoad =
       editRow?.[uk.tenantId] ?? catalog.defaultNewUserTenantId.value
     if (Number.isFinite(Number(tenantToLoad))) {
+      applyTenantPermissionFilter(Number(tenantToLoad))
       await loadSubtenantsForTenant(Number(tenantToLoad))
       await loadRolesForTenant(Number(tenantToLoad))
+    } else {
+      catalog.permissionTreeNodes.value = []
+      catalog.knownPermissionIds.value = new Set()
+    }
+  }
+
+  function onDialogReady(form) {
+    const tenantId = form?.[uk.tenantId]
+    if (Number.isFinite(Number(tenantId))) {
+      applyTenantPermissionFilter(Number(tenantId), form)
     }
   }
 
@@ -475,6 +535,7 @@ function createUserAddFormLoaders(ctx) {
     afterRolesSelected,
     afterTenantSelected,
     onDialogOpen,
+    onDialogReady,
   }
 }
 
@@ -595,6 +656,7 @@ function createUserAddFormFields(ctx) {
         treeNodes: () => catalog.permissionTreeNodes.value,
         loading: catalog.permissionsTreeLoading,
         treeNoNodesLabelKey: 'permissionTreeEmpty',
+        disable: form => !Number.isFinite(Number(form[uk.tenantId])),
       },
       {
         key: uk.changePassword,
@@ -636,6 +698,7 @@ export function useUserAddForm(editingRef) {
     fields,
     formatUserPayload: form => formatUserFormPayload(form, editingRef),
     onDialogOpen: loaders.onDialogOpen,
+    onDialogReady: loaders.onDialogReady,
     defaultNewUserTenantId: catalog.defaultNewUserTenantId,
   }
 }

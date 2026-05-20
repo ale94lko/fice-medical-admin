@@ -664,6 +664,25 @@ export function isMainTenant(row) {
   return name === key || domain === key || schema === key
 }
 
+export function extractPlanModuleIds(plan) {
+  if (!plan || typeof plan !== typeNames.object) {
+    return []
+  }
+  const modules = plan.modules
+  if (!Array.isArray(modules)) {
+    return []
+  }
+  const ids = []
+  for (const mod of modules) {
+    const id = Number(mod?.id)
+    if (Number.isFinite(id)) {
+      ids.push(id)
+    }
+  }
+
+  return ids
+}
+
 export function mapTenant(tenant) {
   if (!tenant || typeof tenant !== typeNames.object) {
     return null
@@ -696,6 +715,7 @@ export function mapTenant(tenant) {
     [tk.notes]: tenant.notes ?? '',
     [tk.state]: tenant.state ?? null,
     [tk.country]: tenant.country ?? null,
+    planModuleIds: extractPlanModuleIds(tenant.plan),
   }
 }
 

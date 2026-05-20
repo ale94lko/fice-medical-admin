@@ -7,10 +7,10 @@
 }
 
 .app-header {
-  background: $surface !important;
-  color: $text-strong;
-  box-shadow: $shadow-sm;
-  border-bottom: 1px solid $border-subtle;
+  background: $shell-bg !important;
+  color: $shell-text;
+  box-shadow: none;
+  border-bottom: 1px solid $shell-border;
 
   .q-toolbar {
     min-height: 56px;
@@ -22,18 +22,18 @@
     font-weight: 600;
     font-size: 1.05rem;
     letter-spacing: -0.02em;
-    color: $primary;
+    color: $shell-text;
   }
 
   .q-btn {
-    color: $text-muted;
+    color: $shell-text-muted;
   }
 }
 
 .app-footer {
-  background: $surface !important;
-  color: $text-muted;
-  border-top: 1px solid $border-subtle;
+  background: $shell-bg !important;
+  color: $shell-text-muted;
+  border-top: 1px solid $shell-border;
   box-shadow: none;
 
   .q-toolbar {
@@ -43,28 +43,28 @@
 
   label {
     font-weight: 400;
-    opacity: 0.9;
+    color: $shell-text-muted;
   }
 }
 
 .app-drawer {
-  background: $surface !important;
-  color: $text-strong;
-  border-right: 1px solid $border-subtle !important;
+  background: $shell-bg !important;
+  color: $shell-text;
+  border-right: 1px solid $shell-border !important;
 
   .q-item {
     border-radius: $radius-md;
     margin: 2px 10px;
     min-height: 44px;
-    color: $text-strong;
+    color: $shell-text;
     transition: background-color 0.15s ease;
 
     .q-icon {
-      color: $text-muted;
+      color: $shell-text-muted;
     }
 
     &:hover {
-      background: $surface-muted;
+      background: $shell-bg-hover;
     }
   }
 
@@ -87,11 +87,11 @@
 
 .app-nav-item--active {
   background: $nav-active-bg !important;
-  color: $primary !important;
+  color: $shell-text !important;
   font-weight: 600;
 
   .q-icon {
-    color: $primary !important;
+    color: $shell-text !important;
   }
 }
 
@@ -109,6 +109,7 @@
 
 .app-drawer .icon-hide .q-btn {
   border-radius: 50%;
+  background: $surface !important;
   box-shadow: $shadow-sm;
   color: $text-muted;
 }
@@ -236,19 +237,20 @@ input:-webkit-autofill {
   -webkit-text-fill-color: #000 !important;
 }
 
-.q-expansion-item__container {
+.app-drawer .q-expansion-item__container {
   .q-item {
+    color: $shell-text;
+
     .q-item__section {
       .q-icon {
-        color: $text-muted !important;
+        color: $shell-text-muted !important;
       }
     }
 
-    &.app-nav-item--active,
-    &.text-primary {
+    &.app-nav-item--active {
       .q-item__section {
         .q-icon {
-          color: $primary !important;
+          color: $shell-text !important;
         }
       }
     }

@@ -142,3 +142,44 @@ export function buildPermissionTreeNodes(
 
   return tree
 }
+
+export function filterPermissionTreeByModuleIds(treeNodes, moduleIds) {
+  if (!Array.isArray(treeNodes) || treeNodes.length === 0) {
+    return []
+  }
+  const allowed = new Set(
+    (moduleIds || [])
+      .map(id => Number(id))
+      .filter(Number.isFinite),
+  )
+  if (allowed.size === 0) {
+    return []
+  }
+
+  return treeNodes.filter(branch => {
+    const key = branch?.nodeKey
+    if (typeof key !== 'string' || !key.startsWith('m-')) {
+      return false
+    }
+    if (key === 'm-uncategorized') {
+      return false
+    }
+    const mid = Number(key.slice(2))
+
+    return Number.isFinite(mid) && allowed.has(mid)
+  })
+}
+
+export function collectPermissionIdsFromTree(treeNodes) {
+  const ids = new Set()
+  for (const branch of treeNodes || []) {
+    for (const leaf of branch.children || []) {
+      const n = Number(leaf.nodeKey)
+      if (Number.isFinite(n)) {
+        ids.add(n)
+      }
+    }
+  }
+
+  return ids
+}

@@ -97,6 +97,7 @@
       :fields="userAddFields"
       :initial-values="userDialogInitialValues"
       :on-open="onUserDialogOpen"
+      :after-open="onUserDialogReady"
       :format-payload="formatUserDialogPayload"
       :saving="addSaving"
       @save="onSaveUser"/>
@@ -391,6 +392,7 @@ const {
   fields: userAddFields,
   formatUserPayload,
   onDialogOpen: onUserDialogOpen,
+  onDialogReady: onUserDialogReady,
   defaultNewUserTenantId,
 } = useUserAddForm(userBeingEdited)
 

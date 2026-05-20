@@ -153,12 +153,13 @@
                 :label="labelFor(field)"
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
-                :readonly="isFieldReadonly(field)">
+                :readonly="isFieldReadonly(field) || disableFor(field)">
                 <template #control>
                   <div
                     class="relative-position full-width permission-tree-scroll"
                     :class="{
-                      'permission-tree-readonly': isFieldReadonly(field),
+                      'permission-tree-readonly':
+                        isFieldReadonly(field) || disableFor(field),
                     }">
                     <q-inner-loading
                       :showing="loadingFor(field)"
@@ -315,6 +316,7 @@ const props = defineProps({
   submitKey: { type: String, default: dialogI18nKeys.save },
   formatPayload: { type: Function, default: null },
   onOpen: { type: Function, default: null },
+  afterOpen: { type: Function, default: null },
   initialValues: { type: Object, default: null },
   persistent: { type: Boolean, default: true },
   minWidth: { type: String, default: 'min(520px, 100vw - 24px)' },
@@ -587,6 +589,9 @@ watch(
       await props.onOpen()
     }
     applyInitialValues()
+    if (typeof props.afterOpen === typeNames.function) {
+      await props.afterOpen(form)
+    }
     await nextTick()
     formRef.value?.resetValidation()
   },
