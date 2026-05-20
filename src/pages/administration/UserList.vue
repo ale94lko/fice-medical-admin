@@ -1,7 +1,7 @@
 <template>
-  <q-page>
+  <q-page class="admin-page">
     <q-table
-      class="table"
+      class="table admin-data-table"
       row-key="id"
       binary-state-sort
       v-model:pagination="tablePagination"
@@ -18,7 +18,9 @@
       <template v-slot:top>
         <q-btn
           no-caps
+          unelevated
           color="primary"
+          class="app-btn-primary"
           icon="add"
           :disable="
             loading || addSaving || deleteSaving || passwordChangeSaving
@@ -28,8 +30,10 @@
           @click="addUser"/>
         <q-space />
         <q-btn
-          color="secondary"
-          class="text-teal-10"
+          outline
+          no-caps
+          color="primary"
+          class="app-btn-outline"
           icon="filter_alt"
           badge-color="primary"
           :disable="loading || deleteSaving || passwordChangeSaving"
@@ -103,7 +107,7 @@
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
       <q-card class="user-filter-card">
-        <q-toolbar class="q-px-md bg-teal-10 text-white">
+        <q-toolbar class="q-px-md app-dialog-toolbar">
           <q-toolbar-title>{{ t('userFiltersTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -151,8 +155,9 @@
           <q-btn
             no-caps
             padding="7px 30px"
-            color="secondary"
-            class="text-teal-10"
+            outline
+            color="primary"
+            class="app-btn-outline"
             :title="t('userFilterClear')"
             :label="t('userFilterClear')"
             @click="clearUserFilters"/>
@@ -183,7 +188,7 @@
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
       <q-card v-if="userPasswordTarget" class="user-password-card">
-        <q-toolbar class="q-px-md bg-teal-10 text-white">
+        <q-toolbar class="q-px-md app-dialog-toolbar">
           <q-toolbar-title>{{ t('changeUserPasswordTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -254,8 +259,9 @@
             <q-btn
               no-caps
               padding="7px 30px"
-              color="secondary"
-              class="text-teal-10"
+              outline
+              color="primary"
+              class="app-btn-outline"
               :title="t('cancel')"
               :label="t('cancel')"
               :disable="passwordChangeSaving"
@@ -279,7 +285,7 @@
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
       <q-card v-if="userViewing" class="user-view-card">
-        <q-toolbar class="q-px-md bg-teal-10 text-white">
+        <q-toolbar class="q-px-md app-dialog-toolbar">
           <q-toolbar-title>{{ t('viewUserTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -845,7 +851,7 @@ function isUserStatusZero(row) {
 }
 
 function userRowClass(row) {
-  return isUserStatusZero(row) ? 'user-row--status-zero' : ''
+  return isUserStatusZero(row) ? 'data-row--inactive' : ''
 }
 
 const deleteUserMessage = computed(() => {
@@ -979,14 +985,6 @@ async function onConfirmDeleteUser() {
 </script>
 
 <style scoped>
-  :deep(tbody tr.user-row--status-zero td:not(:last-child)) {
-    background-color: rgba(244, 67, 54, 0.12) !important;
-  }
-
-  :deep(.q-table--grid .user-row--status-zero) {
-    background-color: rgba(244, 67, 54, 0.12);
-  }
-
   .user-filter-card {
     min-width: min(400px, 100vw - 32px);
     max-width: 440px;

@@ -1,6 +1,6 @@
 <template>
-  <q-layout view="hHh Lpr lff">
-    <q-header elevated class="bg-teal-10">
+  <q-layout view="hHh Lpr lff" class="app-layout">
+    <q-header bordered class="app-header">
       <q-toolbar>
         <q-btn
           flat
@@ -29,14 +29,14 @@
         </q-btn>
       </q-toolbar>
     </q-header>
-    <q-footer reveal elevated>
+    <q-footer class="app-footer">
       <q-toolbar class="justify-center">
         <label>&copy; 2025 FiCE Medical Admin. Powered by LandA Apps</label>
       </q-toolbar>
     </q-footer>
     <q-drawer
-      class="bg-teal-10"
       v-model="sidebar"
+      class="app-drawer"
       show-if-above
       bordered
       :mini="sidebar && !sidebarExpanded"
@@ -44,7 +44,7 @@
       @mouseover="openDrawer()"
       @mouseout="closeDrawer()">
       <q-scroll-area
-        class="fit text-white"
+        class="fit"
         :horizontal-thumb-style="{ opacity: 0 }">
         <q-list padding>
           <q-item
@@ -98,7 +98,7 @@
               <q-icon name="manage_accounts" />
             </q-item-section>
             <q-item-section>Administration</q-item-section>
-            <q-item-section side class="text-white">
+            <q-item-section side>
               <q-icon v-if="administrationMenu" name="chevron_left" />
               <q-icon v-else name="chevron_right" />
             </q-item-section>
@@ -106,7 +106,7 @@
               fit
               anchor="top end"
               self="top left"
-              class="bg-teal-9 text-white"
+              class="app-drawer-submenu"
               v-model="administrationMenu">
               <q-item
                 clickable
@@ -144,14 +144,14 @@
         v-if="sidebarExpanded && !extraSmallView" class="absolute icon-hide">
         <q-btn
           dense
-          class="bg-white"
+          flat
           icon="chevron_left"
           @click="drawerClick(true)" />
       </div>
       <div v-else-if="!extraSmallView" class="absolute icon-hide">
         <q-btn
           dense
-          class="bg-white"
+          flat
           icon="chevron_right"
           @click="drawerClick(false)" />
       </div>
@@ -206,7 +206,7 @@ const extraSmallView = computed(
 const accordionMenu = computed(
   () => (extraSmallView.value || mobileView.value) && sidebarExpanded.value
 )
-const activeClass = computed(() => 'text-primary bg-blue-1')
+const activeClass = computed(() => 'app-nav-item--active')
 
 // Methods
 const { t } = useI18n()

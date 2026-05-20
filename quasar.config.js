@@ -44,6 +44,13 @@ export default defineConfig((ctx) => {
         notify: {
           position: 'top',
         },
+        btn: {
+          unelevated: true,
+          rounded: true,
+        },
+        card: {
+          flat: false,
+        },
       },
       lang: 'en-US',
       plugins: [

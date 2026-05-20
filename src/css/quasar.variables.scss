@@ -1,28 +1,29 @@
-// Quasar SCSS (& Sass) Variables
-// --------------------------------------------------
-// To customize the look and feel of this app, you can override
-// the Sass/SCSS variables found in Quasar's source Sass/SCSS files.
+// Quasar SCSS variables — FiCE Medical Admin (modern palette)
 
-// Check documentation for full list of Quasar variables
+$primary   : #0f766e;
+$secondary : #e2e8f0;
+$accent    : #14b8a6;
 
-// Your own variables (that are declared here) and Quasar's own
-// ones will be available out of the box in your .vue/.scss/.sass files
+$dark      : #0f172a;
+$dark-page : #0f172a;
 
-// It's highly recommended to change the default colors
-// to match your app's branding.
-// Tip: Use the "Theme Builder" on Quasar's documentation website.
+$positive  : #16a34a;
+$negative  : #dc2626;
+$info      : #0ea5e9;
+$warning   : #d97706;
 
-$primary   : #004D40;
-$secondary : #B2DFDB;
-$accent    : #234E52;
+$white     : #ffffff;
+$secondary-2: #f0fdfa;
 
-$dark      : #1D1D1D;
-$dark-page : #121212;
-
-$positive  : #21BA45;
-$negative  : #C10015;
-$info      : #31CCEC;
-$warning   : #F2C037;
-
-$white     : #FFFFFF;
-$secondary-2: #E6F2F0;
+// App surfaces (available in .vue / .scss)
+$page-bg         : #f1f5f9;
+$surface         : #ffffff;
+$surface-muted   : #f8fafc;
+$border-subtle   : rgba(15, 23, 42, 0.08);
+$text-muted      : #64748b;
+$text-strong     : #0f172a;
+$nav-active-bg   : rgba(15, 118, 110, 0.1);
+$radius-md       : 10px;
+$radius-lg       : 14px;
+$shadow-sm       : 0 1px 2px rgba(15, 23, 42, 0.06);
+$shadow-md       : 0 8px 24px rgba(15, 23, 42, 0.08);

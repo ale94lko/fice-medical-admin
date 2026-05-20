@@ -1,7 +1,7 @@
 <template>
-  <q-page>
+  <q-page class="admin-page">
     <q-table
-      class="table"
+      class="table admin-data-table"
       row-key="id"
       binary-state-sort
       v-model:pagination="tablePagination"
@@ -18,7 +18,9 @@
       <template v-slot:top>
         <q-btn
           no-caps
+          unelevated
           color="primary"
+          class="app-btn-primary"
           icon="add"
           :disable="loading || addSaving || deleteSaving"
           :title="t('addTenant')"
@@ -26,8 +28,10 @@
           @click="addTenant"/>
         <q-space />
         <q-btn
-          color="secondary"
-          class="text-teal-10"
+          outline
+          no-caps
+          color="primary"
+          class="app-btn-outline"
           icon="filter_alt"
           badge-color="primary"
           :disable="loading || deleteSaving"
@@ -43,6 +47,7 @@
             round
             icon="visibility"
             color="primary"
+            class="app-btn-icon-action"
             :size="siteBreakpoints.SM"
             :disable="addSaving || deleteSaving"
             :title="t('viewTenant')"
@@ -91,7 +96,7 @@
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
       <q-card class="tenant-filter-card">
-        <q-toolbar class="q-px-md bg-teal-10 text-white">
+        <q-toolbar class="q-px-md app-dialog-toolbar">
           <q-toolbar-title>{{ t('tenantFiltersTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -169,8 +174,9 @@
           <q-btn
             no-caps
             padding="7px 30px"
-            color="secondary"
-            class="text-teal-10"
+            outline
+            color="primary"
+            class="app-btn-outline"
             :title="t('tenantFilterClear')"
             :label="t('tenantFilterClear')"
             @click="clearTenantFilters"/>
@@ -200,7 +206,7 @@
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
       <q-card v-if="tenantViewing" class="tenant-view-card">
-        <q-toolbar class="q-px-md bg-teal-10 text-white">
+        <q-toolbar class="q-px-md app-dialog-toolbar">
           <q-toolbar-title>{{ t('viewTenantTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -735,7 +741,7 @@ function isTenantStatusZero(row) {
 }
 
 function tenantRowClass(row) {
-  return isTenantStatusZero(row) ? 'tenant-row--status-zero' : ''
+  return isTenantStatusZero(row) ? 'data-row--inactive' : ''
 }
 
 const deleteTenantMessage = computed(() => {
@@ -865,14 +871,6 @@ async function onConfirmDeleteTenant() {
 </script>
 
 <style scoped>
-  :deep(tbody tr.tenant-row--status-zero td:not(:last-child)) {
-    background-color: rgba(244, 67, 54, 0.12) !important;
-  }
-
-  :deep(.q-table--grid .tenant-row--status-zero) {
-    background-color: rgba(244, 67, 54, 0.12);
-  }
-
   .tenant-filter-card {
     min-width: min(400px, 100vw - 32px);
     max-width: 440px;

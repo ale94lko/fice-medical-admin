@@ -6,7 +6,7 @@
     :persistent="persistent"
     @update:model-value="emit('update:modelValue', $event)">
     <q-card class="modal-card" :style="cardStyle">
-      <q-toolbar class="q-px-md bg-teal-10 text-white">
+      <q-toolbar class="q-px-md app-dialog-toolbar">
         <q-toolbar-title>{{ titleText }}</q-toolbar-title>
         <q-btn
           flat
@@ -231,8 +231,9 @@
           <q-btn
             no-caps
             padding="7px 30px"
-            color="secondary"
-            class="text-teal-10"
+            outline
+            color="primary"
+            class="app-btn-outline"
             :title="t(cancelKey)"
             :label="t(cancelKey)"
             :disable="saving"

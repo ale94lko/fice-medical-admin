@@ -1,6 +1,236 @@
 // app global css in SCSS form
 @import 'quasar.variables';
 
+// —— Layout shell ——
+.app-layout .q-page-container {
+  background: $page-bg;
+}
+
+.app-header {
+  background: $surface !important;
+  color: $text-strong;
+  box-shadow: $shadow-sm;
+  border-bottom: 1px solid $border-subtle;
+
+  .q-toolbar {
+    min-height: 56px;
+    padding-left: 12px;
+    padding-right: 16px;
+  }
+
+  .q-toolbar-title {
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+    color: $primary;
+  }
+
+  .q-btn {
+    color: $text-muted;
+  }
+}
+
+.app-footer {
+  background: $surface !important;
+  color: $text-muted;
+  border-top: 1px solid $border-subtle;
+  box-shadow: none;
+
+  .q-toolbar {
+    min-height: 40px;
+    font-size: 0.75rem;
+  }
+
+  label {
+    font-weight: 400;
+    opacity: 0.9;
+  }
+}
+
+.app-drawer {
+  background: $surface !important;
+  color: $text-strong;
+  border-right: 1px solid $border-subtle !important;
+
+  .q-item {
+    border-radius: $radius-md;
+    margin: 2px 10px;
+    min-height: 44px;
+    color: $text-strong;
+    transition: background-color 0.15s ease;
+
+    .q-icon {
+      color: $text-muted;
+    }
+
+    &:hover {
+      background: $surface-muted;
+    }
+  }
+
+  .q-expansion-item {
+    margin: 2px 10px;
+    border-radius: $radius-md;
+
+    > .q-expansion-item__container > .q-item {
+      margin: 0;
+    }
+  }
+
+  .q-expansion-item__content .q-item {
+    margin-left: 4px;
+    margin-right: 4px;
+    padding-left: 12px;
+    font-size: 0.9rem;
+  }
+}
+
+.app-nav-item--active {
+  background: $nav-active-bg !important;
+  color: $primary !important;
+  font-weight: 600;
+
+  .q-icon {
+    color: $primary !important;
+  }
+}
+
+.app-drawer-submenu {
+  background: $surface !important;
+  color: $text-strong !important;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-md;
+  box-shadow: $shadow-md;
+
+  .q-item {
+    min-height: 40px;
+  }
+}
+
+.app-drawer .icon-hide .q-btn {
+  border-radius: 50%;
+  box-shadow: $shadow-sm;
+  color: $text-muted;
+}
+
+// —— Admin pages & data tables ——
+.admin-page {
+  padding: 20px 24px 28px;
+}
+
+.admin-data-table {
+  background: $surface;
+  border-radius: $radius-lg;
+  border: 1px solid $border-subtle;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+
+  .q-table__top {
+    padding: 16px 20px;
+    gap: 12px;
+    border-bottom: 1px solid $border-subtle;
+    background: $surface;
+  }
+
+  .q-table__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: $text-strong;
+  }
+
+  thead tr th {
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: $text-muted;
+    background: $surface-muted !important;
+    border-bottom: 1px solid $border-subtle;
+    padding: 12px 16px;
+  }
+
+  tbody tr td {
+    padding: 14px 16px;
+    font-size: 0.925rem;
+    color: $text-strong;
+    border-bottom: 1px solid $border-subtle;
+  }
+
+  tbody tr:hover td:not(:last-child) {
+    background: $surface-muted !important;
+  }
+
+  tbody tr.data-row--inactive td:not(:last-child) {
+    background: #fef2f2 !important;
+    box-shadow: inset 3px 0 0 $negative;
+  }
+
+  .q-table--grid .data-row--inactive {
+    background: #fef2f2;
+    box-shadow: inset 3px 0 0 $negative;
+  }
+
+  .q-table__bottom {
+    padding: 10px 16px;
+    border-top: 1px solid $border-subtle;
+    background: $surface-muted;
+    color: $text-muted;
+    font-size: 0.85rem;
+  }
+
+  .q-table__control .q-btn {
+    color: $text-muted;
+  }
+}
+
+.app-btn-primary {
+  border-radius: $radius-md;
+  font-weight: 600;
+  padding: 8px 18px;
+}
+
+.app-btn-outline {
+  border-radius: $radius-md;
+  font-weight: 500;
+}
+
+.app-btn-icon-action {
+  opacity: 0.85;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+
+  &:hover:not(.disabled) {
+    opacity: 1;
+    background: $nav-active-bg;
+  }
+}
+
+// —— Dialogs & modals ——
+.app-dialog-toolbar {
+  background: linear-gradient(135deg, $primary 0%, #115e59 100%) !important;
+  color: $white !important;
+  min-height: 52px;
+
+  .q-toolbar-title {
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+}
+
+.modal-card {
+  border-radius: $radius-lg !important;
+  overflow: hidden;
+  box-shadow: $shadow-md;
+}
+
+.primary-action {
+  margin-left: 16px;
+  border-radius: $radius-md;
+  font-weight: 600;
+  padding: 8px 28px;
+}
+
+// —— Legacy / shared ——
 input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 1000px white inset !important;
   -webkit-text-fill-color: #000 !important;
@@ -10,14 +240,15 @@ input:-webkit-autofill {
   .q-item {
     .q-item__section {
       .q-icon {
-        color: $white !important;
+        color: $text-muted !important;
       }
     }
 
+    &.app-nav-item--active,
     &.text-primary {
       .q-item__section {
         .q-icon {
-          color: var(--q-primary) !important;
+          color: $primary !important;
         }
       }
     }
@@ -25,15 +256,15 @@ input:-webkit-autofill {
 }
 
 .q-table__container {
-  max-height: calc(100vh - 100px);
+  max-height: calc(100vh - 140px);
 
   &.table {
     thead tr:last-child th:last-child {
-      background-color: $white !important;
+      background-color: $surface-muted !important;
     }
 
     td:last-child {
-      background-color: $white !important;
+      background-color: $surface !important;
     }
 
     th:last-child,
@@ -41,13 +272,13 @@ input:-webkit-autofill {
       position: sticky;
       right: 0;
       z-index: 2;
-      box-shadow: -6px 0 10px -6px rgba(0, 0, 0, 0.12);
+      box-shadow: -4px 0 12px -4px rgba(15, 23, 42, 0.1);
     }
   }
 }
 
 .login-container {
-  background-color: $secondary-2;
+  background: linear-gradient(160deg, $secondary-2 0%, $page-bg 55%, $surface 100%);
 
   .login-card {
     min-width: 100%;
@@ -59,9 +290,11 @@ input:-webkit-autofill {
     }
 
     .my-card {
-      width: 350px;
-      padding: 20px 10px;
-      border-radius: 10px !important;
+      width: 380px;
+      padding: 28px 24px;
+      border-radius: $radius-lg !important;
+      box-shadow: $shadow-md;
+      border: 1px solid $border-subtle;
 
       .login-inputs {
         padding-bottom: 0 !important;
@@ -80,8 +313,13 @@ input:-webkit-autofill {
 
         .forgot-password {
           margin: 10px;
-          color: #00796B;
+          color: $primary;
           cursor: pointer;
+          font-weight: 500;
+
+          &:hover {
+            text-decoration: underline;
+          }
         }
       }
     }
@@ -95,8 +333,17 @@ input:-webkit-autofill {
 
 .user-menu {
   min-width: 200px;
+  border-radius: $radius-md;
+  border: 1px solid $border-subtle;
+  box-shadow: $shadow-md;
 }
 
 .q-notifications .q-notifications__list--top {
-  top: 54px !important;
+  top: 60px !important;
+}
+
+// —— Error page ——
+.error-page {
+  background: linear-gradient(160deg, $primary 0%, #134e4a 100%);
+  color: $white;
 }

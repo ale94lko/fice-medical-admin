@@ -11,7 +11,8 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { passwordToggleIconName } from 'src/composables/usePasswordVisibility.js'
+import { passwordToggleIconName }
+  from 'src/composables/usePasswordVisibility.js'
 
 const props = defineProps({
   showPlain: {

@@ -1,7 +1,7 @@
 <template>
-  <q-page>
+  <q-page class="admin-page">
     <q-table
-      class="table"
+      class="table admin-data-table"
       row-key="id"
       binary-state-sort
       v-model:pagination="tablePagination"
@@ -16,8 +16,10 @@
       <template v-slot:top>
         <q-space />
         <q-btn
-          color="secondary"
-          class="text-teal-10"
+          outline
+          no-caps
+          color="primary"
+          class="app-btn-outline"
           icon="filter_alt"
           badge-color="primary"
           :disable="loading || editSaving"
@@ -67,7 +69,7 @@
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
       <q-card class="permission-filter-card">
-        <q-toolbar class="q-px-md bg-teal-10 text-white">
+        <q-toolbar class="q-px-md app-dialog-toolbar">
           <q-toolbar-title>{{ t('permissionFiltersTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -122,8 +124,9 @@
           <q-btn
             no-caps
             padding="7px 30px"
-            color="secondary"
-            class="text-teal-10"
+            outline
+            color="primary"
+            class="app-btn-outline"
             :title="t('roleFilterClear')"
             :label="t('roleFilterClear')"
             @click="clearPermissionFilters"/>
@@ -144,7 +147,7 @@
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
       <q-card v-if="permissionViewing" class="permission-view-card">
-        <q-toolbar class="q-px-md bg-teal-10 text-white">
+        <q-toolbar class="q-px-md app-dialog-toolbar">
           <q-toolbar-title>{{ t('viewPermissionTitle') }}</q-toolbar-title>
           <q-btn
             flat
