@@ -91,6 +91,20 @@
               :active-class="activeClass">
               <q-item-section>{{ t('permissions') }}</q-item-section>
             </q-item>
+            <q-item
+              clickable
+              v-ripple
+              to="/catalogs"
+              :active-class="activeClass">
+              <q-item-section>{{ t('catalogs') }}</q-item-section>
+            </q-item>
+            <q-item
+              clickable
+              v-ripple
+              to="/plans"
+              :active-class="activeClass">
+              <q-item-section>{{ t('plans') }}</q-item-section>
+            </q-item>
           </q-expansion-item>
         </q-list>
       </q-scroll-area>

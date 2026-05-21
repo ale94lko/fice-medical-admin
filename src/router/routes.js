@@ -23,6 +23,14 @@ const routes = [
         path: 'permissions',
         component: () => import('pages/administration/PermissionList.vue'),
       },
+      {
+        path: 'catalogs',
+        component: () => import('pages/administration/CatalogList.vue'),
+      },
+      {
+        path: 'plans',
+        component: () => import('pages/administration/PlanList.vue'),
+      },
     ],
     meta: { requiresAuth: true },
   },

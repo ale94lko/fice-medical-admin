@@ -757,6 +757,11 @@ function lazyRulesFor(field) {
   return 'ondemand'
 }
 
+/** Reserves q-field bottom slot height (matches validated fields). */
+function validationSpacerRule() {
+  return true
+}
+
 function rulesFor(field) {
   const list = []
   if (field.rules?.length) {
@@ -773,6 +778,13 @@ function rulesFor(field) {
 
       return true
     })
+  }
+  if (
+    !list.length
+    && field.kind !== fieldTypes.checkbox
+    && field.reserveValidationSpace !== false
+  ) {
+    list.push(validationSpacerRule)
   }
 
   return list.length ? list : undefined
@@ -919,6 +931,10 @@ async function onFormSubmit() {
   .dialog-field-row {
     width: 100%;
     min-width: 0;
+  }
+
+  .dialog-field-row :deep(.q-field--outlined .q-field__bottom) {
+    min-height: 20px;
   }
 
   .select-options-search-wrap {

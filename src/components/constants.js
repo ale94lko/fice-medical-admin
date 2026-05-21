@@ -21,7 +21,6 @@ export const apiPaths = {
   tenantsCreate: '/admin-tenant/v1/tenants/create',
   usersList: '/admin-tenant/v1/users',
   usersRegister: '/admin-tenant/v1/users/register',
-  usersUpdate: '/admin-tenant/v1/users/update',
   usersChangePassword: '/admin-tenant/v1/users/change-password',
   rolesList: '/roles/v1',
   rolesCreate: '/admin-tenant/v1/role/add',
@@ -29,6 +28,10 @@ export const apiPaths = {
   permissionsList: '/permissions/v1',
   permissionsUpdate: '/permissions/v1/update',
   modulesList: '/modules/v1',
+  modulesCreate: '/modules/v1/create',
+  modulesUpdate: '/modules/v1/update',
+  catalogList: '/admin-tenant/v1/catalog',
+  catalogCreate: '/admin-tenant/v1/catalog/create',
   oauthLogin: '/oauth/v1/login',
   oauthRefresh: '/oauth/v1/refresh',
   oauthResetPassword: '/oauth/v1/reset-password',
@@ -164,6 +167,71 @@ export const permissionFieldKeys = {
 
 export const permissionListColumnKeys = {
   actions: 'actions',
+}
+
+export const moduleFieldKeys = {
+  name: 'name',
+  description: 'description',
+}
+
+export const moduleListColumnKeys = {
+  actions: 'actions',
+}
+
+export const catalogFieldKeys = {
+  name: 'name',
+  scope: 'scope',
+  description: 'description',
+  status: 'status',
+  items: 'items',
+}
+
+export const catalogItemFieldKeys = {
+  label: 'label',
+  code: 'code',
+  description: 'description',
+  tenantId: 'tenantId',
+}
+
+export const catalogListColumnKeys = {
+  actions: 'actions',
+  itemCount: 'itemCount',
+}
+
+export const catalogScopes = {
+  global: 'global',
+  tenant: 'tenant',
+}
+
+export const catalogFormDefaults = {
+  statusActive: 1,
+  scope: catalogScopes.global,
+}
+
+export const planFieldKeys = {
+  name: 'name',
+  description: 'description',
+  price: 'price',
+  status: 'status',
+  billingCycle: 'billingCycle',
+  features: 'features',
+  modules: 'modules',
+  permissions: 'permissions',
+}
+
+export const planListColumnKeys = {
+  actions: 'actions',
+}
+
+export const planBillingCycles = {
+  monthly: 'monthly',
+  yearly: 'yearly',
+  quarterly: 'quarterly',
+}
+
+export const planFormDefaults = {
+  statusActive: 1,
+  billingCycle: planBillingCycles.monthly,
 }
 
 export const roleDetailNumericIdArrayKeys = [

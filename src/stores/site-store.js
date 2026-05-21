@@ -14,7 +14,14 @@ import {
   coerceUserMutationRoot,
   extractPlansList,
   buildPermissionUpdateBody,
+  catalogByIdPath,
   enrichPermissionsModuleNames,
+  extractCatalogList,
+  mapCatalog,
+  mapModule,
+  mapPlan,
+  moduleByIdPath,
+  planByIdPath,
   extractTenantList,
   extractTenantListPagination,
   extractTenantMutationResponse,
@@ -46,6 +53,15 @@ export const useSiteStore = defineStore('site', {
     permissionList: [],
     permissionListPagination: null,
     permissionListQuery: { page: 1, limit: 20 },
+    moduleList: [],
+    moduleListPagination: null,
+    moduleListQuery: { page: 1, limit: 20 },
+    planList: [],
+    planListPagination: null,
+    planListQuery: { page: 1, limit: 20 },
+    catalogList: [],
+    catalogListPagination: null,
+    catalogListQuery: { page: 1, limit: 20 },
     plans: [],
   }),
   getters: {
@@ -68,6 +84,72 @@ export const useSiteStore = defineStore('site', {
       } catch (error) {
         console.error('Error fetching plans:', error)
         this.plans = []
+        throw error
+      }
+    },
+    async getPlanList(params = {}) {
+      try {
+        const page = Number(params.page ?? this.planListQuery.page ?? 1)
+        const limit = Number(params.limit ?? this.planListQuery.limit ?? 20)
+        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
+        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
+        this.planListQuery = { page: safePage, limit: safeLimit }
+
+        const apiPage = Math.max(0, safePage - 1)
+        const response = await apiInstance.get(apiPaths.plans, {
+          params: { page: apiPage, limit: safeLimit },
+        })
+
+        const root = response?.data?.data
+        if (!root) {
+          this.planList = []
+          this.planListPagination = null
+
+          return
+        }
+        const list = extractPlansList(root)
+
+        this.planList = list.map(mapPlan).filter(Boolean)
+        this.planListPagination = extractTenantListPagination(root)
+        this.plans = this.planList.map(mapPlanRow).filter(Boolean)
+      } catch (error) {
+        console.error('Error fetching plan list:', error)
+        throw error
+      }
+    },
+    async createPlan(payload) {
+      try {
+        await apiInstance.post(apiPaths.plans, payload)
+        await this.getPlanList({
+          page: this.planListQuery.page,
+          limit: this.planListQuery.limit,
+        })
+        await this.getPlans()
+      } catch (error) {
+        console.error('Error creating plan:', error)
+        throw error
+      }
+    },
+    async updatePlan(id, payload) {
+      try {
+        await apiInstance.patch(planByIdPath(id), payload)
+        await this.getPlanList({
+          page: this.planListQuery.page,
+          limit: this.planListQuery.limit,
+        })
+        await this.getPlans()
+      } catch (error) {
+        console.error('Error updating plan:', error)
+        throw error
+      }
+    },
+    async deletePlan(id) {
+      try {
+        await apiInstance.delete(planByIdPath(id))
+        await this.getPlanList()
+        await this.getPlans()
+      } catch (error) {
+        console.error('Error deleting plan:', error)
         throw error
       }
     },
@@ -234,28 +316,33 @@ export const useSiteStore = defineStore('site', {
     },
     async updateUser(id, payload) {
       try {
-        const body = buildUserUpdateBody(id, payload)
-        const response = await apiInstance.post(
-          apiPaths.usersUpdate,
-          body,
-        )
+        const body = buildUserUpdateBody(payload)
+        const response = await apiInstance.patch(userByIdPath(id), body)
         const raw = extractUserMutationResponse(response.data)
         const mapped = mapUser(coerceUserMutationRoot(raw))
         let updated = mergeUserWithPayload(mapped, payload)
         if (updated && updated.id == null && id != null) {
           updated = { ...updated, id }
         }
-        if (updated && updated.id != null) {
-          const idx = this.userList.findIndex(
+        try {
+          const fresh = await this.getUserById(id)
+          if (fresh) {
+            updated = mergeUserWithPayload(fresh, payload) ?? updated
+          }
+        } catch {
+          // Keep PATCH merge when detail fetch fails
+        }
+        await this.getUserList({
+          page: this.userListQuery.page,
+          limit: this.userListQuery.limit,
+        })
+        if (updated?.id != null) {
+          const fromList = this.userList.find(
             u => String(u.id) === String(updated.id),
           )
-          if (idx >= 0) {
-            this.userList.splice(idx, 1, updated)
-          } else {
-            await this.getUserList()
+          if (fromList) {
+            updated = mergeUserWithPayload(fromList, payload) ?? updated
           }
-        } else {
-          await this.getUserList()
         }
         return updated
       } catch (error) {
@@ -398,6 +485,136 @@ export const useSiteStore = defineStore('site', {
         })
       } catch (error) {
         console.error('Error updating permission:', error)
+        throw error
+      }
+    },
+    async getModuleList(params = {}) {
+      try {
+        const page = Number(params.page ?? this.moduleListQuery.page ?? 1)
+        const limit = Number(params.limit ?? this.moduleListQuery.limit ?? 20)
+        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
+        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
+        this.moduleListQuery = { page: safePage, limit: safeLimit }
+
+        const apiPage = Math.max(0, safePage - 1)
+        const response = await apiInstance.get(apiPaths.modulesList, {
+          params: { page: apiPage, limit: safeLimit },
+        })
+
+        const root = response?.data?.data
+        if (!root) {
+          this.moduleList = []
+          this.moduleListPagination = null
+
+          return
+        }
+        const list = extractTenantList(root)
+
+        this.moduleList = list.map(mapModule).filter(Boolean)
+        this.moduleListPagination = extractTenantListPagination(root)
+      } catch (error) {
+        console.error('Error fetching modules:', error)
+        throw error
+      }
+    },
+    async createModule(payload) {
+      try {
+        await apiInstance.post(apiPaths.modulesCreate, payload)
+        await this.getModuleList({
+          page: this.moduleListQuery.page,
+          limit: this.moduleListQuery.limit,
+        })
+      } catch (error) {
+        console.error('Error creating module:', error)
+        throw error
+      }
+    },
+    async updateModule(payload) {
+      try {
+        await apiInstance.patch(apiPaths.modulesUpdate, payload)
+        await this.getModuleList({
+          page: this.moduleListQuery.page,
+          limit: this.moduleListQuery.limit,
+        })
+      } catch (error) {
+        console.error('Error updating module:', error)
+        throw error
+      }
+    },
+    async deleteModule(id) {
+      try {
+        await apiInstance.delete(moduleByIdPath(id))
+        await this.getModuleList()
+      } catch (error) {
+        console.error('Error deleting module:', error)
+        throw error
+      }
+    },
+    async getCatalogList(params = {}) {
+      try {
+        const page = Number(params.page ?? this.catalogListQuery.page ?? 1)
+        const limit = Number(params.limit ?? this.catalogListQuery.limit ?? 20)
+        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
+        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
+        this.catalogListQuery = { page: safePage, limit: safeLimit }
+
+        const apiPage = Math.max(0, safePage - 1)
+        const response = await apiInstance.get(apiPaths.catalogList, {
+          params: { page: apiPage, limit: safeLimit },
+        })
+
+        const root = response?.data?.data
+        if (!root) {
+          this.catalogList = []
+          this.catalogListPagination = null
+
+          return
+        }
+        const list = extractCatalogList(root)
+
+        this.catalogList = list.map(mapCatalog).filter(Boolean)
+        this.catalogListPagination = extractTenantListPagination(root)
+      } catch (error) {
+        console.error('Error fetching catalogs:', error)
+        throw error
+      }
+    },
+    async getCatalogById(id) {
+      const response = await apiInstance.get(catalogByIdPath(id))
+      const root = response?.data?.data ?? response?.data
+
+      return mapCatalog(root)
+    },
+    async createCatalog(payload) {
+      try {
+        await apiInstance.post(apiPaths.catalogCreate, payload)
+        await this.getCatalogList({
+          page: this.catalogListQuery.page,
+          limit: this.catalogListQuery.limit,
+        })
+      } catch (error) {
+        console.error('Error creating catalog:', error)
+        throw error
+      }
+    },
+    async updateCatalog(id, payload) {
+      try {
+        await apiInstance.patch(catalogByIdPath(id), payload)
+        await this.getCatalogList({
+          page: this.catalogListQuery.page,
+          limit: this.catalogListQuery.limit,
+        })
+      } catch (error) {
+        console.error('Error updating catalog:', error)
+        throw error
+      }
+    },
+    async deleteCatalog(id) {
+      try {
+        await apiInstance.delete(catalogByIdPath(id))
+        await this.getCatalogList()
+      } catch (error) {
+        console.error('Error deleting catalog:', error)
         throw error
       }
     },

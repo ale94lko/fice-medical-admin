@@ -183,3 +183,9 @@ export function collectPermissionIdsFromTree(treeNodes) {
 
   return ids
 }
+
+export function collectPermissionIdsForModuleIds(treeNodes, moduleIds) {
+  const filtered = filterPermissionTreeByModuleIds(treeNodes, moduleIds)
+
+  return collectPermissionIdsFromTree(filtered)
+}

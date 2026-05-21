@@ -5,6 +5,10 @@ import {
   countryDialMetaByCode,
   officialTimezoneRows,
   tenantCountryToIso3166Alpha2,
+  catalogFieldKeys,
+  catalogItemFieldKeys,
+  moduleFieldKeys,
+  planFieldKeys,
   permissionFieldKeys,
   roleDetailNumericIdArrayKeys,
   roleDetailPermissionEntryArrayKeys,
@@ -63,6 +67,143 @@ export function rolesByTenantPath(tenantId) {
 
 export function permissionByIdPath(id) {
   return `${apiPaths.permissionsList}/${encodeURIComponent(String(id))}`
+}
+
+export function moduleByIdPath(id) {
+  return `${apiPaths.modulesList}/${encodeURIComponent(String(id))}`
+}
+
+export function planByIdPath(id) {
+  return `${apiPaths.plans}/${encodeURIComponent(String(id))}`
+}
+
+export function catalogByIdPath(id) {
+  return `${apiPaths.catalogList}/${encodeURIComponent(String(id))}`
+}
+
+export function extractCatalogList(root) {
+  if (!root) {
+    return []
+  }
+  if (Array.isArray(root)) {
+    return root
+  }
+  if (Array.isArray(root.items)) {
+    return root.items
+  }
+  if (Array.isArray(root.catalogs)) {
+    return root.catalogs
+  }
+  if (Array.isArray(root.data)) {
+    return root.data
+  }
+
+  return []
+}
+
+export function mapCatalogItem(item, index = 0) {
+  if (!item || typeof item !== typeNames.object) {
+    return null
+  }
+  const ik = catalogItemFieldKeys
+  const idRaw = item.id
+  const idNum = idRaw != null && idRaw !== '' ? Number(idRaw) : null
+  const tenantRaw = item.tenant_id ?? item.tenantId
+  const tenantId =
+    tenantRaw != null && tenantRaw !== ''
+      ? Number(tenantRaw)
+      : null
+
+  return {
+    id: Number.isFinite(idNum) ? idNum : null,
+    _localKey: Number.isFinite(idNum)
+      ? `id-${idNum}`
+      : `new-${index}-${Date.now()}`,
+    [ik.label]: String(item.label ?? '').trim(),
+    [ik.code]: String(item.code ?? '').trim(),
+    [ik.description]: String(item.description ?? '').trim(),
+    [ik.tenantId]: Number.isFinite(tenantId) ? tenantId : null,
+  }
+}
+
+export function mapCatalog(row) {
+  if (!row || typeof row !== typeNames.object) {
+    return null
+  }
+  const ck = catalogFieldKeys
+  const id = Number(row.id)
+  if (!Number.isFinite(id)) {
+    return null
+  }
+  const statusRaw = row.status
+  const status = Number(statusRaw)
+  const itemsRaw = row.catalog_items ?? row.catalogItems ?? row.items
+  const items = []
+  if (Array.isArray(itemsRaw)) {
+    itemsRaw.forEach((item, idx) => {
+      const mapped = mapCatalogItem(item, idx)
+      if (mapped) {
+        items.push(mapped)
+      }
+    })
+  }
+
+  return {
+    id,
+    [ck.name]: String(row.name ?? '').trim(),
+    [ck.scope]: String(row.scope ?? '').trim(),
+    [ck.description]: String(row.description ?? '').trim(),
+    [ck.status]: Number.isFinite(status) ? status : null,
+    [ck.items]: items,
+    itemCount: items.length,
+  }
+}
+
+export function buildCatalogMutationBody(payload) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const ck = catalogFieldKeys
+  const ik = catalogItemFieldKeys
+  const itemsIn = Array.isArray(payload[ck.items]) ? payload[ck.items] : []
+  const catalogItems = []
+  for (const item of itemsIn) {
+    if (!item || typeof item !== typeNames.object) {
+      continue
+    }
+    const label = String(item[ik.label] ?? '').trim()
+    const code = String(item[ik.code] ?? '').trim()
+    if (!label || !code) {
+      continue
+    }
+    const entry = {
+      label,
+      code,
+      description: String(item[ik.description] ?? '').trim(),
+    }
+    const idNum = Number(item.id)
+    if (Number.isFinite(idNum)) {
+      entry.id = idNum
+    }
+    const tid = item[ik.tenantId]
+    if (tid != null && tid !== '' && Number.isFinite(Number(tid))) {
+      entry['tenant_id'] = Number(tid)
+    }
+    catalogItems.push(entry)
+  }
+
+  const body = {
+    name: String(payload[ck.name] ?? '').trim(),
+    scope: String(payload[ck.scope] ?? '').trim(),
+    description: String(payload[ck.description] ?? '').trim(),
+    ['catalog_items']: catalogItems,
+  }
+  const st = Number(payload[ck.status])
+  if (Number.isFinite(st)) {
+    body.status = st
+  }
+
+  return body
 }
 
 export function mapRole(row) {
@@ -202,6 +343,52 @@ export function buildPermissionUpdateBody(payload) {
   return {
     name,
     description,
+  }
+}
+
+export function mapModule(row) {
+  if (!row || typeof row !== typeNames.object) {
+    return null
+  }
+  const mk = moduleFieldKeys
+  const id = Number(row.id)
+  if (!Number.isFinite(id)) {
+    return null
+  }
+
+  return {
+    id,
+    [mk.name]: String(row.name ?? '').trim(),
+    [mk.description]: String(row.description ?? '').trim(),
+  }
+}
+
+export function buildModuleCreateBody(payload) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const mk = moduleFieldKeys
+
+  return {
+    name: String(payload[mk.name] ?? '').trim(),
+    description: String(payload[mk.description] ?? '').trim(),
+  }
+}
+
+export function buildModuleUpdateBody(payload, moduleId) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const mk = moduleFieldKeys
+  const id = Number(moduleId ?? payload.id)
+  if (!Number.isFinite(id)) {
+    return {}
+  }
+
+  return {
+    id,
+    name: String(payload[mk.name] ?? '').trim(),
+    description: String(payload[mk.description] ?? '').trim(),
   }
 }
 
@@ -497,19 +684,142 @@ export function extractPlansList(root) {
   return []
 }
 
-export function mapPlanRow(p) {
+export function extractPlanPermissionIds(plan) {
+  if (!plan || typeof plan !== typeNames.object) {
+    return []
+  }
+  const perms = plan.permissions
+  if (!Array.isArray(perms)) {
+    return []
+  }
+  const ids = []
+  for (const perm of perms) {
+    const id = Number(perm?.id)
+    if (Number.isFinite(id)) {
+      ids.push(id)
+    }
+  }
+
+  return ids
+}
+
+function formatPlanModuleNames(plan) {
+  const modules = plan?.modules
+  if (!Array.isArray(modules) || modules.length === 0) {
+    return ''
+  }
+  const names = modules
+    .map(mod => String(mod?.name ?? '').trim())
+    .filter(Boolean)
+
+  return names.join(', ')
+}
+
+function formatPlanPermissionNames(plan) {
+  const perms = plan?.permissions
+  if (!Array.isArray(perms) || perms.length === 0) {
+    return ''
+  }
+  const names = perms
+    .map(perm => String(perm?.name ?? '').trim())
+    .filter(Boolean)
+
+  return names.join(', ')
+}
+
+export function mapPlan(p) {
   if (!p || typeof p !== typeNames.object) {
     return null
   }
+  const pk = planFieldKeys
   const id = p.id ?? p.plan_id
   if (id == null || id === '') {
     return null
   }
-  const name = p.name ?? p.plan_name ?? p.title ?? `Plan ${id}`
+  const idNum = Number(id)
+  if (!Number.isFinite(idNum)) {
+    return null
+  }
+  const priceRaw = p.price ?? p.plan_price
+  const price = Number(priceRaw)
+  const statusRaw = p.status ?? p.plan_status
+  const status = Number(statusRaw)
+  const billingRaw = p.billing_cycle ?? p.billingCycle ?? p.billing
 
   return {
-    id: Number(id),
-    name: String(name),
+    id: idNum,
+    [pk.name]: String(
+      p.name ?? p.plan_name ?? p.title ?? `Plan ${idNum}`,
+    ).trim(),
+    [pk.description]: String(p.description ?? '').trim(),
+    [pk.price]: Number.isFinite(price) ? price : 0,
+    [pk.status]: Number.isFinite(status) ? status : null,
+    [pk.billingCycle]: String(billingRaw ?? '').trim(),
+    [pk.features]: String(p.features ?? '').trim(),
+    [pk.modules]: extractPlanModuleIds(p),
+    [pk.permissions]: extractPlanPermissionIds(p),
+    moduleNames: formatPlanModuleNames(p),
+    permissionNames: formatPlanPermissionNames(p),
+  }
+}
+
+export function mapPlanRow(p) {
+  const mapped = mapPlan(p)
+  if (!mapped) {
+    return null
+  }
+
+  const pk = planFieldKeys
+
+  return {
+    id: mapped.id,
+    name: mapped[pk.name],
+  }
+}
+
+export function buildPlanCreateBody(payload) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const pk = planFieldKeys
+  const price = Number(payload[pk.price])
+
+  const billingCycle = String(payload[pk.billingCycle] ?? '').trim()
+
+  return {
+    name: String(payload[pk.name] ?? '').trim(),
+    description: String(payload[pk.description] ?? '').trim(),
+    price: Number.isFinite(price) ? price : 0,
+    status: Number(payload[pk.status]),
+    ['billing_cycle']: billingCycle,
+    features: String(payload[pk.features] ?? '').trim(),
+    modules: intIdList(payload[pk.modules]),
+    permissions: intIdList(payload[pk.permissions]),
+  }
+}
+
+export function buildPlanUpdateBody(payload, planId) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const pk = planFieldKeys
+  const id = Number(planId ?? payload.id)
+  if (!Number.isFinite(id)) {
+    return {}
+  }
+  const price = Number(payload[pk.price])
+
+  const billingCycle = String(payload[pk.billingCycle] ?? '').trim()
+
+  return {
+    name: String(payload[pk.name] ?? '').trim(),
+    description: String(payload[pk.description] ?? '').trim(),
+    price: Number.isFinite(price) ? price : 0,
+    status: Number(payload[pk.status]),
+    ['billing_cycle']: billingCycle,
+    features: String(payload[pk.features] ?? '').trim(),
+    modules: intIdList(payload[pk.modules]),
+    permissions: intIdList(payload[pk.permissions]),
   }
 }
 
@@ -900,6 +1210,34 @@ function intIdsFromMixedIdList(mixed) {
   return uniqueFiniteNumbers(nums).sort((a, b) => a - b)
 }
 
+export function extractRoleSelectOptionsFromUser(user) {
+  const rk = roleFieldKeys
+  const mixed = user?.roles ?? user?.role_ids ?? user?.roleIds
+  if (!Array.isArray(mixed)) {
+    return []
+  }
+  const options = []
+  const seen = new Set()
+  for (const item of mixed) {
+    if (item == null || typeof item !== typeNames.object) {
+      continue
+    }
+    const mapped = mapRole(item)
+    if (!mapped || !Number.isFinite(Number(mapped.id))) {
+      continue
+    }
+    const id = Number(mapped.id)
+    if (seen.has(id)) {
+      continue
+    }
+    seen.add(id)
+    const label = String(mapped[rk.name] ?? '').trim() || String(id)
+    options.push({ label, value: id })
+  }
+
+  return options
+}
+
 export function mapUser(user) {
   if (!user || typeof user !== typeNames.object) {
     return null
@@ -942,6 +1280,7 @@ export function mapUser(user) {
     [uk.permissions]: permissions,
     [uk.description]: description,
     [uk.allowedSubtenantIds]: allowedSubtenantIds,
+    roleSelectOptions: extractRoleSelectOptionsFromUser(user),
   }
   if (Number.isFinite(tenantIdNum)) {
     out[uk.tenantId] = tenantIdNum
@@ -980,11 +1319,23 @@ export function mergeUserWithPayload(mapped, payload) {
       mapped[uk.status] ?? payload[uk.status],
     ),
   }
-  if (Array.isArray(payload.roles)) {
-    next[uk.roles] = intIdList(payload.roles)
+  if (
+    Array.isArray(payload[uk.roles])
+    || Array.isArray(payload.roles)
+    || Array.isArray(payload.role_ids)
+  ) {
+    next[uk.roles] = intIdList(
+      payload[uk.roles] ?? payload.roles ?? payload.role_ids,
+    )
   }
-  if (Array.isArray(payload.permissions)) {
-    next[uk.permissions] = intIdList(payload.permissions)
+  if (
+    Array.isArray(payload[uk.permissions])
+    || Array.isArray(payload.permissions)
+    || Array.isArray(payload.permission_ids)
+  ) {
+    next[uk.permissions] = intIdList(
+      payload[uk.permissions] ?? payload.permissions ?? payload.permission_ids,
+    )
   }
   if (Array.isArray(payload.allowedSubtenantIds)) {
     next[uk.allowedSubtenantIds] = intIdList(payload.allowedSubtenantIds)
@@ -1008,71 +1359,78 @@ export function mergeUserWithPayload(mapped, payload) {
   return next
 }
 
-export function buildUserUpdateBody(userId, payload) {
+export function buildUserUpdateBody(payload) {
   if (!payload || typeof payload !== typeNames.object) {
     return {}
   }
   const uk = userFieldKeys
-  const idNum = Number(userId)
-  if (!Number.isFinite(idNum)) {
-    return {}
-  }
   const username =
     String(payload[uk.username] ?? '').trim()
     || String(payload[uk.email] ?? '').trim()
-  const email = String(payload[uk.email] ?? '').trim()
-  const pw = String(payload[uk.password] ?? '').trim()
+  const password = String(payload[uk.password] ?? '').trim()
   const status = Number(payload[uk.status])
   const description = String(
     payload.description ?? payload[uk.description] ?? '',
   ).trim()
-  const roles = intIdList(payload.roles)
-  const permissions = intIdList(payload.permissions)
-  const modules = intIdList(payload.modules)
-  const allowedSub = intIdList(
-    payload.allowedSubtenantIds ?? payload.allowed_subtenant_ids,
+  const changePassword = payload[uk.changePassword] ?? payload.change_password
+  const roles = intIdList(
+    payload[uk.roles] ?? payload.roles ?? payload.role_ids,
   )
-  const tenantRaw = payload.tenantId ?? payload.tenant_id
+  const permissions = intIdList(
+    payload[uk.permissions] ?? payload.permissions ?? payload.permission_ids,
+  )
+  const modules = intIdList(payload[uk.modules] ?? payload.modules)
+  const allowedSub = intIdList(
+    payload[uk.allowedSubtenantIds]
+    ?? payload.allowedSubtenantIds
+    ?? payload.allowed_subtenant_ids,
+  )
+  const tenantRaw = payload[uk.tenantId] ?? payload.tenant_id
   const tenantId = Number(tenantRaw)
-  const hasChangePassword = Object.prototype.hasOwnProperty.call(
-    payload,
-    'changePassword',
-  ) || Object.prototype.hasOwnProperty.call(payload, 'change_password')
-  const changePassword = hasChangePassword
-    ? payload.changePassword !== false && payload.changePassword !== 0
-    : false
 
   const body = {
-    userId: idNum,
-    newUser: false,
     username,
-    email,
     status: Number.isFinite(status) ? status : 1,
-    changePassword,
     roles,
     permissions,
     modules,
-    allowedSubtenantIds: allowedSub,
   }
-  if (pw.length > 0) {
-    body.password = pw
-  }
+  body['change_password'] = changePassword !== false && changePassword !== 0
+  body['new_user'] = false
+  body['allowed_subtenant_ids'] = allowedSub
   if (description.length > 0) {
     body.description = description
   }
   if (Number.isFinite(tenantId)) {
-    body.tenantId = tenantId
+    body['tenant_id'] = tenantId
+  }
+  if (password.length > 0) {
+    body.password = password
   }
 
   return body
 }
 
-function intIdList(value) {
+export function intIdList(value) {
   if (!Array.isArray(value)) {
     return []
   }
+  const nums = []
+  for (const x of value) {
+    let n
+    if (x != null && typeof x === typeNames.object) {
+      n = Number(
+        x.value ?? x.id ?? x.role_id ?? x.roleId ?? x.permission_id,
+      )
+    } else {
+      n = Number(x)
+    }
+    if (Number.isFinite(n)) {
+      nums.push(n)
+    }
+  }
 
-  return value.map(x => Number(x)).filter(Number.isFinite)
+  return uniqueFiniteNumbers(nums)
 }
 
 function uniqueFiniteNumbers(values) {

@@ -18,6 +18,7 @@ import {
 import {
   buildPermissionCodeToIdMap,
   extractRoleTemplatePermissionIds,
+  intIdList,
   isMainTenant,
   isValidEmail,
   mapRole,
@@ -57,6 +58,78 @@ function resolveDefaultUserTenantId(mappedTenants, tenantKey) {
   const first = list.find(row => Number.isFinite(Number(row.id)))
 
   return first ? Number(first.id) : null
+}
+
+async function fetchRoleSelectOptionById(roleId) {
+  const id = Number(roleId)
+  if (!Number.isFinite(id)) {
+    return null
+  }
+  try {
+    const res = await apiInstance.get(roleByIdPath(id))
+    const root = res.data?.data ?? res.data
+    const mapped = mapRole(root)
+    if (!mapped) {
+      return null
+    }
+    const label = String(mapped[rk.name] ?? '').trim() || String(id)
+
+    return { label, value: id }
+  } catch {
+    return { label: String(id), value: id }
+  }
+}
+
+async function buildRoleOptionsWithAssignments(
+  apiOptions,
+  assignedIds,
+  knownFromUser = [],
+) {
+  const byId = new Map()
+  for (const o of [...(apiOptions || []), ...(knownFromUser || [])]) {
+    const n = Number(o?.value)
+    const label = String(o?.label ?? '').trim()
+    if (Number.isFinite(n) && label) {
+      byId.set(n, { label, value: n })
+    }
+  }
+  const missing = (assignedIds || [])
+    .map(x => Number(x))
+    .filter(id => Number.isFinite(id) && !byId.has(id))
+  if (missing.length > 0) {
+    const fetched = await Promise.all(
+      missing.map(id => fetchRoleSelectOptionById(id)),
+    )
+    for (const opt of fetched) {
+      if (opt) {
+        byId.set(opt.value, opt)
+      }
+    }
+  }
+  const sorted = [...byId.values()]
+  sorted.sort((a, b) => a.label.localeCompare(b.label))
+
+  return sorted
+}
+
+function mergeMissingSelectOptions(options, selectedValues, labelForId) {
+  const opts = [...(options || [])]
+  const existing = new Set(opts.map(o => Number(o.value)))
+  const ids = Array.isArray(selectedValues) ? selectedValues : []
+  for (const raw of ids) {
+    const id = Number(raw)
+    if (!Number.isFinite(id) || existing.has(id)) {
+      continue
+    }
+    opts.push({
+      label: labelForId(id),
+      value: id,
+    })
+    existing.add(id)
+  }
+  opts.sort((a, b) => String(a.label).localeCompare(String(b.label)))
+
+  return opts
 }
 
 function mapTenantsToSelectOptions(mappedTenants) {
@@ -225,18 +298,15 @@ function clearFormRoles(form) {
   clearFormPermissions(form)
 }
 
-function formatUserFormPayload(form, editingRef) {
-  const roles = Array.isArray(form[uk.roles])
-    ? form[uk.roles].map(x => Number(x)).filter(Number.isFinite)
-    : []
-  const permissions = Array.isArray(form[uk.permissions])
-    ? form[uk.permissions].map(x => Number(x)).filter(Number.isFinite)
-    : []
-  const allowedSubtenantIds = Array.isArray(form[uk.allowedSubtenantIds])
-    ? form[uk.allowedSubtenantIds].map(x => Number(x)).filter(Number.isFinite)
-    : []
+function formatUserFormPayload(form, editingRef, catalog) {
+  const roles = intIdList(form[uk.roles])
+  const permissions = intIdList(form[uk.permissions])
+  const allowedSubtenantIds = intIdList(form[uk.allowedSubtenantIds])
 
   const tenantId = Number(form[uk.tenantId])
+  const modules = Number.isFinite(tenantId)
+    ? (catalog.tenantPlanModuleIdsByTenantId.value.get(tenantId) ?? [])
+    : []
 
   const out = {
     [uk.username]: String(form[uk.username] ?? '').trim(),
@@ -245,7 +315,7 @@ function formatUserFormPayload(form, editingRef) {
     changePassword: Boolean(form[uk.changePassword]),
     roles,
     permissions,
-    modules: [],
+    modules,
     allowedSubtenantIds,
   }
   if (Number.isFinite(tenantId)) {
@@ -398,15 +468,20 @@ function createUserAddFormLoaders(ctx) {
         apiPaths.tenantsList,
         { active: true },
       )
-      const mapped = tenantRawRows
-        .map(mapTenant)
-        .filter(Boolean)
-        .filter(t => !isMainTenant(t))
-      catalog.tenantSelectOptions.value = mapTenantsToSelectOptions(mapped)
+      const allMapped = tenantRawRows.map(mapTenant).filter(Boolean)
+      const editTenantId = Number(editingRef?.value?.[uk.tenantId])
+      const forSelect = allMapped.filter(t => {
+        if (!isMainTenant(t)) {
+          return true
+        }
+
+        return Number.isFinite(editTenantId) && Number(t.id) === editTenantId
+      })
+      catalog.tenantSelectOptions.value = mapTenantsToSelectOptions(forSelect)
       catalog.tenantPlanModuleIdsByTenantId.value =
-        buildTenantPlanModuleIdsMap(mapped)
+        buildTenantPlanModuleIdsMap(allMapped)
       catalog.defaultNewUserTenantId.value =
-        resolveDefaultUserTenantId(mapped, '')
+        resolveDefaultUserTenantId(forSelect, '')
     } catch {
       catalog.tenantSelectOptions.value = []
       catalog.tenantPlanModuleIdsByTenantId.value = new Map()
@@ -435,8 +510,12 @@ function createUserAddFormLoaders(ctx) {
       if (seq !== subtenantFetchSeqRef.current) {
         return
       }
-      catalog.subtenantSelectOptions.value = mapSubtenantRowsToSelectOptions(
-        list,
+      const editSubs = editingRef?.value?.[uk.allowedSubtenantIds]
+      const preserveSubs = Array.isArray(editSubs) ? editSubs : []
+      catalog.subtenantSelectOptions.value = mergeMissingSelectOptions(
+        mapSubtenantRowsToSelectOptions(list),
+        preserveSubs,
+        id => `${t('userAllowedSubTenants')} #${id}`,
       )
     } catch {
       if (seq !== subtenantFetchSeqRef.current) {
@@ -475,7 +554,18 @@ function createUserAddFormLoaders(ctx) {
         rk.name,
         catalog.permissionCodeToId.value,
       )
-      catalog.rolesOptions.value = options
+      const editRow = editingRef?.value
+      const preserveRoles = Array.isArray(editRow?.[uk.roles])
+        ? editRow[uk.roles]
+        : []
+      const knownRoleOpts = Array.isArray(editRow?.roleSelectOptions)
+        ? editRow.roleSelectOptions
+        : []
+      catalog.rolesOptions.value = await buildRoleOptionsWithAssignments(
+        options,
+        preserveRoles,
+        knownRoleOpts,
+      )
       catalog.rolePermissionIdsByRoleId.value = permissionIdsByRoleId
     } catch {
       if (seq !== rolesLoadSeqRef.current) {
@@ -523,11 +613,39 @@ function createUserAddFormLoaders(ctx) {
     }
   }
 
-  function onDialogReady(form) {
-    const tenantId = form?.[uk.tenantId]
-    if (Number.isFinite(Number(tenantId))) {
-      applyTenantPermissionFilter(Number(tenantId), form)
+  async function onDialogReady(form) {
+    const tenantId = Number(form?.[uk.tenantId])
+    if (!Number.isFinite(tenantId)) {
+      return
     }
+    const savedRoleIds = intIdList(form[uk.roles])
+    const savedSubtenantIds = intIdList(form[uk.allowedSubtenantIds])
+    applyTenantPermissionFilter(tenantId, form)
+    const editRow = editingRef?.value
+    const knownRoleOpts = Array.isArray(editRow?.roleSelectOptions)
+      ? editRow.roleSelectOptions
+      : []
+    catalog.rolesOptions.value = await buildRoleOptionsWithAssignments(
+      catalog.rolesOptions.value,
+      savedRoleIds,
+      knownRoleOpts,
+    )
+    if (savedRoleIds.length > 0) {
+      form[uk.roles] = savedRoleIds
+    }
+    catalog.subtenantSelectOptions.value = mergeMissingSelectOptions(
+      catalog.subtenantSelectOptions.value,
+      savedSubtenantIds,
+      id => `${t('userAllowedSubTenants')} #${id}`,
+    )
+    if (savedSubtenantIds.length > 0) {
+      form[uk.allowedSubtenantIds] = savedSubtenantIds
+    }
+    if (savedRoleIds.length > 0) {
+      await afterRolesSelected(form, savedRoleIds)
+      form[uk.roles] = savedRoleIds
+    }
+    await nextTick()
   }
 
   return {
@@ -624,15 +742,13 @@ function createUserAddFormFields(ctx) {
         { label: t('tenantStatusInactive'), value: 0 },
       ],
     }
-    const baseFields = isEdit
-      ? [...identityFields, statusField, tenantField, subtenantField]
-      : [
-        ...identityFields,
-        passwordField,
-        tenantField,
-        subtenantField,
-        statusField,
-      ]
+    const baseFields = [
+      ...identityFields,
+      ...(isEdit ? [] : [passwordField]),
+      tenantField,
+      subtenantField,
+      statusField,
+    ]
 
     return [
       ...baseFields,
@@ -697,7 +813,7 @@ export function useUserAddForm(editingRef) {
 
   return {
     fields,
-    formatUserPayload: form => formatUserFormPayload(form, editingRef),
+    formatUserPayload: form => formatUserFormPayload(form, editingRef, catalog),
     onDialogOpen: loaders.onDialogOpen,
     onDialogReady: loaders.onDialogReady,
     defaultNewUserTenantId: catalog.defaultNewUserTenantId,
