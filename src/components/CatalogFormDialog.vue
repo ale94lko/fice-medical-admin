@@ -90,7 +90,7 @@
                   v-for="(item, index) in form[ck.items]"
                   class="catalog-item-block"
                   :key="item._localKey">
-                  <div class="row items-center no-wrap q-mb-sm">
+                  <div class="row items-center no-wrap catalog-item-header">
                     <span class="text-caption text-grey-7">
                       {{ t('catalogItemNumber', { n: index + 1 }) }}
                     </span>
@@ -106,24 +106,29 @@
                       :aria-label="t('catalogRemoveItem')"
                       @click="removeItem(index)"/>
                   </div>
-                  <q-input
-                    v-model="item[ik.label]"
-                    outlined
-                    dense
-                    :label="t('catalogItemLabel')"
-                    :rules="[requiredRule]"/>
-                  <q-input
-                    v-model="item[ik.code]"
-                    outlined
-                    dense
-                    class="q-mt-sm"
-                    :label="t('catalogItemCode')"
-                    :rules="[requiredRule]"/>
+                  <div class="catalog-item-row-label-code">
+                    <q-input
+                      v-model="item[ik.label]"
+                      outlined
+                      dense
+                      :label="t('catalogItemLabel')"
+                      :rules="[requiredRule]"/>
+                    <q-input
+                      v-model="item[ik.code]"
+                      outlined
+                      dense
+                      :label="t('catalogItemCode')"
+                      :rules="[requiredRule]"/>
+                  </div>
                   <q-input
                     v-model="item[ik.description]"
                     outlined
                     dense
-                    class="q-mt-sm"
+                    type="textarea"
+                    :rows="2"
+                    :autogrow="false"
+                    input-class="catalog-item-description-inner"
+                    class="catalog-item-description"
                     :label="t('description')"/>
                 </div>
               </div>
@@ -352,7 +357,7 @@ watch(
   .catalog-items-scroll {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
     max-width: 100%;
     max-height: min(280px, 38vh);
@@ -367,14 +372,55 @@ watch(
     flex: 0 0 auto;
     width: 100%;
     max-width: 100%;
-    padding: 12px;
+    padding: 8px 10px 10px;
     border: 1px solid rgba(15, 23, 42, 0.1);
     border-radius: 8px;
     background: rgba(15, 23, 42, 0.02);
   }
 
+  .catalog-item-header {
+    margin-bottom: 4px;
+  }
+
+  .catalog-item-row-label-code {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .catalog-item-row-label-code :deep(.q-field) {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .catalog-item-description {
+    margin-top: 6px;
+  }
+
   .catalog-item-block :deep(.q-field) {
     width: 100%;
+  }
+
+  .catalog-item-block :deep(.q-field--dense) {
+    margin-bottom: 0;
+  }
+
+  .catalog-item-block :deep(.q-field__bottom) {
+    min-height: 18px;
+    padding-top: 2px;
+  }
+
+  :deep(.catalog-item-description-inner) {
+    min-height: 3.25rem;
+    line-height: 1.35;
+  }
+
+  @media (max-width: 480px) {
+    .catalog-item-row-label-code {
+      grid-template-columns: 1fr;
+    }
   }
 
   .catalog-items-empty {
