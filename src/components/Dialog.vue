@@ -52,6 +52,8 @@
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
                 @blur="onFieldBlur(field)"
+                @keydown="ev => onPlainTextKeydown(field, ev)"
+                @paste="ev => onPlainTextPaste(field, ev)"
                 @update:model-value="v => onPlainInputField(field, v)">
                 <template
                   v-if="isPasswordInputType(field.inputType)
@@ -269,6 +271,7 @@ import {
   dialogEmitEvents,
   dialogI18nKeys,
   fieldTypes,
+  inputNormalizeKeys,
   htmlAutocomplete,
   htmlButtonTypes,
   htmlInputModes,
@@ -288,6 +291,8 @@ import {
   getTenantCountryIso3166Alpha2,
   nationalPhoneDisplayMaxLength,
   parseNationalPhoneDigits,
+  sanitizeRoleNameInput,
+  sanitizeTenantDomainInput,
 } from './helpers.js'
 import UsFlagIcon from './UsFlagIcon.vue'
 import PasswordToggleIcon from './PasswordToggleIcon.vue'
@@ -308,6 +313,17 @@ const PHONE_FLAG_BY_COUNTRY = {
 const passwordVisibility = usePasswordVisibilityByKey()
 
 const DIAL_PHONE_NAV_KEYS = new Set(phoneInputNavKeys)
+
+const INPUT_NORMALIZER_CONFIG = {
+  [inputNormalizeKeys.roleName]: {
+    sanitize: sanitizeRoleNameInput,
+    allowKey: key => /^[a-zA-Z ]$/.test(key),
+  },
+  [inputNormalizeKeys.tenantDomain]: {
+    sanitize: sanitizeTenantDomainInput,
+    allowKey: key => /^[a-zA-Z0-9_]$/.test(key),
+  },
+}
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
@@ -464,13 +480,63 @@ function clearAddressSuggestState() {
   }
 }
 
+function resolveInputNormalizerConfig(field) {
+  const key = field?.inputNormalizeKey
+  if (key && INPUT_NORMALIZER_CONFIG[key]) {
+    return INPUT_NORMALIZER_CONFIG[key]
+  }
+  if (typeof field?.normalizeInput === 'function') {
+    return {
+      sanitize: field.normalizeInput,
+      allowKey: () => true,
+    }
+  }
+
+  return null
+}
+
 function onPlainInputField(field, val) {
-  if (typeof field.normalizeInput === 'function') {
-    form[field.key] = field.normalizeInput(val ?? '')
+  const cfg = resolveInputNormalizerConfig(field)
+  if (cfg) {
+    form[field.key] = cfg.sanitize(val ?? '')
 
     return
   }
   form[field.key] = val
+}
+
+function onPlainTextKeydown(field, ev) {
+  const cfg = resolveInputNormalizerConfig(field)
+  if (!cfg) {
+    return
+  }
+  if (ev.ctrlKey || ev.metaKey || ev.altKey) {
+    return
+  }
+  if (ev.key.length !== 1) {
+    return
+  }
+  if (!cfg.allowKey(ev.key)) {
+    ev.preventDefault()
+  }
+}
+
+function onPlainTextPaste(field, ev) {
+  const cfg = resolveInputNormalizerConfig(field)
+  if (!cfg) {
+    return
+  }
+  ev.preventDefault()
+  const pasted = ev.clipboardData?.getData('text') ?? ''
+  const current = String(form[field.key] ?? '')
+  const el = ev.target
+  let merged = current + pasted
+  if (el instanceof HTMLInputElement) {
+    const start = el.selectionStart ?? current.length
+    const end = el.selectionEnd ?? current.length
+    merged = current.slice(0, start) + pasted + current.slice(end)
+  }
+  form[field.key] = cfg.sanitize(merged)
 }
 
 function onAddressSuggestInput(field, val) {
@@ -565,10 +631,11 @@ function applyInitialValues() {
 
 function normalizePlainInputFields() {
   for (const field of props.fields) {
-    if (!field?.key || typeof field.normalizeInput !== 'function') {
+    const cfg = resolveInputNormalizerConfig(field)
+    if (!field?.key || !cfg) {
       continue
     }
-    form[field.key] = field.normalizeInput(form[field.key] ?? '')
+    form[field.key] = cfg.sanitize(form[field.key] ?? '')
   }
 }
 

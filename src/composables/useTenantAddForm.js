@@ -5,6 +5,7 @@ import { useSiteStore } from 'stores/site-store.js'
 import {
   countryCodeUsa,
   fieldTypes,
+  inputNormalizeKeys,
   htmlInputTypes,
   localeCodes,
   quasarNotifyTypes,
@@ -16,7 +17,6 @@ import {
 import {
   concatInternationalPhone,
   getOfficialUtcOffsetTimezoneOptions,
-  sanitizeTenantDomainInput,
 } from 'components/helpers.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -98,7 +98,7 @@ export function useTenantAddForm() {
         kind: fieldTypes.input,
         labelKey: tk.domain,
         rules: [requiredRule],
-        normalizeInput: sanitizeTenantDomainInput,
+        inputNormalizeKey: inputNormalizeKeys.tenantDomain,
       },
       {
         key: tk.planId,

@@ -45,6 +45,14 @@ export function sanitizeTenantDomainInput(raw) {
   return s
 }
 
+/** Role name on create: A–Z and underscores; spaces → _. */
+export function sanitizeRoleNameInput(raw) {
+  return String(raw ?? '')
+    .replace(/\s/g, '_')
+    .replace(/[^A-Za-z_]/g, '')
+    .toUpperCase()
+}
+
 export function tenantByIdPath(id) {
   return `${apiPaths.tenantsList}/${encodeURIComponent(String(id))}`
 }
@@ -298,7 +306,7 @@ export function buildRoleCreateBody(payload) {
     return {}
   }
   const rk = roleFieldKeys
-  const name = String(payload[rk.name] ?? '').trim()
+  const name = sanitizeRoleNameInput(payload[rk.name])
   const description = String(payload[rk.description] ?? '').trim()
   const permissionIds = intIdList(payload[rk.permissions])
   const tenantIdNum = Number(payload[rk.tenantId])

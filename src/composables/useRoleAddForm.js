@@ -9,6 +9,7 @@ import {
   htmlInputTypes,
   qSelectOptionKeys,
   quasarNotifyTypes,
+  inputNormalizeKeys,
   roleFieldKeys,
   selectBehaviors,
   tenantFieldKeys,
@@ -275,14 +276,19 @@ export function useRoleAddForm(editingRoleRef) {
     const requiredRule = val =>
       (!!val && String(val).trim().length > 0) || t('fieldRequired')
 
+    const nameField = {
+      key: rk.name,
+      kind: fieldTypes.input,
+      labelKey: rk.name,
+      inputType: htmlInputTypes.text,
+      rules: [requiredRule],
+    }
+    if (!isEditMode.value) {
+      nameField.inputNormalizeKey = inputNormalizeKeys.roleName
+    }
+
     const baseFields = [
-      {
-        key: rk.name,
-        kind: fieldTypes.input,
-        labelKey: rk.name,
-        inputType: htmlInputTypes.text,
-        rules: [requiredRule],
-      },
+      nameField,
       {
         key: rk.tenantId,
         kind: fieldTypes.select,

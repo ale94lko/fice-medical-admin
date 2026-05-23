@@ -111,6 +111,11 @@ export const fieldTypes = {
   permissionTree: 'permissionTree',
 }
 
+export const inputNormalizeKeys = {
+  roleName: 'roleName',
+  tenantDomain: 'tenantDomain',
+}
+
 export const tenantFieldKeys = {
   name: 'name',
   domain: 'domain',
