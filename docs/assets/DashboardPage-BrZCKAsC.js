@@ -1,0 +1,1 @@
+import{N as e,l as t}from"./runtime-core.esm-bundler-Bplz-Msz.js";import{n}from"./index-DMeTgkIU.js";import{t as r}from"./QPage-CSIuUFFx.js";var i={};function a(n,i){return e(),t(r,{class:`flex flex-center`})}var o=n(i,[[`render`,a]]);export{o as default};
