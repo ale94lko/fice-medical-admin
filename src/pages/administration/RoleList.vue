@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page">
-    <q-table
+    <AdminQTable
       class="table admin-data-table"
       row-key="id"
       binary-state-sort
@@ -38,43 +38,41 @@
           :badge="getbadge(activeRoleFilterCount)"
           @click="openRoleFilters"/>
       </template>
-      <template v-slot:body-cell-actions="props">
-        <q-td :props="props">
-          <q-btn
-            flat
-            round
-            icon="visibility"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="roleFormSaving || deleteSaving"
-            :title="t('viewRole')"
-            :aria-label="t('viewRole')"
-            @click="openViewRole(props.row)"/>
-          <q-btn
-            v-if="!isProtectedRole(props.row)"
-            flat
-            round
-            icon="edit"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="roleFormSaving || deleteSaving"
-            :title="t('editRole')"
-            :aria-label="t('editRole')"
-            @click="openEditRole(props.row)"/>
-          <q-btn
-            v-if="!isProtectedRole(props.row)"
-            flat
-            round
-            icon="delete"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="deleteSaving || roleFormSaving"
-            :title="t('deleteRoleTitle')"
-            :aria-label="t('deleteRoleTitle')"
-            @click="deleteRow(props.row)"/>
-        </q-td>
+      <template #row-actions="{ row }">
+        <q-btn
+          flat
+          round
+          icon="visibility"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="roleFormSaving || deleteSaving"
+          :title="t('viewRole')"
+          :aria-label="t('viewRole')"
+          @click="openViewRole(row)"/>
+        <q-btn
+          v-if="!isProtectedRole(row)"
+          flat
+          round
+          icon="edit"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="roleFormSaving || deleteSaving"
+          :title="t('editRole')"
+          :aria-label="t('editRole')"
+          @click="openEditRole(row)"/>
+        <q-btn
+          v-if="!isProtectedRole(row)"
+          flat
+          round
+          icon="delete"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="deleteSaving || roleFormSaving"
+          :title="t('deleteRoleTitle')"
+          :aria-label="t('deleteRoleTitle')"
+          @click="deleteRow(row)"/>
       </template>
-    </q-table>
+    </AdminQTable>
 
     <Dialog
       v-model="roleFormDialogOpen"
@@ -238,6 +236,7 @@ import {
   siteBreakpointsPx,
   tenantFieldKeys,
 } from 'components/constants.js'
+import AdminQTable from 'components/AdminQTable.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import {

@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page">
-    <q-table
+    <AdminQTable
       class="table admin-data-table"
       row-key="id"
       binary-state-sort
@@ -40,44 +40,42 @@
           :badge="getbadge(activeTenantFilterCount)"
           @click="openTenantFilters"/>
       </template>
-      <template v-slot:body-cell-actions="props">
-        <q-td :props="props">
-          <q-btn
-            flat
-            round
-            icon="visibility"
-            color="primary"
-            class="app-btn-icon-action"
-            :size="siteBreakpoints.SM"
-            :disable="addSaving || deleteSaving"
-            :title="t('viewTenant')"
-            :aria-label="t('viewTenant')"
-            @click="openViewTenant(props.row)"/>
-          <q-btn
-            v-if="!isMainTenant(props.row)"
-            flat
-            round
-            icon="edit"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="addSaving || deleteSaving"
-            :title="t('editTenant')"
-            :aria-label="t('editTenant')"
-            @click="editRow(props.row)"/>
-          <q-btn
-            v-if="!isTenantStatusZero(props.row) && !isMainTenant(props.row)"
-            flat
-            round
-            icon="delete"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="deleteSaving"
-            :title="t('deleteTenantTitle')"
-            :aria-label="t('deleteTenantTitle')"
-            @click="deleteRow(props.row)"/>
-        </q-td>
+      <template #row-actions="{ row }">
+        <q-btn
+          flat
+          round
+          icon="visibility"
+          color="primary"
+          class="app-btn-icon-action"
+          :size="siteBreakpoints.SM"
+          :disable="addSaving || deleteSaving"
+          :title="t('viewTenant')"
+          :aria-label="t('viewTenant')"
+          @click="openViewTenant(row)"/>
+        <q-btn
+          v-if="!isMainTenant(row)"
+          flat
+          round
+          icon="edit"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="addSaving || deleteSaving"
+          :title="t('editTenant')"
+          :aria-label="t('editTenant')"
+          @click="editRow(row)"/>
+        <q-btn
+          v-if="!isTenantStatusZero(row) && !isMainTenant(row)"
+          flat
+          round
+          icon="delete"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="deleteSaving"
+          :title="t('deleteTenantTitle')"
+          :aria-label="t('deleteTenantTitle')"
+          @click="deleteRow(row)"/>
       </template>
-    </q-table>
+    </AdminQTable>
 
     <Dialog
       v-model="addDialogOpen"
@@ -269,6 +267,7 @@ import {
   nationalPhoneDigitsFromStored,
   usStateLabelFromCode,
 } from 'components/helpers.js'
+import AdminQTable from 'components/AdminQTable.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import {

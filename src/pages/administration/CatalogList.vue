@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page">
-    <q-table
+    <AdminQTable
       class="table admin-data-table"
       row-key="id"
       binary-state-sort
@@ -38,41 +38,39 @@
           :badge="getbadge(activeCatalogFilterCount)"
           @click="openCatalogFilters"/>
       </template>
-      <template v-slot:body-cell-actions="props">
-        <q-td :props="props">
-          <q-btn
-            flat
-            round
-            icon="visibility"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="catalogFormSaving || deleteSaving"
-            :title="t('viewCatalog')"
-            :aria-label="t('viewCatalog')"
-            @click="openViewCatalog(props.row)"/>
-          <q-btn
-            flat
-            round
-            icon="edit"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="catalogFormSaving || deleteSaving"
-            :title="t('editCatalog')"
-            :aria-label="t('editCatalog')"
-            @click="openEditCatalog(props.row)"/>
-          <q-btn
-            flat
-            round
-            icon="delete"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="deleteSaving || catalogFormSaving"
-            :title="t('deleteCatalogTitle')"
-            :aria-label="t('deleteCatalogTitle')"
-            @click="deleteRow(props.row)"/>
-        </q-td>
+      <template #row-actions="{ row }">
+        <q-btn
+          flat
+          round
+          icon="visibility"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="catalogFormSaving || deleteSaving"
+          :title="t('viewCatalog')"
+          :aria-label="t('viewCatalog')"
+          @click="openViewCatalog(row)"/>
+        <q-btn
+          flat
+          round
+          icon="edit"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="catalogFormSaving || deleteSaving"
+          :title="t('editCatalog')"
+          :aria-label="t('editCatalog')"
+          @click="openEditCatalog(row)"/>
+        <q-btn
+          flat
+          round
+          icon="delete"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="deleteSaving || catalogFormSaving"
+          :title="t('deleteCatalogTitle')"
+          :aria-label="t('deleteCatalogTitle')"
+          @click="deleteRow(row)"/>
       </template>
-    </q-table>
+    </AdminQTable>
 
     <CatalogFormDialog
       v-model="catalogFormDialogOpen"
@@ -237,6 +235,7 @@ import {
   siteBreakpoints,
   siteBreakpointsPx,
 } from 'components/constants.js'
+import AdminQTable from 'components/AdminQTable.vue'
 import CatalogFormDialog from 'components/CatalogFormDialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import { buildCatalogMutationBody } from 'components/helpers.js'

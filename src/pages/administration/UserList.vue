@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page">
-    <q-table
+    <AdminQTable
       class="table admin-data-table"
       row-key="id"
       binary-state-sort
@@ -42,54 +42,52 @@
           :badge="getbadge(activeUserFilterCount)"
           @click="openUserFilters"/>
       </template>
-      <template v-slot:body-cell-actions="props">
-        <q-td :props="props">
-          <q-btn
-            flat
-            round
-            icon="visibility"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="addSaving || deleteSaving || passwordChangeSaving"
-            :title="t('viewUser')"
-            :aria-label="t('viewUser')"
-            @click="openViewUser(props.row)"/>
-          <q-btn
-            v-if="!isPrimarySuperadmin(props.row)"
-            flat
-            round
-            icon="vpn_key"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="addSaving || deleteSaving || passwordChangeSaving"
-            :title="t('changeUserPassword')"
-            :aria-label="t('changeUserPassword')"
-            @click="openChangePassword(props.row)"/>
-          <q-btn
-            v-if="!isPrimarySuperadmin(props.row)"
-            flat
-            round
-            icon="edit"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="addSaving || deleteSaving || passwordChangeSaving"
-            :title="t('editUser')"
-            :aria-label="t('editUser')"
-            @click="editRow(props.row)"/>
-          <q-btn
-            v-if="showDeleteAction(props.row)"
-            flat
-            round
-            icon="delete"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="deleteSaving || passwordChangeSaving"
-            :title="t('deleteUserTitle')"
-            :aria-label="t('deleteUserTitle')"
-            @click="deleteRow(props.row)"/>
-        </q-td>
+      <template #row-actions="{ row }">
+        <q-btn
+          flat
+          round
+          icon="visibility"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="addSaving || deleteSaving || passwordChangeSaving"
+          :title="t('viewUser')"
+          :aria-label="t('viewUser')"
+          @click="openViewUser(row)"/>
+        <q-btn
+          v-if="!isPrimarySuperadmin(row)"
+          flat
+          round
+          icon="vpn_key"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="addSaving || deleteSaving || passwordChangeSaving"
+          :title="t('changeUserPassword')"
+          :aria-label="t('changeUserPassword')"
+          @click="openChangePassword(row)"/>
+        <q-btn
+          v-if="!isPrimarySuperadmin(row)"
+          flat
+          round
+          icon="edit"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="addSaving || deleteSaving || passwordChangeSaving"
+          :title="t('editUser')"
+          :aria-label="t('editUser')"
+          @click="editRow(row)"/>
+        <q-btn
+          v-if="showDeleteAction(row)"
+          flat
+          round
+          icon="delete"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="deleteSaving || passwordChangeSaving"
+          :title="t('deleteUserTitle')"
+          :aria-label="t('deleteUserTitle')"
+          @click="deleteRow(row)"/>
       </template>
-    </q-table>
+    </AdminQTable>
 
     <Dialog
       v-model="addDialogOpen"
@@ -347,6 +345,7 @@ import {
   userListColumnKeys,
 } from 'components/constants.js'
 import PasswordToggleIcon from 'components/PasswordToggleIcon.vue'
+import AdminQTable from 'components/AdminQTable.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import {

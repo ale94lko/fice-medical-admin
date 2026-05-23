@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page">
-    <q-table
+    <AdminQTable
       class="table admin-data-table"
       row-key="id"
       binary-state-sort
@@ -28,31 +28,29 @@
           :badge="getbadge(activeModuleFilterCount)"
           @click="openModuleFilters"/>
       </template>
-      <template v-slot:body-cell-actions="props">
-        <q-td :props="props">
-          <q-btn
-            flat
-            round
-            icon="visibility"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="loading || editSaving"
-            :title="t('viewModule')"
-            :aria-label="t('viewModule')"
-            @click="openViewModule(props.row)"/>
-          <q-btn
-            flat
-            round
-            icon="edit"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="loading || editSaving"
-            :title="t('editModule')"
-            :aria-label="t('editModule')"
-            @click="openEditModule(props.row)"/>
-        </q-td>
+      <template #row-actions="{ row }">
+        <q-btn
+          flat
+          round
+          icon="visibility"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="loading || editSaving"
+          :title="t('viewModule')"
+          :aria-label="t('viewModule')"
+          @click="openViewModule(row)"/>
+        <q-btn
+          flat
+          round
+          icon="edit"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="loading || editSaving"
+          :title="t('editModule')"
+          :aria-label="t('editModule')"
+          @click="openEditModule(row)"/>
       </template>
-    </q-table>
+    </AdminQTable>
 
     <Dialog
       v-model="editDialogOpen"
@@ -203,6 +201,7 @@ import {
   siteBreakpoints,
   siteBreakpointsPx,
 } from 'components/constants.js'
+import AdminQTable from 'components/AdminQTable.vue'
 import Dialog from 'components/Dialog.vue'
 import { useModuleEditForm } from 'src/composables/useModuleEditForm.js'
 import { useModuleViewPermissions }

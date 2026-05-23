@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page">
-    <q-table
+    <AdminQTable
       class="table admin-data-table"
       row-key="id"
       binary-state-sort
@@ -38,41 +38,39 @@
           :badge="getbadge(activePlanFilterCount)"
           @click="openPlanFilters"/>
       </template>
-      <template v-slot:body-cell-actions="props">
-        <q-td :props="props">
-          <q-btn
-            flat
-            round
-            icon="visibility"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="planFormSaving || deleteSaving"
-            :title="t('viewPlan')"
-            :aria-label="t('viewPlan')"
-            @click="openViewPlan(props.row)"/>
-          <q-btn
-            flat
-            round
-            icon="edit"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="planFormSaving || deleteSaving"
-            :title="t('editPlan')"
-            :aria-label="t('editPlan')"
-            @click="openEditPlan(props.row)"/>
-          <q-btn
-            flat
-            round
-            icon="delete"
-            color="primary"
-            :size="siteBreakpoints.SM"
-            :disable="deleteSaving || planFormSaving"
-            :title="t('deletePlanTitle')"
-            :aria-label="t('deletePlanTitle')"
-            @click="deleteRow(props.row)"/>
-        </q-td>
+      <template #row-actions="{ row }">
+        <q-btn
+          flat
+          round
+          icon="visibility"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="planFormSaving || deleteSaving"
+          :title="t('viewPlan')"
+          :aria-label="t('viewPlan')"
+          @click="openViewPlan(row)"/>
+        <q-btn
+          flat
+          round
+          icon="edit"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="planFormSaving || deleteSaving"
+          :title="t('editPlan')"
+          :aria-label="t('editPlan')"
+          @click="openEditPlan(row)"/>
+        <q-btn
+          flat
+          round
+          icon="delete"
+          color="primary"
+          :size="siteBreakpoints.SM"
+          :disable="deleteSaving || planFormSaving"
+          :title="t('deletePlanTitle')"
+          :aria-label="t('deletePlanTitle')"
+          @click="deleteRow(row)"/>
       </template>
-    </q-table>
+    </AdminQTable>
 
     <Dialog
       v-model="planFormDialogOpen"
@@ -256,6 +254,7 @@ import {
   siteBreakpoints,
   siteBreakpointsPx,
 } from 'components/constants.js'
+import AdminQTable from 'components/AdminQTable.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import { clonePermissionTreeForViewReadonly } from 'components/helpers.js'
