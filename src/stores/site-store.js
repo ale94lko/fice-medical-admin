@@ -317,6 +317,7 @@ export const useSiteStore = defineStore('site', {
     async updateUser(id, payload) {
       try {
         const body = buildUserUpdateBody(payload)
+        delete body.change_password
         const response = await apiInstance.patch(userByIdPath(id), body)
         const raw = extractUserMutationResponse(response.data)
         const mapped = mapUser(coerceUserMutationRoot(raw))

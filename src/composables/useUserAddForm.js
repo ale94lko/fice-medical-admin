@@ -312,7 +312,6 @@ function formatUserFormPayload(form, editingRef, catalog) {
     [uk.username]: String(form[uk.username] ?? '').trim(),
     [uk.status]: Number(form[uk.status]),
     description: String(form[uk.description] ?? '').trim(),
-    changePassword: Boolean(form[uk.changePassword]),
     roles,
     permissions,
     modules,
@@ -323,6 +322,11 @@ function formatUserFormPayload(form, editingRef, catalog) {
   }
   if (!editingRef?.value) {
     out[uk.password] = String(form[uk.password] ?? '').trim()
+    out.changePassword = Boolean(form[uk.changePassword])
+  } else {
+    delete out[uk.changePassword]
+    delete out.changePassword
+    delete out.change_password
   }
 
   return out
@@ -344,10 +348,12 @@ function createUserAddFormLoaders(ctx) {
     const moduleIds = Number.isFinite(id)
       ? catalog.tenantPlanModuleIdsByTenantId.value.get(id) ?? []
       : []
-    const filtered = filterPermissionTreeByModuleIds(
-      catalog.allPermissionTreeNodes.value,
-      moduleIds,
-    )
+    const filtered = moduleIds.length === 0
+      ? []
+      : filterPermissionTreeByModuleIds(
+        catalog.allPermissionTreeNodes.value,
+        moduleIds,
+      )
     catalog.permissionTreeNodes.value = filtered
     catalog.knownPermissionIds.value = collectPermissionIdsFromTree(filtered)
     if (form) {
@@ -453,10 +459,9 @@ function createUserAddFormLoaders(ctx) {
     }
 
     const allowed = catalog.knownPermissionIds.value
-    const merged = [...aggregated].filter(
-      pid => !allowed.size || allowed.has(pid),
-    )
-    merged.sort((a, b) => a - b)
+    const merged = [...aggregated]
+      .filter(pid => !allowed.size || allowed.has(pid))
+      .sort((a, b) => a - b)
     writeFormPermissions(form, merged)
     await nextTick()
   }
@@ -618,10 +623,12 @@ function createUserAddFormLoaders(ctx) {
     if (!Number.isFinite(tenantId)) {
       return
     }
+    const editRow = editingRef?.value
+    const isEdit = Boolean(editRow)
     const savedRoleIds = intIdList(form[uk.roles])
     const savedSubtenantIds = intIdList(form[uk.allowedSubtenantIds])
+    const savedPermissionIds = intIdList(form[uk.permissions])
     applyTenantPermissionFilter(tenantId, form)
-    const editRow = editingRef?.value
     const knownRoleOpts = Array.isArray(editRow?.roleSelectOptions)
       ? editRow.roleSelectOptions
       : []
@@ -641,7 +648,16 @@ function createUserAddFormLoaders(ctx) {
     if (savedSubtenantIds.length > 0) {
       form[uk.allowedSubtenantIds] = savedSubtenantIds
     }
-    if (savedRoleIds.length > 0) {
+    if (isEdit) {
+      if (savedPermissionIds.length > 0) {
+        const allowed = catalog.knownPermissionIds.value
+        const restored = savedPermissionIds.filter(
+          pid => !allowed.size || allowed.has(pid),
+        )
+        restored.sort((a, b) => a - b)
+        writeFormPermissions(form, restored)
+      }
+    } else if (savedRoleIds.length > 0) {
       await afterRolesSelected(form, savedRoleIds)
       form[uk.roles] = savedRoleIds
     }
@@ -775,13 +791,15 @@ function createUserAddFormFields(ctx) {
         treeNoNodesLabelKey: 'permissionTreeEmpty',
         disable: form => !Number.isFinite(Number(form[uk.tenantId])),
       },
-      {
-        key: uk.changePassword,
-        kind: fieldTypes.checkbox,
-        labelKey: 'userRequirePasswordChange',
-        defaultValue: !isEdit,
-        alwaysShow: true,
-      },
+      ...(isEdit
+        ? []
+        : [{
+          key: uk.changePassword,
+          kind: fieldTypes.checkbox,
+          labelKey: 'userRequirePasswordChange',
+          defaultValue: true,
+          alwaysShow: true,
+        }]),
       {
         key: uk.description,
         kind: fieldTypes.textarea,

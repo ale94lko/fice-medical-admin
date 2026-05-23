@@ -189,3 +189,37 @@ export function collectPermissionIdsForModuleIds(treeNodes, moduleIds) {
 
   return collectPermissionIdsFromTree(filtered)
 }
+
+export function moduleIdsFromPermissionIds(treeNodes, permissionIds) {
+  const want = new Set(
+    (permissionIds || [])
+      .map(id => Number(id))
+      .filter(Number.isFinite),
+  )
+  if (want.size === 0) {
+    return []
+  }
+  const moduleIds = new Set()
+  for (const branch of treeNodes || []) {
+    const key = branch?.nodeKey
+    if (typeof key !== 'string' || !key.startsWith('m-')) {
+      continue
+    }
+    if (key === 'm-uncategorized') {
+      continue
+    }
+    const mid = Number(key.slice(2))
+    if (!Number.isFinite(mid)) {
+      continue
+    }
+    for (const leaf of branch.children || []) {
+      const pid = Number(leaf.nodeKey)
+      if (Number.isFinite(pid) && want.has(pid)) {
+        moduleIds.add(mid)
+        break
+      }
+    }
+  }
+
+  return [...moduleIds].sort((a, b) => a - b)
+}

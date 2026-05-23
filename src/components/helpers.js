@@ -1182,7 +1182,7 @@ export function coerceUserMutationRoot(raw) {
     : null
 }
 
-function intIdsFromMixedIdList(mixed) {
+export function intIdsFromMixedIdList(mixed) {
   if (!Array.isArray(mixed)) {
     return []
   }
@@ -1372,7 +1372,6 @@ export function buildUserUpdateBody(payload) {
   const description = String(
     payload.description ?? payload[uk.description] ?? '',
   ).trim()
-  const changePassword = payload[uk.changePassword] ?? payload.change_password
   const roles = intIdList(
     payload[uk.roles] ?? payload.roles ?? payload.role_ids,
   )
@@ -1395,7 +1394,6 @@ export function buildUserUpdateBody(payload) {
     permissions,
     modules,
   }
-  body['change_password'] = changePassword !== false && changePassword !== 0
   body['new_user'] = false
   body['allowed_subtenant_ids'] = allowedSub
   if (description.length > 0) {
@@ -1407,6 +1405,8 @@ export function buildUserUpdateBody(payload) {
   if (password.length > 0) {
     body.password = password
   }
+
+  delete body.change_password
 
   return body
 }

@@ -27,7 +27,8 @@ import { i18nGlobalT } from './i18n.js'
 let lastSessionExpiredNotifyAt = 0
 
 const api = axios.create({
-  baseURL: 'https://3137-79-112-108-239.ngrok-free.app',
+  baseURL:
+    'https://7d3d-2a0c-5a81-e10e-7800-bd1c-a186-f705-c749.ngrok-free.app',
 })
 
 let refreshInFlight = null

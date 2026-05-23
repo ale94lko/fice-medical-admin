@@ -349,7 +349,11 @@ import {
 import PasswordToggleIcon from 'components/PasswordToggleIcon.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
-import { fetchAllEnvelopeList, mapTenant } from 'components/helpers.js'
+import {
+  fetchAllEnvelopeList,
+  intIdsFromMixedIdList,
+  mapTenant,
+} from 'components/helpers.js'
 import { useUserAddForm } from 'src/composables/useUserAddForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
@@ -419,18 +423,10 @@ function userRowToFormSeed(row) {
   if (!row) {
     return null
   }
-  const roles = Array.isArray(row[uk.roles])
-    ? row[uk.roles].map(x => Number(x)).filter(Number.isFinite)
-    : []
-  const permissions = Array.isArray(row[uk.permissions])
-    ? row[uk.permissions].map(x => Number(x)).filter(Number.isFinite)
-    : []
-  const allowedSubtenantIds = Array.isArray(row[uk.allowedSubtenantIds])
-    ? row[uk.allowedSubtenantIds].map(x => Number(x)).filter(Number.isFinite)
-    : []
+  const roles = intIdsFromMixedIdList(row[uk.roles])
+  const permissions = intIdsFromMixedIdList(row[uk.permissions])
+  const allowedSubtenantIds = intIdsFromMixedIdList(row[uk.allowedSubtenantIds])
   const desc = String(row[uk.description] ?? '').trim()
-  const cp = row[uk.changePassword]
-  const changePassword = cp === true || cp === 1 || cp === '1'
 
   const tenantRaw = row[uk.tenantId]
   const tenantId = Number(tenantRaw)
@@ -441,7 +437,6 @@ function userRowToFormSeed(row) {
     [uk.roles]: roles,
     [uk.permissions]: permissions,
     [uk.description]: desc,
-    [uk.changePassword]: changePassword,
     [uk.allowedSubtenantIds]: allowedSubtenantIds,
     ...(Number.isFinite(tenantId) ? { [uk.tenantId]: tenantId } : {}),
   }
