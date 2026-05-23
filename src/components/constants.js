@@ -11,6 +11,9 @@ export const siteBreakpointsPx = {
   MD: 1024,
 }
 
+/** Below this width the drawer uses overlay (mobile) behavior. */
+export const drawerMobileMaxPx = 499
+
 export const defaultTenant = 'main'
 
 export const primarySuperadminUser = 'superadmin@fice.medical'

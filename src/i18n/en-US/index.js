@@ -28,6 +28,8 @@ export default {
   selectOptionsSearchPlaceholder: 'Search…',
   welcome: 'Welcome, {name}!',
   dashboard: 'Dashboard',
+  expandMenu: 'Expand menu',
+  collapseMenu: 'Collapse menu',
   administration: 'Administration',
   users: 'Users',
   addUser: 'Add user',

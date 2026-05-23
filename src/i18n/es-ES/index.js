@@ -29,6 +29,8 @@ export default {
   selectOptionsSearchPlaceholder: 'Buscar…',
   welcome: 'Bienvenido, {name}!',
   dashboard: 'Panel',
+  expandMenu: 'Expandir menú',
+  collapseMenu: 'Contraer menú',
   administration: 'Administración',
   users: 'Usuarios',
   addUser: 'Agregar usuario',
