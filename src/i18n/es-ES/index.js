@@ -168,9 +168,22 @@ export default {
     'No se pudieron cargar módulos ni permisos del formulario. '
     + 'Inténtalo de nuevo.',
   permissions: 'Permisos',
+  modules: 'Módulos',
+  viewModule: 'Ver módulo',
+  viewModuleTitle: 'Detalle del módulo',
+  editModule: 'Editar módulo',
+  moduleUpdatedSuccess: 'Módulo actualizado correctamente',
+  moduleUpdateError: 'No se pudo actualizar el módulo',
+  moduleListError: 'No se pudo cargar el listado de módulos',
+  moduleDetailLoadError:
+    'No se pudieron cargar los detalles del módulo; '
+    + 'el formulario puede estar incompleto',
+  moduleFiltersTitle: 'Filtrar módulos',
+  moduleId: 'ID del módulo',
   viewPermission: 'Ver permiso',
   viewPermissionTitle: 'Detalle del permiso',
   editPermission: 'Editar permiso',
+  permissionNameReadOnly: 'El nombre no se puede modificar.',
   permissionUpdatedSuccess: 'Permiso actualizado correctamente',
   permissionUpdateError: 'No se pudo actualizar el permiso',
   permissionListError: 'No se pudo cargar el listado de permisos',

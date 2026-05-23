@@ -73,6 +73,10 @@ export function moduleByIdPath(id) {
   return `${apiPaths.modulesList}/${encodeURIComponent(String(id))}`
 }
 
+export function moduleUpdateByIdPath(id) {
+  return `${apiPaths.moduleAdminItem}/${encodeURIComponent(String(id))}`
+}
+
 export function planByIdPath(id) {
   return `${apiPaths.plans}/${encodeURIComponent(String(id))}`
 }
@@ -337,11 +341,9 @@ export function buildPermissionUpdateBody(payload) {
     return {}
   }
   const pk = permissionFieldKeys
-  const name = String(payload[pk.name] ?? '').trim()
   const description = String(payload[pk.description] ?? '').trim()
 
   return {
-    name,
     description,
   }
 }
@@ -387,6 +389,18 @@ export function buildModuleUpdateBody(payload, moduleId) {
 
   return {
     id,
+    name: String(payload[mk.name] ?? '').trim(),
+    description: String(payload[mk.description] ?? '').trim(),
+  }
+}
+
+export function buildModulePatchBody(payload) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const mk = moduleFieldKeys
+
+  return {
     name: String(payload[mk.name] ?? '').trim(),
     description: String(payload[mk.description] ?? '').trim(),
   }

@@ -107,8 +107,8 @@
       persistent
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
-      <q-card class="user-filter-card">
-        <q-toolbar class="q-px-md app-dialog-toolbar">
+      <q-card class="modal-card app-dialog-card app-dialog-card--sm">
+        <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('userFiltersTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -119,7 +119,7 @@
             :aria-label="t('close')"
             @click="closeUserFilterDialog"/>
         </q-toolbar>
-        <q-card-section class="column q-gutter-md q-px-lg q-py-md">
+        <q-card-section class="app-dialog-body app-dialog-form-stack">
           <q-input
             v-model="filterDraft[uk.username]"
             outlined
@@ -151,11 +151,9 @@
             </template>
           </q-select>
         </q-card-section>
-        <q-separator />
-        <q-card-actions align="center" class="q-pa-md">
+        <q-card-actions align="right" class="app-dialog-actions">
           <q-btn
             no-caps
-            padding="7px 30px"
             outline
             color="primary"
             class="app-btn-outline"
@@ -164,9 +162,9 @@
             @click="clearUserFilters"/>
           <q-btn
             no-caps
+            unelevated
             class="primary-action"
             color="primary"
-            padding="7px 30px"
             :title="t('userFilterApply')"
             :label="t('userFilterApply')"
             @click="applyUserFilters"/>
@@ -188,8 +186,10 @@
       persistent
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
-      <q-card v-if="userPasswordTarget" class="user-password-card">
-        <q-toolbar class="q-px-md app-dialog-toolbar">
+      <q-card
+        v-if="userPasswordTarget"
+        class="modal-card app-dialog-card app-dialog-card--sm">
+        <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('changeUserPasswordTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -203,7 +203,7 @@
         </q-toolbar>
         <q-form
           ref="passwordFormRef"
-          class="q-px-lg q-py-md q-gutter-md"
+          class="app-dialog-body app-dialog-form-stack"
           greedy
           autocomplete="off"
           @submit.prevent="onSubmitPasswordChange">
@@ -256,10 +256,9 @@
               />
             </template>
           </q-input>
-          <q-card-actions align="center" class="q-pt-sm q-pb-md">
+          <q-card-actions align="right" class="app-dialog-actions">
             <q-btn
               no-caps
-              padding="7px 30px"
               outline
               color="primary"
               class="app-btn-outline"
@@ -269,9 +268,9 @@
               @click="closePasswordDialog"/>
             <q-btn
               no-caps
+              unelevated
               class="primary-action"
               color="primary"
-              padding="7px 30px"
               type="submit"
               :title="t('save')"
               :label="t('save')"
@@ -285,8 +284,10 @@
       v-model="viewUserDialogOpen"
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
-      <q-card v-if="userViewing" class="user-view-card">
-        <q-toolbar class="q-px-md app-dialog-toolbar">
+      <q-card
+        v-if="userViewing"
+        class="modal-card app-dialog-card app-dialog-card--lg">
+        <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('viewUserTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -297,7 +298,7 @@
             :aria-label="t('close')"
             @click="closeViewUser"/>
         </q-toolbar>
-        <q-card-section class="user-view-body q-px-lg q-py-md">
+        <q-card-section class="app-dialog-body">
           <div class="row q-col-gutter-md">
             <div
               v-for="item in userDetailRows"
@@ -308,11 +309,10 @@
             </div>
           </div>
         </q-card-section>
-        <q-separator />
-        <q-card-actions align="center" class="q-pa-md">
+        <q-card-actions align="right" class="app-dialog-actions">
           <q-btn
             no-caps
-            padding="7px 30px"
+            unelevated
             color="primary"
             :title="t('close')"
             :label="t('close')"
@@ -980,33 +980,3 @@ async function onConfirmDeleteUser() {
   }
 }
 </script>
-
-<style scoped>
-  .user-filter-card {
-    min-width: min(400px, 100vw - 32px);
-    max-width: 440px;
-  }
-
-  .user-filter-card .primary-action {
-    margin-left: 16px;
-  }
-
-  .user-view-card {
-    min-width: min(400px, 100vw - 24px);
-    max-width: min(560px, 100vw - 24px);
-  }
-
-  .user-password-card {
-    min-width: min(400px, 100vw - 24px);
-    max-width: min(480px, 100vw - 24px);
-  }
-
-  .user-password-card .primary-action {
-    margin-left: 16px;
-  }
-
-  .user-view-body {
-    max-height: min(360px, 70vh);
-    overflow-y: auto;
-  }
-</style>

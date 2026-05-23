@@ -57,55 +57,76 @@
             </q-item-section>
             <q-item-section>{{ t('dashboard') }}</q-item-section>
           </q-item>
-          <q-expansion-item
-            v-model="administrationMenu"
-            :content-inset-level="1"
-            :label="t('administration')"
-            expand-separator
-            icon="manage_accounts">
-            <q-item
-              clickable
-              v-ripple
-              to="/tenants"
-              :active-class="activeClass">
-              <q-item-section>{{ t('tenants') }}</q-item-section>
-            </q-item>
-            <q-item
-              clickable
-              v-ripple
-              to="/users"
-              :active-class="activeClass">
-              <q-item-section>{{ t('users') }}</q-item-section>
-            </q-item>
-            <q-item
-              clickable
-              v-ripple
-              to="/roles"
-              :active-class="activeClass">
-              <q-item-section>{{ t('roles') }}</q-item-section>
-            </q-item>
-            <q-item
-              clickable
-              v-ripple
-              to="/permissions"
-              :active-class="activeClass">
-              <q-item-section>{{ t('permissions') }}</q-item-section>
-            </q-item>
-            <q-item
-              clickable
-              v-ripple
-              to="/catalogs"
-              :active-class="activeClass">
-              <q-item-section>{{ t('catalogs') }}</q-item-section>
-            </q-item>
-            <q-item
-              clickable
-              v-ripple
-              to="/plans"
-              :active-class="activeClass">
-              <q-item-section>{{ t('plans') }}</q-item-section>
-            </q-item>
-          </q-expansion-item>
+          <q-item
+            clickable
+            v-ripple
+            to="/tenants"
+            :active-class="activeClass">
+            <q-item-section avatar>
+              <q-icon name="apartment" />
+            </q-item-section>
+            <q-item-section>{{ t('tenants') }}</q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-ripple
+            to="/users"
+            :active-class="activeClass">
+            <q-item-section avatar>
+              <q-icon name="people" />
+            </q-item-section>
+            <q-item-section>{{ t('users') }}</q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-ripple
+            to="/roles"
+            :active-class="activeClass">
+            <q-item-section avatar>
+              <q-icon name="badge" />
+            </q-item-section>
+            <q-item-section>{{ t('roles') }}</q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-ripple
+            to="/permissions"
+            :active-class="activeClass">
+            <q-item-section avatar>
+              <q-icon name="vpn_key" />
+            </q-item-section>
+            <q-item-section>{{ t('permissions') }}</q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-ripple
+            to="/modules"
+            :active-class="activeClass">
+            <q-item-section avatar>
+              <q-icon name="extension" />
+            </q-item-section>
+            <q-item-section>{{ t('modules') }}</q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-ripple
+            to="/catalogs"
+            :active-class="activeClass">
+            <q-item-section avatar>
+              <q-icon name="category" />
+            </q-item-section>
+            <q-item-section>{{ t('catalogs') }}</q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-ripple
+            to="/plans"
+            :active-class="activeClass">
+            <q-item-section avatar>
+              <q-icon name="payments" />
+            </q-item-section>
+            <q-item-section>{{ t('plans') }}</q-item-section>
+          </q-item>
         </q-list>
       </q-scroll-area>
       <div
@@ -140,7 +161,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from 'stores/auth-store.js'
@@ -158,11 +179,6 @@ const sidebar = ref(false)
 const sidebarExpanded = ref(true)
 const openByMouseOver = ref(false)
 const showSignOutConfirm = ref(false)
-
-const clientMenu = ref(null)
-const providerMenu = ref(null)
-const humanResourcesMenu = ref(null)
-const administrationMenu = ref(null)
 
 // Computed
 const windowWidth = computed(() => $q.screen.width)
@@ -205,19 +221,7 @@ const closeDrawer = () => {
   }
 }
 
-const hideAllMenu = () => {
-  clientMenu.value = false
-  providerMenu.value = false
-  humanResourcesMenu.value = false
-  administrationMenu.value = false
-}
-
 const handleLogout = () => {
   showSignOutConfirm.value = true
 }
-
-// Watchers
-watch(windowWidth, () => {
-  hideAllMenu()
-})
 </script>

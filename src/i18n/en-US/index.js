@@ -156,9 +156,22 @@ export default {
   rolePermissionsLoadError:
     'Could not load modules or permissions for the form. Try again.',
   permissions: 'Permissions',
+  modules: 'Modules',
+  viewModule: 'View module',
+  viewModuleTitle: 'Module details',
+  editModule: 'Edit module',
+  moduleUpdatedSuccess: 'Module updated successfully',
+  moduleUpdateError: 'Could not update module',
+  moduleListError: 'Could not load module list',
+  moduleDetailLoadError:
+    'Could not load module details; '
+    + 'form may be incomplete',
+  moduleFiltersTitle: 'Filter modules',
+  moduleId: 'Module ID',
   viewPermission: 'View permission',
   viewPermissionTitle: 'Permission details',
   editPermission: 'Edit permission',
+  permissionNameReadOnly: 'The name cannot be changed.',
   permissionUpdatedSuccess: 'Permission updated successfully',
   permissionUpdateError: 'Could not update permission',
   permissionListError: 'Could not load permission list',

@@ -86,8 +86,8 @@
       persistent
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
-      <q-card class="catalog-filter-card">
-        <q-toolbar class="q-px-md app-dialog-toolbar">
+      <q-card class="modal-card app-dialog-card app-dialog-card--sm">
+        <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('catalogFiltersTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -98,7 +98,7 @@
             :aria-label="t('close')"
             @click="closeCatalogFilterDialog"/>
         </q-toolbar>
-        <q-card-section class="column q-gutter-md q-px-lg q-py-md">
+        <q-card-section class="app-dialog-body app-dialog-form-stack">
           <q-input
             v-model="filterDraft[ck.name]"
             outlined
@@ -132,11 +132,9 @@
             :label="t('status')"
             :behavior="selectBehaviors.menu"/>
         </q-card-section>
-        <q-separator />
-        <q-card-actions align="center" class="q-pa-md">
+        <q-card-actions align="right" class="app-dialog-actions">
           <q-btn
             no-caps
-            padding="7px 30px"
             outline
             color="primary"
             class="app-btn-outline"
@@ -145,9 +143,9 @@
             @click="clearCatalogFilters"/>
           <q-btn
             no-caps
+            unelevated
             class="primary-action"
             color="primary"
-            padding="7px 30px"
             :title="t('roleFilterApply')"
             :label="t('roleFilterApply')"
             @click="applyCatalogFilters"/>
@@ -168,8 +166,10 @@
       v-model="viewCatalogDialogOpen"
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
-      <q-card v-if="catalogViewing" class="catalog-view-card">
-        <q-toolbar class="q-px-md app-dialog-toolbar">
+      <q-card
+        v-if="catalogViewing"
+        class="modal-card app-dialog-card app-dialog-card--lg">
+        <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('viewCatalogTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -180,7 +180,7 @@
             :aria-label="t('close')"
             @click="closeViewCatalog"/>
         </q-toolbar>
-        <q-card-section class="catalog-view-body q-px-lg q-py-md">
+        <q-card-section class="app-dialog-body">
           <div class="row q-col-gutter-md q-mb-md">
             <div
               v-for="item in catalogDetailRows"
@@ -196,6 +196,7 @@
             flat
             bordered
             dense
+            class="table admin-data-table"
             row-key="_localKey"
             hide-pagination
             :rows="catalogViewItems"
@@ -205,11 +206,10 @@
             {{ t('catalogItemsEmpty') }}
           </div>
         </q-card-section>
-        <q-separator />
-        <q-card-actions align="center" class="q-pa-md">
+        <q-card-actions align="right" class="app-dialog-actions">
           <q-btn
             no-caps
-            padding="7px 30px"
+            unelevated
             color="primary"
             :title="t('close')"
             :label="t('close')"
@@ -755,24 +755,3 @@ async function onConfirmDeleteCatalog() {
   }
 }
 </script>
-
-<style scoped>
-  .catalog-filter-card {
-    min-width: min(400px, 100vw - 32px);
-    max-width: 440px;
-  }
-
-  .catalog-filter-card .primary-action {
-    margin-left: 16px;
-  }
-
-  .catalog-view-card {
-    min-width: min(520px, 100vw - 24px);
-    max-width: min(720px, 100vw - 24px);
-  }
-
-  .catalog-view-body {
-    max-height: min(640px, 78vh);
-    overflow-y: auto;
-  }
-</style>

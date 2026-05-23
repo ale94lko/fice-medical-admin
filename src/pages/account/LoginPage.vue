@@ -99,6 +99,7 @@ async function handleLogin() {
         t
       )
       if (result) {
+        loginError.value = ''
         await router.push('/dashboard')
       }
     } catch (error) {

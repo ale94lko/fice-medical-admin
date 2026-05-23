@@ -13,6 +13,7 @@ import {
   coerceTenantMutationRoot,
   coerceUserMutationRoot,
   extractPlansList,
+  buildModulePatchBody,
   buildPermissionUpdateBody,
   catalogByIdPath,
   enrichPermissionsModuleNames,
@@ -21,6 +22,7 @@ import {
   mapModule,
   mapPlan,
   moduleByIdPath,
+  moduleUpdateByIdPath,
   planByIdPath,
   extractTenantList,
   extractTenantListPagination,
@@ -518,6 +520,17 @@ export const useSiteStore = defineStore('site', {
         throw error
       }
     },
+    async getModuleById(id) {
+      try {
+        const response = await apiInstance.get(moduleByIdPath(id))
+        const raw = response?.data?.data ?? response?.data
+
+        return mapModule(raw)
+      } catch (error) {
+        console.error('Error fetching module:', error)
+        throw error
+      }
+    },
     async createModule(payload) {
       try {
         await apiInstance.post(apiPaths.modulesCreate, payload)
@@ -530,9 +543,14 @@ export const useSiteStore = defineStore('site', {
         throw error
       }
     },
-    async updateModule(payload) {
+    async updateModule(id, payload) {
       try {
-        await apiInstance.patch(apiPaths.modulesUpdate, payload)
+        const idNum = Number(id)
+        if (!Number.isFinite(idNum)) {
+          throw new Error('Invalid module id')
+        }
+        const body = buildModulePatchBody(payload)
+        await apiInstance.patch(moduleUpdateByIdPath(idNum), body)
         await this.getModuleList({
           page: this.moduleListQuery.page,
           limit: this.moduleListQuery.limit,

@@ -90,8 +90,8 @@
       persistent
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
-      <q-card class="plan-filter-card">
-        <q-toolbar class="q-px-md app-dialog-toolbar">
+      <q-card class="modal-card app-dialog-card app-dialog-card--sm">
+        <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('planFiltersTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -102,7 +102,7 @@
             :aria-label="t('close')"
             @click="closePlanFilterDialog"/>
         </q-toolbar>
-        <q-card-section class="column q-gutter-md q-px-lg q-py-md">
+        <q-card-section class="app-dialog-body app-dialog-form-stack">
           <q-input
             v-model="filterDraft[pk.name]"
             outlined
@@ -136,11 +136,9 @@
             :label="t('planBillingCycle')"
             :behavior="selectBehaviors.menu"/>
         </q-card-section>
-        <q-separator />
-        <q-card-actions align="center" class="q-pa-md">
+        <q-card-actions align="right" class="app-dialog-actions">
           <q-btn
             no-caps
-            padding="7px 30px"
             outline
             color="primary"
             class="app-btn-outline"
@@ -149,9 +147,9 @@
             @click="clearPlanFilters"/>
           <q-btn
             no-caps
+            unelevated
             class="primary-action"
             color="primary"
-            padding="7px 30px"
             :title="t('roleFilterApply')"
             :label="t('roleFilterApply')"
             @click="applyPlanFilters"/>
@@ -172,8 +170,10 @@
       v-model="viewPlanDialogOpen"
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
-      <q-card v-if="planViewing" class="plan-view-card">
-        <q-toolbar class="q-px-md app-dialog-toolbar">
+      <q-card
+        v-if="planViewing"
+        class="modal-card app-dialog-card app-dialog-card--lg">
+        <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('viewPlanTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -184,7 +184,7 @@
             :aria-label="t('close')"
             @click="closeViewPlan"/>
         </q-toolbar>
-        <q-card-section class="plan-view-body q-px-lg q-py-md">
+        <q-card-section class="app-dialog-body">
           <div class="row q-col-gutter-md">
             <div
               v-for="item in planDetailRows"
@@ -225,11 +225,10 @@
             </div>
           </div>
         </q-card-section>
-        <q-separator />
-        <q-card-actions align="center" class="q-pa-md">
+        <q-card-actions align="right" class="app-dialog-actions">
           <q-btn
             no-caps
-            padding="7px 30px"
+            unelevated
             color="primary"
             :title="t('close')"
             :label="t('close')"
@@ -797,33 +796,3 @@ async function onConfirmDeletePlan() {
   }
 }
 </script>
-
-<style scoped>
-  .plan-filter-card {
-    min-width: min(400px, 100vw - 32px);
-    max-width: 440px;
-  }
-
-  .plan-filter-card .primary-action {
-    margin-left: 16px;
-  }
-
-  .plan-view-card {
-    min-width: min(520px, 100vw - 24px);
-    max-width: min(720px, 100vw - 24px);
-  }
-
-  .plan-view-body {
-    max-height: min(640px, 78vh);
-    overflow-y: auto;
-  }
-
-  .permission-tree-scroll {
-    max-height: 320px;
-    overflow-y: auto;
-  }
-
-  .plan-view-permission-qfield :deep(.q-field__control) {
-    padding-top: 6px;
-  }
-</style>

@@ -11,7 +11,7 @@ import {
   writeStoredRefreshToken,
   writeStoredToken,
 } from '../utils/auth-local-storage.js'
-import { clearSessionExpiredUiSuppression } from '../utils/api-session-error.js'
+import { dismissSessionExpiredNotify } from '../utils/api-session-error.js'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -47,7 +47,7 @@ export const useAuthStore = defineStore('auth', {
 
         const td = extractOAuthTokenPayload(response.data)
         this.applyTokensFromApi(td)
-        clearSessionExpiredUiSuppression()
+        dismissSessionExpiredNotify()
 
         return true
       } catch (error) {

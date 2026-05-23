@@ -1,6 +1,7 @@
 import { apiPaths } from 'components/constants.js'
 
 let sessionExpiredUiSuppressionUntil = 0
+let sessionExpiredNotifyDismiss = null
 
 export function beginSessionExpiredUiSuppression(windowMs = 3500) {
   sessionExpiredUiSuppressionUntil = Date.now() + windowMs
@@ -8,6 +9,20 @@ export function beginSessionExpiredUiSuppression(windowMs = 3500) {
 
 export function clearSessionExpiredUiSuppression() {
   sessionExpiredUiSuppressionUntil = 0
+}
+
+export function registerSessionExpiredNotify(dismiss) {
+  dismissSessionExpiredNotify()
+  sessionExpiredNotifyDismiss =
+    typeof dismiss === 'function' ? dismiss : null
+}
+
+export function dismissSessionExpiredNotify() {
+  if (typeof sessionExpiredNotifyDismiss === 'function') {
+    sessionExpiredNotifyDismiss()
+  }
+  sessionExpiredNotifyDismiss = null
+  beginSessionExpiredUiSuppression(2500)
 }
 
 function isUnauthorizedApiError(error) {

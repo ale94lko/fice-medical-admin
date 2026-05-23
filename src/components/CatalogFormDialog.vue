@@ -5,8 +5,10 @@
     :transition-show="quasarTransitions.scale"
     :transition-hide="quasarTransitions.scale"
     @update:model-value="emit('update:modelValue', $event)">
-    <q-card class="modal-card catalog-form-card" :style="cardStyle">
-      <q-toolbar class="q-px-md app-dialog-toolbar">
+    <q-card
+      class="modal-card app-dialog-card app-dialog-card--lg catalog-form-card"
+      :style="cardStyle">
+      <q-toolbar class="app-dialog-toolbar">
         <q-toolbar-title>{{ title }}</q-toolbar-title>
         <q-btn
           flat
@@ -25,7 +27,7 @@
         autocomplete="off"
         @submit.prevent="submit">
         <q-card-section
-          class="q-px-lg q-py-md catalog-form-body"
+          class="app-dialog-body catalog-form-body"
           :style="bodyStyle">
           <div class="catalog-form-fields">
             <q-input
@@ -135,11 +137,9 @@
             </div>
           </div>
         </q-card-section>
-        <q-separator />
-        <q-card-actions align="center" class="q-pa-md">
+        <q-card-actions align="right" class="app-dialog-actions">
           <q-btn
             no-caps
-            padding="7px 30px"
             outline
             color="primary"
             class="app-btn-outline"
@@ -149,9 +149,9 @@
             @click="close"/>
           <q-btn
             no-caps
+            unelevated
             class="primary-action"
             color="primary"
-            padding="7px 30px"
             type="submit"
             :loading="saving"
             :title="t('save')"
@@ -171,7 +171,6 @@ import {
   catalogFormDefaults,
   catalogItemFieldKeys,
   catalogScopes,
-  cssOverflow,
   quasarNotifyTypes,
   quasarTransitions,
   selectBehaviors,
@@ -201,8 +200,6 @@ const cardStyle = {
 
 const bodyStyle = {
   maxHeight: 'min(70vh, 600px)',
-  overflowY: cssOverflow.auto,
-  overflowX: 'hidden',
 }
 
 const form = reactive({

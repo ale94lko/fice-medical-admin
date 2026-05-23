@@ -4,18 +4,16 @@
     persistent
     transition-show="scale"
     transition-hide="scale">
-    <q-card class="modal-card">
-      <q-toolbar class="q-px-md app-dialog-toolbar">
+    <q-card class="modal-card app-dialog-card app-dialog-card--sm">
+      <q-toolbar class="app-dialog-toolbar">
         <q-toolbar-title>{{ title }}</q-toolbar-title>
       </q-toolbar>
-      <q-card-section class="q-px-xl q-py-md modal-body flex flex-center">
-        <div class="text-body1">{{ message }}</div>
+      <q-card-section class="app-dialog-body flex flex-center">
+        <div class="text-body1 text-grey-9">{{ message }}</div>
       </q-card-section>
-      <q-separator />
-      <q-card-actions align="center" class="q-pa-md">
+      <q-card-actions align="right" class="app-dialog-actions">
         <q-btn
           no-caps
-          padding="7px 30px"
           v-if="cancelText"
           outline
           color="primary"
@@ -25,6 +23,7 @@
           @click="onCancel"/>
         <q-btn
           no-caps
+          unelevated
           class="primary-action"
           color="primary"
           :title="confirmText"
@@ -61,18 +60,3 @@ const onCancel = () => {
 }
 </script>
 
-<style scoped>
-  .modal-card {
-    min-width: 400px;
-    max-width: 500px;
-
-    .text-body1 {
-      margin: 10px auto;
-    }
-
-    .primary-action {
-      margin-left: 25px;
-      padding: 7px 30px;
-    }
-  }
-</style>

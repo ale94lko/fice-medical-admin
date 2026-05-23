@@ -1,0 +1,62 @@
+---
+description: Run ESLint after code edits and fix style issues before finishing
+alwaysApply: true
+---
+
+# ESLint after every code change
+
+After **any** edit to project source files, verify code style before considering the task done.
+
+## Required step
+
+1. Run ESLint on files you changed (or the whole `src` tree if many files changed):
+
+```bash
+npm run lint
+```
+
+For a faster check on specific paths:
+
+```bash
+npx eslint -c ./eslint.config.js "src/path/to/changed/**/*.{js,vue}"
+```
+
+2. Fix **all** reported problems (errors and warnings), especially:
+   - `max-len` (80 characters) — break long lines (imports, attributes, strings)
+   - `space-before-function-paren` — `async()` not `async ()` in callbacks when required
+   - Vue/Quasar attribute wrapping — split long `class` / prop lists across lines
+
+3. Re-run ESLint until the command exits with code 0.
+
+## Do not finish if
+
+- ESLint was not run after your edits
+- Known lint issues remain in files you modified
+- You only say "run lint locally" without running it yourself
+
+## Common fixes in this repo
+
+```vue
+<!-- max-len: split long q-card -->
+<q-card
+  v-if="userViewing"
+  class="modal-card app-dialog-card app-dialog-card--lg">
+```
+
+```javascript
+// max-len: split long import
+import { useModuleViewPermissions }
+  from 'src/composables/useModuleViewPermissions.js'
+
+// space-before-function-paren
+watch([a, b], async([open, row]) => { ... })
+```
+
+```javascript
+// max-len: break long i18n strings
+moduleDetailLoadError:
+  'Could not load module details; '
+  + 'form may be incomplete',
+```
+
+Use `ReadLints` on edited paths when available; still run `npm run lint` when the change spans multiple files or touches config.

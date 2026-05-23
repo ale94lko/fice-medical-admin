@@ -3,13 +3,14 @@ import { useI18n } from 'vue-i18n'
 import {
   fieldTypes,
   htmlInputTypes,
-  permissionFieldKeys,
+  moduleFieldKeys,
 } from 'components/constants.js'
-import { buildPermissionUpdateBody } from 'components/helpers.js'
+import { buildModulePatchBody } from 'components/helpers.js'
 
-export function usePermissionEditForm() {
+const mk = moduleFieldKeys
+
+export function useModuleEditForm() {
   const { t } = useI18n()
-  const pk = permissionFieldKeys
 
   const fields = computed(() => {
     const requiredRule = val =>
@@ -17,17 +18,16 @@ export function usePermissionEditForm() {
 
     return [
       {
-        key: pk.name,
+        key: mk.name,
         kind: fieldTypes.input,
-        labelKey: pk.name,
+        labelKey: mk.name,
         inputType: htmlInputTypes.text,
-        readonly: true,
-        hintKey: 'permissionNameReadOnly',
+        rules: [requiredRule],
       },
       {
-        key: pk.description,
+        key: mk.description,
         kind: fieldTypes.textarea,
-        labelKey: pk.description,
+        labelKey: mk.description,
         rows: 4,
         autogrow: false,
         rules: [requiredRule],
@@ -35,12 +35,12 @@ export function usePermissionEditForm() {
     ]
   })
 
-  function formatPermissionUpdatePayload(form) {
-    return buildPermissionUpdateBody(form)
+  function formatModuleUpdatePayload(form) {
+    return buildModulePatchBody(form)
   }
 
   return {
     fields,
-    formatPermissionUpdatePayload,
+    formatModuleUpdatePayload,
   }
 }

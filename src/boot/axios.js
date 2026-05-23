@@ -20,6 +20,7 @@ import {
   beginSessionExpiredUiSuppression,
   isInvalidRefreshTokenError,
   markErrorAsSessionLogoutHandled,
+  registerSessionExpiredNotify,
 } from '../utils/api-session-error.js'
 import { deepMapRequestKeysToSnakeCase } from '../utils/request-key-case.js'
 import { i18nGlobalT } from './i18n.js'
@@ -144,12 +145,14 @@ async function clearSessionAndRedirectToLogin() {
   const now = Date.now()
   if (now - lastSessionExpiredNotifyAt > 600) {
     lastSessionExpiredNotifyAt = now
-    Notify.create({
+    const dismiss = Notify.create({
       type: quasarNotifyTypes.negative,
       message: i18nGlobalT('sessionExpiredRelogin'),
       position: 'top',
       timeout: 6000,
+      group: 'session-expired',
     })
+    registerSessionExpiredNotify(dismiss)
   }
   await clearSessionFromApi()
   try {

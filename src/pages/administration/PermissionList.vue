@@ -68,8 +68,8 @@
       persistent
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
-      <q-card class="permission-filter-card">
-        <q-toolbar class="q-px-md app-dialog-toolbar">
+      <q-card class="modal-card app-dialog-card app-dialog-card--sm">
+        <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('permissionFiltersTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -80,7 +80,7 @@
             :aria-label="t('close')"
             @click="closePermissionFilterDialog"/>
         </q-toolbar>
-        <q-card-section class="column q-gutter-md q-px-lg q-py-md">
+        <q-card-section class="app-dialog-body app-dialog-form-stack">
           <q-input
             v-model="filterDraft[pk.name]"
             outlined
@@ -119,11 +119,9 @@
             </template>
           </q-select>
         </q-card-section>
-        <q-separator />
-        <q-card-actions align="center" class="q-pa-md">
+        <q-card-actions align="right" class="app-dialog-actions">
           <q-btn
             no-caps
-            padding="7px 30px"
             outline
             color="primary"
             class="app-btn-outline"
@@ -132,9 +130,9 @@
             @click="clearPermissionFilters"/>
           <q-btn
             no-caps
+            unelevated
             class="primary-action"
             color="primary"
-            padding="7px 30px"
             :title="t('roleFilterApply')"
             :label="t('roleFilterApply')"
             @click="applyPermissionFilters"/>
@@ -146,8 +144,10 @@
       v-model="viewPermissionDialogOpen"
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
-      <q-card v-if="permissionViewing" class="permission-view-card">
-        <q-toolbar class="q-px-md app-dialog-toolbar">
+      <q-card
+        v-if="permissionViewing"
+        class="modal-card app-dialog-card app-dialog-card--lg">
+        <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('viewPermissionTitle') }}</q-toolbar-title>
           <q-btn
             flat
@@ -158,7 +158,7 @@
             :aria-label="t('close')"
             @click="closeViewPermission"/>
         </q-toolbar>
-        <q-card-section class="permission-view-body q-px-lg q-py-md">
+        <q-card-section class="app-dialog-body">
           <div class="row q-col-gutter-md">
             <div
               v-for="item in permissionDetailRows"
@@ -169,11 +169,10 @@
             </div>
           </div>
         </q-card-section>
-        <q-separator />
-        <q-card-actions align="center" class="q-pa-md">
+        <q-card-actions align="right" class="app-dialog-actions">
           <q-btn
             no-caps
-            padding="7px 30px"
+            unelevated
             color="primary"
             :title="t('close')"
             :label="t('close')"
@@ -585,24 +584,3 @@ async function onSavePermissionEdit(payload) {
 const windowWidth = computed(() => $q.screen.width)
 const showGrid = computed(() => windowWidth.value <= siteBreakpointsPx.XXS)
 </script>
-
-<style scoped>
-  .permission-view-card {
-    min-width: min(520px, 100vw - 24px);
-    max-width: min(640px, 100vw - 24px);
-  }
-
-  .permission-view-body {
-    max-height: min(640px, 78vh);
-    overflow-y: auto;
-  }
-
-  .permission-filter-card {
-    min-width: min(400px, 100vw - 32px);
-    max-width: 440px;
-  }
-
-  .permission-filter-card .primary-action {
-    margin-left: 16px;
-  }
-</style>

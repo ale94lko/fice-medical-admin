@@ -32,6 +32,7 @@ import {
   collectPermissionIdsFromTree,
   fetchAllPaginatedRaw,
   filterPermissionTreeByModuleIds,
+  moduleIdsFromPermissionIds,
 } from 'src/utils/permission-catalog-tree.js'
 
 const uk = userFieldKeys
@@ -298,6 +299,37 @@ function clearFormRoles(form) {
   clearFormPermissions(form)
 }
 
+function normalizeRoleIdList(roleIds) {
+  return Array.isArray(roleIds)
+    ? roleIds.map(x => Number(x)).filter(Number.isFinite)
+    : []
+}
+
+function diffRoleIdLists(nextRoleIds, previousRoleIds) {
+  const ids = normalizeRoleIdList(nextRoleIds)
+  const prev = normalizeRoleIdList(previousRoleIds)
+  const idSet = new Set(ids)
+  const prevSet = new Set(prev)
+
+  return {
+    ids,
+    added: ids.filter(rid => !prevSet.has(rid)),
+    removed: prev.filter(rid => !idSet.has(rid)),
+  }
+}
+
+function restoreSavedPermissionsToForm(form, savedPermissionIds, allowedIds) {
+  if (!savedPermissionIds.length) {
+    return
+  }
+  const allowed = allowedIds instanceof Set ? allowedIds : new Set()
+  const restored = savedPermissionIds.filter(
+    pid => !allowed.size || allowed.has(pid),
+  )
+  restored.sort((a, b) => a - b)
+  writeFormPermissions(form, restored)
+}
+
 function formatUserFormPayload(form, editingRef, catalog) {
   const roles = intIdList(form[uk.roles])
   const permissions = intIdList(form[uk.permissions])
@@ -341,13 +373,29 @@ function createUserAddFormLoaders(ctx) {
     rolesPermissionFetchSeqRef,
     subtenantFetchSeqRef,
     rolesLoadSeqRef,
+    previousRoleIdsRef,
+    skipRolePermissionSyncRef,
   } = ctx
 
   function applyTenantPermissionFilter(tenantId, form) {
     const id = Number(tenantId)
-    const moduleIds = Number.isFinite(id)
-      ? catalog.tenantPlanModuleIdsByTenantId.value.get(id) ?? []
+    let moduleIds = Number.isFinite(id)
+      ? [...(catalog.tenantPlanModuleIdsByTenantId.value.get(id) ?? [])]
       : []
+    const isEdit = Boolean(editingRef?.value)
+    if (form && isEdit) {
+      const savedPerms = intIdList(form[uk.permissions])
+      if (
+        savedPerms.length > 0
+        && catalog.allPermissionTreeNodes.value.length > 0
+      ) {
+        const extra = moduleIdsFromPermissionIds(
+          catalog.allPermissionTreeNodes.value,
+          savedPerms,
+        )
+        moduleIds = [...new Set([...moduleIds, ...extra])]
+      }
+    }
     const filtered = moduleIds.length === 0
       ? []
       : filterPermissionTreeByModuleIds(
@@ -431,35 +479,59 @@ function createUserAddFormLoaders(ctx) {
     return { perms, stale: false }
   }
 
-  async function afterRolesSelected(form, roleIds) {
-    const ids = Array.isArray(roleIds)
-      ? roleIds.map(x => Number(x)).filter(Number.isFinite)
-      : []
-    const seq = ++rolesPermissionFetchSeqRef.current
-
-    if (ids.length === 0) {
-      clearFormPermissions(form)
-      await nextTick()
-
-      return
-    }
-
-    const aggregated = new Set()
-    for (const rid of ids) {
+  async function syncPermissionsForRoleDelta(form, added, removed, seq) {
+    const current = new Set(
+      intIdList(form[uk.permissions])
+        .map(x => Number(x))
+        .filter(Number.isFinite),
+    )
+    for (const rid of removed) {
       const { perms, stale } = await resolveRolePermissionIds(rid, seq)
       if (stale) {
-        return
+        return null
       }
       for (const p of perms) {
         const n = Number(p)
         if (Number.isFinite(n)) {
-          aggregated.add(n)
+          current.delete(n)
+        }
+      }
+    }
+    for (const rid of added) {
+      const { perms, stale } = await resolveRolePermissionIds(rid, seq)
+      if (stale) {
+        return null
+      }
+      for (const p of perms) {
+        const n = Number(p)
+        if (Number.isFinite(n)) {
+          current.add(n)
         }
       }
     }
 
+    return current
+  }
+
+  async function afterRolesSelected(form, roleIds) {
+    if (skipRolePermissionSyncRef.current) {
+      return
+    }
+    const { ids, added, removed } = diffRoleIdLists(
+      roleIds,
+      previousRoleIdsRef.value,
+    )
+    if (added.length === 0 && removed.length === 0) {
+      return
+    }
+    const seq = ++rolesPermissionFetchSeqRef.current
+    const current = await syncPermissionsForRoleDelta(form, added, removed, seq)
+    if (!current) {
+      return
+    }
+    previousRoleIdsRef.value = ids.slice()
     const allowed = catalog.knownPermissionIds.value
-    const merged = [...aggregated]
+    const merged = [...current]
       .filter(pid => !allowed.size || allowed.has(pid))
       .sort((a, b) => a - b)
     writeFormPermissions(form, merged)
@@ -600,6 +672,7 @@ function createUserAddFormLoaders(ctx) {
 
   async function onDialogOpen() {
     rolesLoadSeqRef.current += 1
+    previousRoleIdsRef.value = []
     catalog.rolePermissionIdsByRoleId.value = new Map()
     catalog.rolesOptions.value = []
     catalog.subtenantSelectOptions.value = []
@@ -623,45 +696,53 @@ function createUserAddFormLoaders(ctx) {
     if (!Number.isFinite(tenantId)) {
       return
     }
-    const editRow = editingRef?.value
-    const isEdit = Boolean(editRow)
-    const savedRoleIds = intIdList(form[uk.roles])
-    const savedSubtenantIds = intIdList(form[uk.allowedSubtenantIds])
-    const savedPermissionIds = intIdList(form[uk.permissions])
-    applyTenantPermissionFilter(tenantId, form)
-    const knownRoleOpts = Array.isArray(editRow?.roleSelectOptions)
-      ? editRow.roleSelectOptions
-      : []
-    catalog.rolesOptions.value = await buildRoleOptionsWithAssignments(
-      catalog.rolesOptions.value,
-      savedRoleIds,
-      knownRoleOpts,
-    )
-    if (savedRoleIds.length > 0) {
-      form[uk.roles] = savedRoleIds
-    }
-    catalog.subtenantSelectOptions.value = mergeMissingSelectOptions(
-      catalog.subtenantSelectOptions.value,
-      savedSubtenantIds,
-      id => `${t('userAllowedSubTenants')} #${id}`,
-    )
-    if (savedSubtenantIds.length > 0) {
-      form[uk.allowedSubtenantIds] = savedSubtenantIds
-    }
-    if (isEdit) {
-      if (savedPermissionIds.length > 0) {
-        const allowed = catalog.knownPermissionIds.value
-        const restored = savedPermissionIds.filter(
-          pid => !allowed.size || allowed.has(pid),
-        )
-        restored.sort((a, b) => a - b)
-        writeFormPermissions(form, restored)
+    skipRolePermissionSyncRef.current = true
+    try {
+      const editRow = editingRef?.value
+      const isEdit = Boolean(editRow)
+      const savedRoleIds = intIdList(form[uk.roles])
+      const savedSubtenantIds = intIdList(form[uk.allowedSubtenantIds])
+      const savedPermissionIds = intIdList(form[uk.permissions])
+      applyTenantPermissionFilter(tenantId, form)
+      const knownRoleOpts = Array.isArray(editRow?.roleSelectOptions)
+        ? editRow.roleSelectOptions
+        : []
+      catalog.rolesOptions.value = await buildRoleOptionsWithAssignments(
+        catalog.rolesOptions.value,
+        savedRoleIds,
+        knownRoleOpts,
+      )
+      if (savedRoleIds.length > 0) {
+        form[uk.roles] = savedRoleIds
       }
-    } else if (savedRoleIds.length > 0) {
-      await afterRolesSelected(form, savedRoleIds)
-      form[uk.roles] = savedRoleIds
+      catalog.subtenantSelectOptions.value = mergeMissingSelectOptions(
+        catalog.subtenantSelectOptions.value,
+        savedSubtenantIds,
+        id => `${t('userAllowedSubTenants')} #${id}`,
+      )
+      if (savedSubtenantIds.length > 0) {
+        form[uk.allowedSubtenantIds] = savedSubtenantIds
+      }
+      if (isEdit) {
+        previousRoleIdsRef.value = savedRoleIds.slice()
+        restoreSavedPermissionsToForm(
+          form,
+          savedPermissionIds,
+          catalog.knownPermissionIds.value,
+        )
+      } else if (savedRoleIds.length > 0) {
+        previousRoleIdsRef.value = []
+        skipRolePermissionSyncRef.current = false
+        await afterRolesSelected(form, savedRoleIds)
+        skipRolePermissionSyncRef.current = true
+        form[uk.roles] = savedRoleIds
+      } else {
+        previousRoleIdsRef.value = []
+      }
+      await nextTick()
+    } finally {
+      skipRolePermissionSyncRef.current = false
     }
-    await nextTick()
   }
 
   return {
@@ -818,6 +899,8 @@ export function useUserAddForm(editingRef) {
   const rolesPermissionFetchSeqRef = { current: 0 }
   const subtenantFetchSeqRef = { current: 0 }
   const rolesLoadSeqRef = { current: 0 }
+  const previousRoleIdsRef = ref([])
+  const skipRolePermissionSyncRef = { current: false }
   const loaders = createUserAddFormLoaders({
     t,
     $q,
@@ -826,6 +909,8 @@ export function useUserAddForm(editingRef) {
     rolesPermissionFetchSeqRef,
     subtenantFetchSeqRef,
     rolesLoadSeqRef,
+    previousRoleIdsRef,
+    skipRolePermissionSyncRef,
   })
   const fields = createUserAddFormFields({ t, catalog, editingRef, loaders })
 

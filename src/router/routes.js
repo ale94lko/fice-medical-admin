@@ -24,6 +24,10 @@ const routes = [
         component: () => import('pages/administration/PermissionList.vue'),
       },
       {
+        path: 'modules',
+        component: () => import('pages/administration/ModuleList.vue'),
+      },
+      {
         path: 'catalogs',
         component: () => import('pages/administration/CatalogList.vue'),
       },

@@ -6,7 +6,7 @@
     :persistent="persistent"
     @update:model-value="emit('update:modelValue', $event)">
     <q-card class="modal-card" :style="cardStyle">
-      <q-toolbar class="q-px-md app-dialog-toolbar">
+      <q-toolbar class="app-dialog-toolbar">
         <q-toolbar-title>{{ titleText }}</q-toolbar-title>
         <q-btn
           flat
@@ -28,14 +28,13 @@
         @submit.prevent="onFormSubmit"
         @validation-error="onFormValidationError">
         <q-card-section
-          class="q-px-xl q-py-md modal-body"
-          :style="{ maxHeight: bodyMaxHeight, overflowY: cssOverflow.auto }">
-          <div class="column no-wrap q-gutter-md">
-            <div
-              v-for="field in fields"
-              v-show="showFieldRow(field)"
-              class="dialog-field-row"
-              :key="field.key">
+          class="app-dialog-body modal-body app-dialog-form-stack"
+          :style="{ maxHeight: bodyMaxHeight }">
+          <div
+            v-for="field in fields"
+            v-show="showFieldRow(field)"
+            class="dialog-field-row"
+            :key="field.key">
               <q-input
                 v-if="showPhoneField(field)"
                 :model-value="form[field.key]"
@@ -231,14 +230,11 @@
                   </div>
                 </template>
               </q-select>
-            </div>
           </div>
         </q-card-section>
-        <q-separator />
-        <q-card-actions align="center" class="q-pa-md">
+        <q-card-actions align="right" class="app-dialog-actions">
           <q-btn
             no-caps
-            padding="7px 30px"
             outline
             color="primary"
             class="app-btn-outline"
@@ -249,6 +245,7 @@
           />
           <q-btn
             no-caps
+            unelevated
             class="primary-action"
             color="primary"
             :type="htmlButtonTypes.submit"
@@ -269,7 +266,6 @@ import { useQuasar } from 'quasar'
 import {
   clipboardMimeTypes,
   countryCodeUsa,
-  cssOverflow,
   dialogEmitEvents,
   dialogI18nKeys,
   fieldTypes,
@@ -363,6 +359,9 @@ const cardStyle = computed(() => ({
 }))
 
 function isFieldReadonly(field) {
+  if (field.readonly === true) {
+    return true
+  }
   const allowed = props.editableKeysWhenEdit
   if (!allowed?.length) {
     return false
@@ -913,11 +912,6 @@ async function onFormSubmit() {
 </script>
 
 <style scoped>
-  .primary-action {
-    margin-left: 25px;
-    padding: 7px 30px;
-  }
-
   :deep(.dialog-textarea-inner) {
     min-height: 6.5rem;
     resize: vertical;
