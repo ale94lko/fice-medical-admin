@@ -1,0 +1,1 @@
+import{Yt as e,cn as t}from"./axios-BN-LSwcw.js";function n(n,r,i=e.label,a=e.value){let o=Array.isArray(n)?[...n]:[],s=String(r??``).toLowerCase().trim();return s?o.filter(e=>{if(!e||typeof e!==t.object)return!1;let n=String(e[i]??``).toLowerCase(),r=String(e[a]??``).toLowerCase();return n.includes(s)||r.includes(s)}):o}export{n as t};
