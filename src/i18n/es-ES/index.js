@@ -78,6 +78,7 @@ export default {
   schemaName: 'Nombre del esquema',
   newTenant: 'Nuevo tenant',
   editTenant: 'Editar tenant',
+  mainSubtenantName: 'Nombre del sub-tenant principal',
   fieldRequired: 'Este campo es obligatorio',
   tenantNameLettersRequired:
     'El nombre debe incluir letras para generar el esquema de base de datos',

@@ -30,11 +30,12 @@
         <q-card-section
           class="app-dialog-body modal-body app-dialog-form-stack"
           :style="{ maxHeight: bodyMaxHeight }">
-          <div
+          <template
             v-for="field in fields"
-            v-show="showFieldRow(field)"
-            class="dialog-field-row"
             :key="field.key">
+          <div
+            v-if="showFieldRow(field)"
+            class="dialog-field-row">
               <q-input
                 v-if="showPhoneField(field)"
                 :model-value="form[field.key]"
@@ -233,6 +234,7 @@
                 </template>
               </q-select>
           </div>
+          </template>
         </q-card-section>
         <q-card-actions align="right" class="app-dialog-actions">
           <q-btn
@@ -386,12 +388,26 @@ function isFieldReadonly(field) {
   return !allowed.includes(field.key)
 }
 
+function shouldValidateField(field) {
+  if (field.createOnly && props.editableKeysWhenEdit?.length) {
+    return false
+  }
+  if (isFieldReadonly(field)) {
+    return false
+  }
+
+  return true
+}
+
 function showPhoneField(field) {
   return field.kind === fieldTypes.input
     && !field.phoneDialFromCountryField
 }
 
 function showFieldRow(field) {
+  if (field.createOnly && props.editableKeysWhenEdit?.length) {
+    return false
+  }
   if (field.alwaysShow === true) {
     return true
   }
@@ -809,6 +825,10 @@ function plainInputAutocomplete(field) {
 }
 
 function hasRules(field) {
+  if (!shouldValidateField(field)) {
+    return false
+  }
+
   return Boolean(rulesFor(field)?.length)
 }
 
@@ -829,6 +849,9 @@ function validationSpacerRule() {
 }
 
 function rulesFor(field) {
+  if (!shouldValidateField(field)) {
+    return undefined
+  }
   const list = []
   if (field.rules?.length) {
     list.push(...field.rules)

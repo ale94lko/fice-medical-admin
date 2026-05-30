@@ -72,6 +72,7 @@ export default {
   schemaName: 'Schema name',
   newTenant: 'New tenant',
   editTenant: 'Edit tenant',
+  mainSubtenantName: 'Main Subtenant Name',
   fieldRequired: 'This field is required',
   tenantNameLettersRequired:
     'The name must contain letters to generate the database schema',

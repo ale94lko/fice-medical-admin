@@ -78,7 +78,7 @@ export function permissionByIdPath(id) {
 }
 
 export function moduleByIdPath(id) {
-  return `${apiPaths.modulesList}/${encodeURIComponent(String(id))}`
+  return `${apiPaths.moduleAdminItem}/${encodeURIComponent(String(id))}`
 }
 
 export function moduleUpdateByIdPath(id) {
@@ -243,12 +243,16 @@ export function mapRole(row) {
   }
   if (Array.isArray(row.permissions)) {
     mapped[rk.permissions] = row.permissions
-  }
-  if (Array.isArray(row.permission_ids)) {
-    mapped['permission_ids'] = row.permission_ids
-  }
-  if (Array.isArray(row.permissionIds)) {
-    mapped.permissionIds = row.permissionIds
+  } else {
+    const permIds = intIdsFromMixedIdList(
+      row.permissions_ids
+      ?? row.permission_ids
+      ?? row.permissionsIds
+      ?? row.permissionIds,
+    )
+    if (permIds.length) {
+      mapped[rk.permissions] = permIds
+    }
   }
 
   return mapped
@@ -308,13 +312,13 @@ export function buildRoleCreateBody(payload) {
   const rk = roleFieldKeys
   const name = sanitizeRoleNameInput(payload[rk.name])
   const description = String(payload[rk.description] ?? '').trim()
-  const permissionIds = intIdList(payload[rk.permissions])
+  const permissionsIds = intIdList(payload[rk.permissions])
   const tenantIdNum = Number(payload[rk.tenantId])
 
   const body = {
     name,
     description,
-    permissionIds,
+    permissionsIds,
   }
   if (Number.isFinite(tenantIdNum)) {
     body.tenantId = tenantIdNum
@@ -334,13 +338,13 @@ export function buildRoleUpdateBody(payload, roleId) {
   }
   const name = String(payload[rk.name] ?? '').trim()
   const description = String(payload[rk.description] ?? '').trim()
-  const permissionIds = intIdList(payload[rk.permissions])
+  const permissionsIds = intIdList(payload[rk.permissions])
 
   return {
     id,
     name,
     description,
-    permissionIds,
+    permissionsIds,
   }
 }
 
@@ -1119,6 +1123,7 @@ export function mergeTenantWithPayload(mapped, payload, plans) {
 function applyTenantPayloadToSnakeBody(body, payload, tk) {
   const rows = [
     { p: tk.name, b: 'name' },
+    { p: tk.mainSubtenantName, b: 'main_subtenant_name' },
     { p: tk.domain, b: 'domain' },
     {
       p: tk.planId,
@@ -1216,7 +1221,9 @@ export function intIdsFromMixedIdList(mixed) {
           ?? item.role_id
           ?? item.roleId
           ?? item.permission_id
-          ?? item.permissionId,
+          ?? item.permissionId
+          ?? item.subtenant_id
+          ?? item.subtenantId,
       )
       if (Number.isFinite(n)) {
         nums.push(n)
@@ -1260,6 +1267,50 @@ export function extractRoleSelectOptionsFromUser(user) {
   return options
 }
 
+export function extractUserAllowedSubtenantIds(user) {
+  if (!user || typeof user !== typeNames.object) {
+    return []
+  }
+
+  return intIdsFromMixedIdList(
+    user.allowed_subtenant_ids
+    ?? user.allowedSubtenantIds
+    ?? user.subtenants
+    ?? user.sub_tenants,
+  )
+}
+
+export function extractSubtenantSelectOptionsFromUser(user) {
+  const mixed = user?.subtenants ?? user?.sub_tenants
+  if (!Array.isArray(mixed)) {
+    return []
+  }
+  const options = []
+  const seen = new Set()
+  for (const row of mixed) {
+    if (row == null || typeof row !== typeNames.object) {
+      continue
+    }
+    const idNum = Number(
+      row.id ?? row.subtenant_id ?? row.subtenantId,
+    )
+    if (!Number.isFinite(idNum) || seen.has(idNum)) {
+      continue
+    }
+    seen.add(idNum)
+    const name = String(row.name ?? '').trim()
+    const code = String(row.code ?? '').trim()
+    let label = name || code || String(idNum)
+    if (name && code) {
+      label = `${name} (${code})`
+    }
+    options.push({ label, value: idNum })
+  }
+  options.sort((a, b) => a.label.localeCompare(b.label))
+
+  return options
+}
+
 export function mapUser(user) {
   if (!user || typeof user !== typeNames.object) {
     return null
@@ -1271,9 +1322,7 @@ export function mapUser(user) {
   const permissions = intIdsFromMixedIdList(
     user.permissions ?? user.permission_ids ?? user.permissionIds,
   )
-  const allowedSubtenantIds = intIdsFromMixedIdList(
-    user.allowed_subtenant_ids ?? user.allowedSubtenantIds,
-  )
+  const allowedSubtenantIds = extractUserAllowedSubtenantIds(user)
   const description = String(user.description ?? '').trim()
   const hasChangePassword = Object.prototype.hasOwnProperty.call(
     user,
@@ -1303,6 +1352,7 @@ export function mapUser(user) {
     [uk.description]: description,
     [uk.allowedSubtenantIds]: allowedSubtenantIds,
     roleSelectOptions: extractRoleSelectOptionsFromUser(user),
+    subtenantSelectOptions: extractSubtenantSelectOptionsFromUser(user),
   }
   if (Number.isFinite(tenantIdNum)) {
     out[uk.tenantId] = tenantIdNum
@@ -1359,10 +1409,17 @@ export function mergeUserWithPayload(mapped, payload) {
       payload[uk.permissions] ?? payload.permissions ?? payload.permission_ids,
     )
   }
-  if (Array.isArray(payload.allowedSubtenantIds)) {
+  const mergedSubs = extractUserAllowedSubtenantIds(payload)
+  if (mergedSubs.length > 0) {
+    next[uk.allowedSubtenantIds] = mergedSubs
+  } else if (Array.isArray(payload.allowedSubtenantIds)) {
     next[uk.allowedSubtenantIds] = intIdList(payload.allowedSubtenantIds)
   } else if (Array.isArray(payload.allowed_subtenant_ids)) {
     next[uk.allowedSubtenantIds] = intIdList(payload.allowed_subtenant_ids)
+  }
+  const subOpts = extractSubtenantSelectOptionsFromUser(payload)
+  if (subOpts.length > 0) {
+    next.subtenantSelectOptions = subOpts
   }
   if (Object.prototype.hasOwnProperty.call(payload, 'description')) {
     next[uk.description] = String(payload.description ?? '').trim()

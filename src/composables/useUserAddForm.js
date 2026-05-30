@@ -715,8 +715,11 @@ function createUserAddFormLoaders(ctx) {
       if (savedRoleIds.length > 0) {
         form[uk.roles] = savedRoleIds
       }
+      const knownSubOpts = Array.isArray(editRow?.subtenantSelectOptions)
+        ? editRow.subtenantSelectOptions
+        : []
       catalog.subtenantSelectOptions.value = mergeMissingSelectOptions(
-        catalog.subtenantSelectOptions.value,
+        knownSubOpts.concat(catalog.subtenantSelectOptions.value),
         savedSubtenantIds,
         id => `${t('userAllowedSubTenants')} #${id}`,
       )
@@ -776,7 +779,6 @@ function createUserAddFormFields(ctx) {
     const tenantSelectRule = val =>
       (val != null && val !== '' && Number.isFinite(Number(val)))
       || t('fieldRequired')
-    const optionalSelectSpacerRule = () => true
 
     const identityFields = [
       {
@@ -816,9 +818,8 @@ function createUserAddFormFields(ctx) {
       kind: fieldTypes.select,
       labelKey: 'userAllowedSubTenants',
       multiple: true,
-      clearable: true,
       defaultValue: [],
-      rules: [optionalSelectSpacerRule],
+      rules: [rolesRule],
       options: () => catalog.subtenantSelectOptions.value,
       optionLabel: qSelectOptionKeys.label,
       optionValue: qSelectOptionKeys.value,

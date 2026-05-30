@@ -94,6 +94,13 @@ export function useTenantAddForm() {
         rules: [requiredRule, tenantNameLettersRule],
       },
       {
+        key: tk.mainSubtenantName,
+        kind: fieldTypes.input,
+        labelKey: 'mainSubtenantName',
+        createOnly: true,
+        rules: [requiredRule, tenantNameLettersRule],
+      },
+      {
         key: tk.domain,
         kind: fieldTypes.input,
         labelKey: tk.domain,
@@ -203,6 +210,7 @@ export function useTenantAddForm() {
     const tk = tenantFieldKeys
     return {
       [tk.name]: form[tk.name].trim(),
+      [tk.mainSubtenantName]: form[tk.mainSubtenantName].trim(),
       [tk.domain]: form[tk.domain].trim(),
       [tk.planId]: Number(form[tk.planId]),
       [tk.schemaName]: deriveSchemaNameFromTenantName(form[tk.name]),

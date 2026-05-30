@@ -25,14 +25,13 @@ export const apiPaths = {
   usersList: '/admin-tenant/v1/users',
   usersRegister: '/admin-tenant/v1/users/register',
   usersChangePassword: '/admin-tenant/v1/users/change-password',
-  rolesList: '/roles/v1',
-  rolesCreate: '/admin-tenant/v1/role/add',
-  rolesUpdate: '/admin-tenant/v1/role/update',
-  permissionsList: '/permissions/v1',
+  rolesList: '/admin-tenant/v1/roles',
+  rolesCreate: '/admin-tenant/v1/roles/add',
+  rolesUpdate: '/admin-tenant/v1/roles/update',
+  permissionsList: '/admin-tenant/v1/permissions',
   permissionsUpdate: '/admin-tenant/v1/permissions/update',
-  modulesList: '/modules/v1',
-  modulesCreate: '/modules/v1/create',
-  modulesUpdate: '/modules/v1/update',
+  modulesList: '/admin-tenant/v1/module',
+  modulesUpdate: '/admin-tenant/v1/modules/update',
   moduleAdminItem: '/admin-tenant/v1/module',
   catalogList: '/admin-tenant/v1/catalog',
   catalogCreate: '/admin-tenant/v1/catalog/create',
@@ -118,6 +117,7 @@ export const inputNormalizeKeys = {
 
 export const tenantFieldKeys = {
   name: 'name',
+  mainSubtenantName: 'mainSubtenantName',
   domain: 'domain',
   planId: 'planId',
   planName: 'planName',
@@ -244,6 +244,8 @@ export const planFormDefaults = {
 }
 
 export const roleDetailNumericIdArrayKeys = [
+  'permissions_ids',
+  'permissionsIds',
   'permission_ids',
   'permissionIds',
   'permissionIDs',

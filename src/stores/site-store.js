@@ -531,18 +531,6 @@ export const useSiteStore = defineStore('site', {
         throw error
       }
     },
-    async createModule(payload) {
-      try {
-        await apiInstance.post(apiPaths.modulesCreate, payload)
-        await this.getModuleList({
-          page: this.moduleListQuery.page,
-          limit: this.moduleListQuery.limit,
-        })
-      } catch (error) {
-        console.error('Error creating module:', error)
-        throw error
-      }
-    },
     async updateModule(id, payload) {
       try {
         const idNum = Number(id)
