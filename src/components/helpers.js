@@ -70,7 +70,7 @@ export function roleByIdPath(id) {
 }
 
 export function rolesByTenantPath(tenantId) {
-  return `/admin-tenant/v1/role/tenant/${encodeURIComponent(String(tenantId))}`
+  return `${apiPaths.rolesList}/tenant/${encodeURIComponent(String(tenantId))}`
 }
 
 export function permissionByIdPath(id) {
