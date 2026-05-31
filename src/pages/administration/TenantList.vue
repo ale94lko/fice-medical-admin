@@ -2,6 +2,7 @@
   <q-page class="admin-page">
     <AdminQTable
       class="table admin-data-table"
+      :test-id="tableTestId"
       row-key="id"
       binary-state-sort
       v-model:pagination="tablePagination"
@@ -22,6 +23,7 @@
           color="primary"
           class="app-btn-primary"
           icon="add"
+          :data-testid="tid('btn', 'add')"
           :disable="loading || addSaving || deleteSaving"
           :title="t('addTenant')"
           :label="t('addTenant')"
@@ -33,6 +35,7 @@
           color="primary"
           class="app-btn-outline"
           icon="filter_alt"
+          :data-testid="tid('btn', 'filters')"
           badge-color="primary"
           :disable="loading || deleteSaving"
           :title="t('filters')"
@@ -47,6 +50,7 @@
           icon="visibility"
           color="primary"
           class="app-btn-icon-action"
+          :data-testid="rowTid(row.id, 'view')"
           :size="siteBreakpoints.SM"
           :disable="addSaving || deleteSaving"
           :title="t('viewTenant')"
@@ -58,6 +62,7 @@
           round
           icon="edit"
           color="primary"
+          :data-testid="rowTid(row.id, 'edit')"
           :size="siteBreakpoints.SM"
           :disable="addSaving || deleteSaving"
           :title="t('editTenant')"
@@ -69,6 +74,7 @@
           round
           icon="delete"
           color="primary"
+          :data-testid="rowTid(row.id, 'delete')"
           :size="siteBreakpoints.SM"
           :disable="deleteSaving"
           :title="t('deleteTenantTitle')"
@@ -79,6 +85,7 @@
 
     <Dialog
       v-model="addDialogOpen"
+      :test-id-prefix="formTestIdPrefix"
       :title-key="tenantDialogTitleKey"
       :fields="tenantAddFields"
       :initial-values="tenantDialogInitialValues"
@@ -93,7 +100,9 @@
       persistent
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
-      <q-card class="modal-card app-dialog-card app-dialog-card--sm">
+      <q-card
+        class="modal-card app-dialog-card app-dialog-card--sm"
+        :data-testid="tid('filter', 'dialog')">
         <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('tenantFiltersTitle') }}</q-toolbar-title>
           <q-btn
@@ -101,6 +110,7 @@
             round
             dense
             icon="close"
+            :data-testid="tid('filter', 'btn', 'close')"
             :title="t('close')"
             :aria-label="t('close')"
             @click="closeTenantFilterDialog"/>
@@ -111,18 +121,21 @@
             outlined
             dense
             clearable
+            :data-testid="tid('filter', 'field', 'name')"
             :label="t('name')"/>
           <q-input
             v-model="filterDraft[tk.domain]"
             outlined
             dense
             clearable
+            :data-testid="tid('filter', 'field', 'domain')"
             :label="t('domain')"/>
           <q-select
             v-model="filterDraft[tk.planId]"
             outlined
             dense
             clearable
+            :data-testid="tid('filter', 'field', 'plan')"
             emit-value
             map-options
             :behavior="selectBehaviors.menu"
@@ -149,6 +162,7 @@
             clearable
             emit-value
             map-options
+            :data-testid="tid('filter', 'field', 'status')"
             :behavior="selectBehaviors.menu"
             :options="statusFilterDisplayedOptions"
             :option-label="qSelectOptionKeys.label"
@@ -173,6 +187,7 @@
             outline
             color="primary"
             class="app-btn-outline"
+            :data-testid="tid('filter', 'btn', 'clear')"
             :title="t('tenantFilterClear')"
             :label="t('tenantFilterClear')"
             @click="clearTenantFilters"/>
@@ -181,6 +196,7 @@
             unelevated
             class="primary-action"
             color="primary"
+            :data-testid="tid('filter', 'btn', 'apply')"
             :title="t('tenantFilterApply')"
             :label="t('tenantFilterApply')"
             @click="applyTenantFilters"/>
@@ -190,6 +206,7 @@
 
     <ModalComponent
       v-model="deleteConfirmOpen"
+      :test-id-prefix="deleteConfirmTestIdPrefix"
       :title="t('deleteTenantTitle')"
       :message="deleteTenantMessage"
       :confirm-text="t('confirm')"
@@ -203,7 +220,8 @@
       :transition-hide="quasarTransitions.scale">
       <q-card
         v-if="tenantViewing"
-        class="modal-card app-dialog-card app-dialog-card--lg">
+        class="modal-card app-dialog-card app-dialog-card--lg"
+        :data-testid="tid('view', 'dialog')">
         <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('viewTenantTitle') }}</q-toolbar-title>
           <q-btn
@@ -211,6 +229,7 @@
             round
             dense
             icon="close"
+            :data-testid="tid('view', 'btn', 'close')"
             :title="t('close')"
             :aria-label="t('close')"
             @click="closeViewTenant"/>
@@ -231,6 +250,7 @@
             no-caps
             unelevated
             color="primary"
+            :data-testid="tid('view', 'btn', 'close-footer')"
             :title="t('close')"
             :label="t('close')"
             @click="closeViewTenant"/>
@@ -275,8 +295,17 @@ import {
   useTenantAddForm,
 } from 'src/composables/useTenantAddForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
+import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
+
+const {
+  tid,
+  rowTid,
+  tableTestId,
+  formTestIdPrefix,
+  deleteConfirmTestIdPrefix,
+} = useAdminPageTestIds('tenants')
 
 const tk = tenantFieldKeys
 

@@ -7,18 +7,31 @@
           dense
           round
           icon="menu"
+          data-testid="layout-btn-menu"
           aria-label="Menu"
           @click="toggleLeftDrawer"
         />
         <q-toolbar-title>
           FiCE Medical
         </q-toolbar-title>
-        <q-btn flat round dense icon="notifications">
-        </q-btn>
-        <q-btn flat round dense icon="manage_accounts">
+        <q-btn
+          flat
+          round
+          dense
+          icon="notifications"
+          data-testid="layout-btn-notifications"/>
+        <q-btn
+          flat
+          round
+          dense
+          icon="manage_accounts"
+          data-testid="layout-btn-account-menu">
           <q-menu class="user-menu">
             <q-list style="min-width: 100px">
-              <q-item clickable @click="handleLogout">
+              <q-item
+                clickable
+                data-testid="layout-btn-sign-out"
+                @click="handleLogout">
                 <q-item-section avatar>
                   <q-icon name="logout" />
                 </q-item-section>
@@ -49,6 +62,7 @@
             clickable
             v-ripple
             to="/dashboard"
+            data-testid="nav-dashboard"
             :active-class="activeClass">
             <q-item-section avatar>
               <q-icon name="dashboard" />
@@ -59,6 +73,7 @@
             clickable
             v-ripple
             to="/tenants"
+            data-testid="nav-tenants"
             :active-class="activeClass">
             <q-item-section avatar>
               <q-icon name="apartment" />
@@ -69,6 +84,7 @@
             clickable
             v-ripple
             to="/users"
+            data-testid="nav-users"
             :active-class="activeClass">
             <q-item-section avatar>
               <q-icon name="people" />
@@ -79,6 +95,7 @@
             clickable
             v-ripple
             to="/roles"
+            data-testid="nav-roles"
             :active-class="activeClass">
             <q-item-section avatar>
               <q-icon name="badge" />
@@ -89,6 +106,7 @@
             clickable
             v-ripple
             to="/permissions"
+            data-testid="nav-permissions"
             :active-class="activeClass">
             <q-item-section avatar>
               <q-icon name="vpn_key" />
@@ -99,6 +117,7 @@
             clickable
             v-ripple
             to="/modules"
+            data-testid="nav-modules"
             :active-class="activeClass">
             <q-item-section avatar>
               <q-icon name="extension" />
@@ -109,6 +128,7 @@
             clickable
             v-ripple
             to="/catalogs"
+            data-testid="nav-catalogs"
             :active-class="activeClass">
             <q-item-section avatar>
               <q-icon name="category" />
@@ -119,6 +139,7 @@
             clickable
             v-ripple
             to="/plans"
+            data-testid="nav-plans"
             :active-class="activeClass">
             <q-item-section avatar>
               <q-icon name="payments" />
@@ -134,6 +155,7 @@
           dense
           flat
           icon="chevron_left"
+          data-testid="layout-btn-drawer-collapse"
           :title="t('collapseMenu')"
           :aria-label="t('collapseMenu')"
           @click="collapseDrawerToMini" />
@@ -145,6 +167,7 @@
           dense
           flat
           icon="chevron_right"
+          data-testid="layout-btn-drawer-expand"
           :title="t('expandMenu')"
           :aria-label="t('expandMenu')"
           @click="expandDrawer" />

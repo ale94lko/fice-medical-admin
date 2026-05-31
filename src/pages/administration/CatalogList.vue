@@ -2,6 +2,7 @@
   <q-page class="admin-page">
     <AdminQTable
       class="table admin-data-table"
+      :test-id="tableTestId"
       row-key="id"
       binary-state-sort
       v-model:pagination="tablePagination"
@@ -20,6 +21,7 @@
           color="primary"
           class="app-btn-primary"
           icon="add"
+          :data-testid="tid('btn', 'add')"
           :disable="loading || catalogFormSaving || deleteSaving"
           :title="t('addCatalog')"
           :label="t('addCatalog')"
@@ -31,6 +33,7 @@
           color="primary"
           class="app-btn-outline"
           icon="filter_alt"
+          :data-testid="tid('btn', 'filters')"
           badge-color="primary"
           :disable="loading || deleteSaving"
           :title="t('filters')"
@@ -44,6 +47,7 @@
           round
           icon="visibility"
           color="primary"
+          :data-testid="rowTid(row.id, 'view')"
           :size="siteBreakpoints.SM"
           :disable="catalogFormSaving || deleteSaving"
           :title="t('viewCatalog')"
@@ -54,6 +58,7 @@
           round
           icon="edit"
           color="primary"
+          :data-testid="rowTid(row.id, 'edit')"
           :size="siteBreakpoints.SM"
           :disable="catalogFormSaving || deleteSaving"
           :title="t('editCatalog')"
@@ -64,6 +69,7 @@
           round
           icon="delete"
           color="primary"
+          :data-testid="rowTid(row.id, 'delete')"
           :size="siteBreakpoints.SM"
           :disable="deleteSaving || catalogFormSaving"
           :title="t('deleteCatalogTitle')"
@@ -74,6 +80,7 @@
 
     <CatalogFormDialog
       v-model="catalogFormDialogOpen"
+      :test-id-prefix="formTestIdPrefix"
       :title="catalogFormDialogTitle"
       :initial-row="catalogFormInitialRow"
       :saving="catalogFormSaving"
@@ -153,6 +160,7 @@
 
     <ModalComponent
       v-model="deleteConfirmOpen"
+      :test-id-prefix="deleteConfirmTestIdPrefix"
       :title="t('deleteCatalogTitle')"
       :message="deleteCatalogMessage"
       :confirm-text="t('confirm')"
@@ -240,7 +248,16 @@ import CatalogFormDialog from 'components/CatalogFormDialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import { buildCatalogMutationBody } from 'components/helpers.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
+import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
+
+const {
+  tid,
+  rowTid,
+  tableTestId,
+  formTestIdPrefix,
+  deleteConfirmTestIdPrefix,
+} = useAdminPageTestIds('catalogs')
 
 const ck = catalogFieldKeys
 const ik = catalogItemFieldKeys

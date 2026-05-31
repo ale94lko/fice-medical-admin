@@ -1,5 +1,5 @@
 <template>
-  <q-table v-bind="$attrs">
+  <q-table v-bind="tableBind">
     <template
       v-for="name in passthroughSlotNames"
       :key="name"
@@ -29,6 +29,10 @@
 import { computed, useAttrs, useSlots } from 'vue'
 import AdminTableGridItem from './AdminTableGridItem.vue'
 
+const props = defineProps({
+  testId: { type: String, default: '' },
+})
+
 defineOptions({
   inheritAttrs: false,
 })
@@ -39,6 +43,15 @@ const slots = useSlots()
 const attrs = useAttrs()
 
 const hasRowActions = computed(() => Boolean(slots['row-actions']))
+
+const tableBind = computed(() => {
+  const bind = { ...attrs }
+  if (props.testId) {
+    bind['data-testid'] = props.testId
+  }
+
+  return bind
+})
 
 const passthroughSlotNames = computed(() =>
   Object.keys(slots).filter(name => !RESERVED_SLOTS.includes(name)),

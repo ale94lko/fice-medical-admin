@@ -4,7 +4,9 @@
     persistent
     transition-show="scale"
     transition-hide="scale">
-    <q-card class="modal-card app-dialog-card app-dialog-card--sm">
+    <q-card
+      class="modal-card app-dialog-card app-dialog-card--sm"
+      :data-testid="dialogTestId">
       <q-toolbar class="app-dialog-toolbar">
         <q-toolbar-title>{{ title }}</q-toolbar-title>
       </q-toolbar>
@@ -18,6 +20,7 @@
           outline
           color="primary"
           class="app-btn-outline"
+          :data-testid="tid('btn', 'cancel')"
           :title="cancelText"
           :label="cancelText"
           @click="onCancel"/>
@@ -26,6 +29,7 @@
           unelevated
           class="primary-action"
           color="primary"
+          :data-testid="tid('btn', 'confirm')"
           :title="confirmText"
           :label="confirmText"
           @click="onConfirm"/>
@@ -35,19 +39,27 @@
 </template>
 
 <script setup>
-import { toRef } from 'vue'
+import { computed, toRef } from 'vue'
+import { testId as buildTestId } from 'src/utils/test-id.js'
 
 const props = defineProps({
-  modelValue: Boolean, // v-model
+  modelValue: Boolean,
   title: { type: String, default: 'Confirm' },
   message: { type: String, required: true },
   confirmText: { type: String, default: 'OK' },
-  cancelText: { type: String, default: 'Cancel' }
+  cancelText: { type: String, default: 'Cancel' },
+  testIdPrefix: { type: String, default: 'confirm-dialog' },
 })
 
 const emit = defineEmits(['update:modelValue', 'confirm', 'cancel'])
 
 const modelValue = toRef(props, 'modelValue')
+
+const dialogTestId = computed(() => buildTestId(props.testIdPrefix, 'dialog'))
+
+function tid(...parts) {
+  return buildTestId(props.testIdPrefix, ...parts)
+}
 
 const onConfirm = () => {
   emit('confirm')
@@ -59,4 +71,3 @@ const onCancel = () => {
   emit('update:modelValue', false)
 }
 </script>
-

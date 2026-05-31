@@ -2,6 +2,7 @@
   <q-page class="admin-page">
     <AdminQTable
       class="table admin-data-table"
+      :test-id="tableTestId"
       row-key="id"
       binary-state-sort
       v-model:pagination="tablePagination"
@@ -22,6 +23,7 @@
           color="primary"
           class="app-btn-primary"
           icon="add"
+          :data-testid="tid('btn', 'add')"
           :disable="
             loading || addSaving || deleteSaving || passwordChangeSaving
           "
@@ -35,6 +37,7 @@
           color="primary"
           class="app-btn-outline"
           icon="filter_alt"
+          :data-testid="tid('btn', 'filters')"
           badge-color="primary"
           :disable="loading || deleteSaving || passwordChangeSaving"
           :title="t('filters')"
@@ -48,6 +51,7 @@
           round
           icon="visibility"
           color="primary"
+          :data-testid="rowTid(row.id, 'view')"
           :size="siteBreakpoints.SM"
           :disable="addSaving || deleteSaving || passwordChangeSaving"
           :title="t('viewUser')"
@@ -59,6 +63,7 @@
           round
           icon="vpn_key"
           color="primary"
+          :data-testid="rowTid(row.id, 'change-password')"
           :size="siteBreakpoints.SM"
           :disable="addSaving || deleteSaving || passwordChangeSaving"
           :title="t('changeUserPassword')"
@@ -70,6 +75,7 @@
           round
           icon="edit"
           color="primary"
+          :data-testid="rowTid(row.id, 'edit')"
           :size="siteBreakpoints.SM"
           :disable="addSaving || deleteSaving || passwordChangeSaving"
           :title="t('editUser')"
@@ -81,6 +87,7 @@
           round
           icon="delete"
           color="primary"
+          :data-testid="rowTid(row.id, 'delete')"
           :size="siteBreakpoints.SM"
           :disable="deleteSaving || passwordChangeSaving"
           :title="t('deleteUserTitle')"
@@ -91,6 +98,7 @@
 
     <Dialog
       v-model="addDialogOpen"
+      :test-id-prefix="formTestIdPrefix"
       :title-key="userDialogTitleKey"
       :fields="userAddFields"
       :initial-values="userDialogInitialValues"
@@ -105,7 +113,9 @@
       persistent
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
-      <q-card class="modal-card app-dialog-card app-dialog-card--sm">
+      <q-card
+        class="modal-card app-dialog-card app-dialog-card--sm"
+        :data-testid="tid('filter', 'dialog')">
         <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('userFiltersTitle') }}</q-toolbar-title>
           <q-btn
@@ -113,6 +123,7 @@
             round
             dense
             icon="close"
+            :data-testid="tid('filter', 'btn', 'close')"
             :title="t('close')"
             :aria-label="t('close')"
             @click="closeUserFilterDialog"/>
@@ -123,6 +134,7 @@
             outlined
             dense
             clearable
+            :data-testid="tid('filter', 'field', 'email')"
             :label="t('email')"/>
           <q-select
             v-model="filterDraft[uk.status]"
@@ -131,6 +143,7 @@
             clearable
             emit-value
             map-options
+            :data-testid="tid('filter', 'field', 'status')"
             :behavior="selectBehaviors.menu"
             :options="statusFilterDisplayedOptions"
             :option-label="qSelectOptionKeys.label"
@@ -155,6 +168,7 @@
             outline
             color="primary"
             class="app-btn-outline"
+            :data-testid="tid('filter', 'btn', 'clear')"
             :title="t('userFilterClear')"
             :label="t('userFilterClear')"
             @click="clearUserFilters"/>
@@ -163,6 +177,7 @@
             unelevated
             class="primary-action"
             color="primary"
+            :data-testid="tid('filter', 'btn', 'apply')"
             :title="t('userFilterApply')"
             :label="t('userFilterApply')"
             @click="applyUserFilters"/>
@@ -172,6 +187,7 @@
 
     <ModalComponent
       v-model="deleteConfirmOpen"
+      :test-id-prefix="deleteConfirmTestIdPrefix"
       :title="t('deleteUserTitle')"
       :message="deleteUserMessage"
       :confirm-text="t('confirm')"
@@ -186,7 +202,8 @@
       :transition-hide="quasarTransitions.scale">
       <q-card
         v-if="userPasswordTarget"
-        class="modal-card app-dialog-card app-dialog-card--sm">
+        class="modal-card app-dialog-card app-dialog-card--sm"
+        :data-testid="tid('change-password', 'dialog')">
         <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('changeUserPasswordTitle') }}</q-toolbar-title>
           <q-btn
@@ -194,6 +211,7 @@
             round
             dense
             icon="close"
+            :data-testid="tid('change-password', 'btn', 'close')"
             :disable="passwordChangeSaving"
             :title="t('close')"
             :aria-label="t('close')"
@@ -212,6 +230,7 @@
             v-model="passwordChangeDraft.password"
             outlined
             dense
+            :data-testid="tid('change-password', 'field', 'password')"
             name="fice-admin-user-change-password"
             :autocomplete="htmlAutocomplete.newPassword"
             :type="passwordFieldVisibility.resolvedInputType(
@@ -235,6 +254,7 @@
             v-model="passwordChangeDraft.confirm"
             outlined
             dense
+            :data-testid="tid('change-password', 'field', 'confirm')"
             name="fice-admin-user-change-password-confirm"
             :autocomplete="htmlAutocomplete.off"
             :type="passwordFieldVisibility.resolvedInputType(
@@ -355,10 +375,19 @@ import {
 } from 'components/helpers.js'
 import { useUserAddForm } from 'src/composables/useUserAddForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
+import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
 import { usePasswordVisibilityByKey }
   from 'src/composables/usePasswordVisibility.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
+
+const {
+  tid,
+  rowTid,
+  tableTestId,
+  formTestIdPrefix,
+  deleteConfirmTestIdPrefix,
+} = useAdminPageTestIds('users')
 
 const uk = userFieldKeys
 const ttk = tenantFieldKeys

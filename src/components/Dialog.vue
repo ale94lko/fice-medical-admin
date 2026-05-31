@@ -5,7 +5,10 @@
     :model-value="modelValue"
     :persistent="persistent"
     @update:model-value="emit('update:modelValue', $event)">
-    <q-card class="modal-card" :style="cardStyle">
+    <q-card
+      class="modal-card"
+      :style="cardStyle"
+      :data-testid="dialogTestId">
       <q-toolbar class="app-dialog-toolbar">
         <q-toolbar-title>{{ titleText }}</q-toolbar-title>
         <q-btn
@@ -13,6 +16,7 @@
           round
           dense
           icon="close"
+          :data-testid="tid('btn', 'close')"
           :disable="saving"
           :title="t('close')"
           :aria-label="t('close')"
@@ -38,6 +42,7 @@
             class="dialog-field-row">
               <q-input
                 v-if="showPhoneField(field)"
+                :data-testid="resolveFieldTestId(field)"
                 :model-value="form[field.key]"
                 outlined
                 :lazy-rules="lazyRulesFor(field)"
@@ -68,6 +73,7 @@
               </q-input>
               <q-input
                 v-else-if="isDialPrefixedPhoneField(field)"
+                :data-testid="resolveFieldTestId(field)"
                 outlined
                 :lazy-rules="lazyRulesFor(field)"
                 :reactive-rules="hasRules(field)"
@@ -101,6 +107,7 @@
                 <q-input
                   v-model="form[field.key]"
                   outlined
+                  :data-testid="resolveFieldTestId(field)"
                   :lazy-rules="lazyRulesFor(field)"
                   :reactive-rules="hasRules(field)"
                   :readonly="isFieldReadonly(field)"
@@ -121,6 +128,7 @@
                     clickable
                     dense
                     :key="idx"
+                    :data-testid="tid('field', field.key, 'suggestion', idx)"
                     @mousedown.prevent="pickAddressSuggestion(
                       field, opt.value
                     )">
@@ -131,6 +139,7 @@
               <q-input
                 v-else-if="field.kind === fieldTypes.textarea"
                 v-model="form[field.key]"
+                :data-testid="resolveFieldTestId(field)"
                 outlined
                 input-class="dialog-textarea-inner"
                 :lazy-rules="lazyRulesFor(field)"
@@ -146,12 +155,14 @@
               <q-checkbox
                 v-else-if="field.kind === fieldTypes.checkbox"
                 v-model="form[field.key]"
+                :data-testid="resolveFieldTestId(field)"
                 color="primary"
                 class="dialog-checkbox-field"
                 :disable="isFieldReadonly(field)"
                 :label="labelFor(field)"/>
               <q-field
                 v-else-if="field.kind === fieldTypes.permissionTree"
+                :data-testid="resolveFieldTestId(field)"
                 outlined
                 stack-label
                 class="full-width permission-tree-qfield"
@@ -173,6 +184,7 @@
                       :showing="loadingFor(field)"
                       color="primary"/>
                     <q-tree
+                      :data-testid="tid('field', field.key, 'tree')"
                       :nodes="treeNodesFor(field)"
                       node-key="nodeKey"
                       label-key="label"
@@ -194,6 +206,7 @@
               <q-select
                 v-else-if="field.kind === fieldTypes.select"
                 v-model="form[field.key]"
+                :data-testid="resolveFieldTestId(field)"
                 outlined
                 emit-value
                 map-options
@@ -223,6 +236,7 @@
                       dense
                       outlined
                       clearable
+                      :data-testid="tid('field', field.key, 'search')"
                       :model-value="
                         String(selectFilterQueries[field.key] ?? '')
                       "
@@ -242,6 +256,7 @@
             outline
             color="primary"
             class="app-btn-outline"
+            :data-testid="tid('btn', 'cancel')"
             :title="t(cancelKey)"
             :label="t(cancelKey)"
             :disable="saving"
@@ -252,6 +267,7 @@
             unelevated
             class="primary-action"
             color="primary"
+            :data-testid="tid('btn', 'save')"
             :type="htmlButtonTypes.submit"
             :title="t(submitKey)"
             :label="t(submitKey)"
@@ -305,6 +321,10 @@ import {
   isPasswordInputType,
   usePasswordVisibilityByKey,
 } from 'src/composables/usePasswordVisibility.js'
+import {
+  fieldTestId as buildFieldTestId,
+  testId as buildTestId,
+} from 'src/utils/test-id.js'
 
 defineOptions({ name: 'AppDialog' })
 
@@ -344,6 +364,7 @@ const props = defineProps({
   maxWidth: { type: String, default: '520px' },
   bodyMaxHeight: { type: String, default: 'min(520px, 70vh)' },
   editableKeysWhenEdit: { type: Array, default: null },
+  testIdPrefix: { type: String, default: 'form-dialog' },
 })
 
 const emit = defineEmits([
@@ -370,6 +391,16 @@ const titleText = computed(() => {
 
   return ''
 })
+
+const dialogTestId = computed(() => buildTestId(props.testIdPrefix, 'dialog'))
+
+function tid(...parts) {
+  return buildTestId(props.testIdPrefix, ...parts)
+}
+
+function resolveFieldTestId(field) {
+  return buildFieldTestId(props.testIdPrefix, field.key, field.testId)
+}
 
 const cardStyle = computed(() => ({
   width: props.minWidth,

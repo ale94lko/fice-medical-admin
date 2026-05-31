@@ -2,6 +2,7 @@
   <q-page class="admin-page">
     <AdminQTable
       class="table admin-data-table"
+      :test-id="tableTestId"
       row-key="id"
       binary-state-sort
       v-model:pagination="tablePagination"
@@ -20,6 +21,7 @@
           color="primary"
           class="app-btn-primary"
           icon="add"
+          :data-testid="tid('btn', 'add')"
           :disable="loading || planFormSaving || deleteSaving"
           :title="t('addPlan')"
           :label="t('addPlan')"
@@ -31,6 +33,7 @@
           color="primary"
           class="app-btn-outline"
           icon="filter_alt"
+          :data-testid="tid('btn', 'filters')"
           badge-color="primary"
           :disable="loading || deleteSaving"
           :title="t('filters')"
@@ -44,6 +47,7 @@
           round
           icon="visibility"
           color="primary"
+          :data-testid="rowTid(row.id, 'view')"
           :size="siteBreakpoints.SM"
           :disable="planFormSaving || deleteSaving"
           :title="t('viewPlan')"
@@ -54,6 +58,7 @@
           round
           icon="edit"
           color="primary"
+          :data-testid="rowTid(row.id, 'edit')"
           :size="siteBreakpoints.SM"
           :disable="planFormSaving || deleteSaving"
           :title="t('editPlan')"
@@ -64,6 +69,7 @@
           round
           icon="delete"
           color="primary"
+          :data-testid="rowTid(row.id, 'delete')"
           :size="siteBreakpoints.SM"
           :disable="deleteSaving || planFormSaving"
           :title="t('deletePlanTitle')"
@@ -74,6 +80,7 @@
 
     <Dialog
       v-model="planFormDialogOpen"
+      :test-id-prefix="formTestIdPrefix"
       :title="planFormDialogTitle"
       :fields="planFormFields"
       :initial-values="planFormInitialValues"
@@ -157,6 +164,7 @@
 
     <ModalComponent
       v-model="deleteConfirmOpen"
+      :test-id-prefix="deleteConfirmTestIdPrefix"
       :title="t('deletePlanTitle')"
       :message="deletePlanMessage"
       :confirm-text="t('confirm')"
@@ -260,7 +268,16 @@ import ModalComponent from 'components/ModalComponent.vue'
 import { clonePermissionTreeForViewReadonly } from 'components/helpers.js'
 import { usePlanForm } from 'src/composables/usePlanForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
+import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
+
+const {
+  tid,
+  rowTid,
+  tableTestId,
+  formTestIdPrefix,
+  deleteConfirmTestIdPrefix,
+} = useAdminPageTestIds('plans')
 
 const pk = planFieldKeys
 

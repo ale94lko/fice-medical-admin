@@ -2,6 +2,7 @@
   <q-page class="admin-page">
     <AdminQTable
       class="table admin-data-table"
+      :test-id="tableTestId"
       row-key="id"
       binary-state-sort
       v-model:pagination="tablePagination"
@@ -21,6 +22,7 @@
           color="primary"
           class="app-btn-outline"
           icon="filter_alt"
+          :data-testid="tid('btn', 'filters')"
           badge-color="primary"
           :disable="loading || editSaving"
           :title="t('filters')"
@@ -34,6 +36,7 @@
           round
           icon="visibility"
           color="primary"
+          :data-testid="rowTid(row.id, 'view')"
           :size="siteBreakpoints.SM"
           :disable="loading || editSaving"
           :title="t('viewModule')"
@@ -44,6 +47,7 @@
           round
           icon="edit"
           color="primary"
+          :data-testid="rowTid(row.id, 'edit')"
           :size="siteBreakpoints.SM"
           :disable="loading || editSaving"
           :title="t('editModule')"
@@ -54,6 +58,7 @@
 
     <Dialog
       v-model="editDialogOpen"
+      :test-id-prefix="formTestIdPrefix"
       title-key="editModule"
       :fields="moduleEditFields"
       :initial-values="moduleEditInitialValues"
@@ -207,7 +212,15 @@ import { useModuleEditForm } from 'src/composables/useModuleEditForm.js'
 import { useModuleViewPermissions }
   from 'src/composables/useModuleViewPermissions.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
+import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
+
+const {
+  tid,
+  rowTid,
+  tableTestId,
+  formTestIdPrefix,
+} = useAdminPageTestIds('modules')
 
 const mk = moduleFieldKeys
 

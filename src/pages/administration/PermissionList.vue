@@ -2,6 +2,7 @@
   <q-page class="admin-page">
     <AdminQTable
       class="table admin-data-table"
+      :test-id="tableTestId"
       row-key="id"
       binary-state-sort
       v-model:pagination="tablePagination"
@@ -21,6 +22,7 @@
           color="primary"
           class="app-btn-outline"
           icon="filter_alt"
+          :data-testid="tid('btn', 'filters')"
           badge-color="primary"
           :disable="loading || editSaving"
           :title="t('filters')"
@@ -34,6 +36,7 @@
           round
           icon="visibility"
           color="primary"
+          :data-testid="rowTid(row.id, 'view')"
           :size="siteBreakpoints.SM"
           :disable="loading || editSaving"
           :title="t('viewPermission')"
@@ -44,6 +47,7 @@
           round
           icon="edit"
           color="primary"
+          :data-testid="rowTid(row.id, 'edit')"
           :size="siteBreakpoints.SM"
           :disable="loading || editSaving"
           :title="t('editPermission')"
@@ -54,6 +58,7 @@
 
     <Dialog
       v-model="editDialogOpen"
+      :test-id-prefix="formTestIdPrefix"
       :title-key="'editPermission'"
       :fields="permissionEditFields"
       :initial-values="permissionEditInitialValues"
@@ -205,8 +210,16 @@ import AdminQTable from 'components/AdminQTable.vue'
 import Dialog from 'components/Dialog.vue'
 import { usePermissionEditForm } from 'src/composables/usePermissionEditForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
+import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
+
+const {
+  tid,
+  rowTid,
+  tableTestId,
+  formTestIdPrefix,
+} = useAdminPageTestIds('permissions')
 
 const pk = permissionFieldKeys
 

@@ -7,7 +7,8 @@
     @update:model-value="emit('update:modelValue', $event)">
     <q-card
       class="modal-card app-dialog-card app-dialog-card--lg catalog-form-card"
-      :style="cardStyle">
+      :style="cardStyle"
+      :data-testid="dialogTestId">
       <q-toolbar class="app-dialog-toolbar">
         <q-toolbar-title>{{ title }}</q-toolbar-title>
         <q-btn
@@ -15,6 +16,7 @@
           round
           dense
           icon="close"
+          :data-testid="tid('btn', 'close')"
           :disable="saving"
           :title="t('close')"
           :aria-label="t('close')"
@@ -34,6 +36,7 @@
               v-model="form[ck.name]"
               outlined
               dense
+              :data-testid="tid('field', 'name')"
               :label="t('catalogName')"
               :rules="[requiredRule]"/>
             <q-select
@@ -42,6 +45,7 @@
               dense
               emit-value
               map-options
+              :data-testid="tid('field', 'scope')"
               :options="scopeOptions"
               :label="t('catalogScope')"
               :behavior="selectBehaviors.menu"
@@ -52,6 +56,7 @@
               dense
               emit-value
               map-options
+              :data-testid="tid('field', 'status')"
               :options="statusOptions"
               :label="t('status')"
               :behavior="selectBehaviors.menu"
@@ -63,6 +68,7 @@
               type="textarea"
               :rows="2"
               autogrow
+              :data-testid="tid('field', 'description')"
               :label="t('description')"/>
 
             <div class="catalog-items-section">
@@ -74,6 +80,7 @@
                   flat
                   color="primary"
                   icon="add"
+                  :data-testid="tid('btn', 'add-item')"
                   :disable="saving"
                   :label="t('catalogAddItem')"
                   @click="addItem"/>
@@ -103,6 +110,7 @@
                       dense
                       icon="delete"
                       color="primary"
+                      :data-testid="tid('item', index, 'btn', 'remove')"
                       :disable="saving"
                       :title="t('catalogRemoveItem')"
                       :aria-label="t('catalogRemoveItem')"
@@ -113,12 +121,14 @@
                       v-model="item[ik.label]"
                       outlined
                       dense
+                      :data-testid="tid('item', index, 'field', 'label')"
                       :label="t('catalogItemLabel')"
                       :rules="[requiredRule]"/>
                     <q-input
                       v-model="item[ik.code]"
                       outlined
                       dense
+                      :data-testid="tid('item', index, 'field', 'code')"
                       :label="t('catalogItemCode')"
                       :rules="[requiredRule]"/>
                   </div>
@@ -129,6 +139,7 @@
                     type="textarea"
                     :rows="2"
                     :autogrow="false"
+                    :data-testid="tid('item', index, 'field', 'description')"
                     input-class="catalog-item-description-inner"
                     class="catalog-item-description"
                     :label="t('description')"/>
@@ -143,6 +154,7 @@
             outline
             color="primary"
             class="app-btn-outline"
+            :data-testid="tid('btn', 'cancel')"
             :disable="saving"
             :title="t('cancel')"
             :label="t('cancel')"
@@ -152,6 +164,7 @@
             unelevated
             class="primary-action"
             color="primary"
+            :data-testid="tid('btn', 'save')"
             type="submit"
             :loading="saving"
             :title="t('save')"
@@ -176,6 +189,7 @@ import {
   selectBehaviors,
 } from 'components/constants.js'
 import { mapCatalogItem } from 'components/helpers.js'
+import { testId as buildTestId } from 'src/utils/test-id.js'
 
 const ck = catalogFieldKeys
 const ik = catalogItemFieldKeys
@@ -185,7 +199,14 @@ const props = defineProps({
   title: { type: String, default: '' },
   initialRow: { type: Object, default: null },
   saving: { type: Boolean, default: false },
+  testIdPrefix: { type: String, default: 'catalogs-form' },
 })
+
+const dialogTestId = computed(() => buildTestId(props.testIdPrefix, 'dialog'))
+
+function tid(...parts) {
+  return buildTestId(props.testIdPrefix, ...parts)
+}
 
 const emit = defineEmits(['update:modelValue', 'save'])
 

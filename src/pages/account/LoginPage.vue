@@ -35,14 +35,14 @@
               color="primary"
               type="submit"
               class="full-width"
-              data-testId="button_sign_in"
+              data-testid="login-btn-sign-in"
               :label="t('signIn')"
               :loading="loading">
             </q-btn>
             <div class="forgot-password-container">
               <q-item-label
                 class="forgot-password"
-                data-testId="button_forgot_password"
+                data-testid="login-link-forgot-password"
                 @click="router.push('/reset-password')">
                 {{ t('forgotPassword') }}
               </q-item-label>

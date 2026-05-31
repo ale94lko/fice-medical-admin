@@ -2,6 +2,7 @@
   <q-page class="admin-page">
     <AdminQTable
       class="table admin-data-table"
+      :test-id="tableTestId"
       row-key="id"
       binary-state-sort
       v-model:pagination="tablePagination"
@@ -20,6 +21,7 @@
           color="primary"
           class="app-btn-primary"
           icon="add"
+          :data-testid="tid('btn', 'add')"
           :disable="loading || roleFormSaving || deleteSaving"
           :title="t('addRole')"
           :label="t('addRole')"
@@ -31,6 +33,7 @@
           color="primary"
           class="app-btn-outline"
           icon="filter_alt"
+          :data-testid="tid('btn', 'filters')"
           badge-color="primary"
           :disable="loading || deleteSaving"
           :title="t('filters')"
@@ -44,6 +47,7 @@
           round
           icon="visibility"
           color="primary"
+          :data-testid="rowTid(row.id, 'view')"
           :size="siteBreakpoints.SM"
           :disable="roleFormSaving || deleteSaving"
           :title="t('viewRole')"
@@ -55,6 +59,7 @@
           round
           icon="edit"
           color="primary"
+          :data-testid="rowTid(row.id, 'edit')"
           :size="siteBreakpoints.SM"
           :disable="roleFormSaving || deleteSaving"
           :title="t('editRole')"
@@ -66,6 +71,7 @@
           round
           icon="delete"
           color="primary"
+          :data-testid="rowTid(row.id, 'delete')"
           :size="siteBreakpoints.SM"
           :disable="deleteSaving || roleFormSaving"
           :title="t('deleteRoleTitle')"
@@ -76,6 +82,7 @@
 
     <Dialog
       v-model="roleFormDialogOpen"
+      :test-id-prefix="formTestIdPrefix"
       :title="roleFormDialogTitle"
       :fields="roleAddFields"
       :initial-values="roleFormInitialValues"
@@ -89,7 +96,9 @@
       persistent
       :transition-show="quasarTransitions.scale"
       :transition-hide="quasarTransitions.scale">
-      <q-card class="modal-card app-dialog-card app-dialog-card--sm">
+      <q-card
+        class="modal-card app-dialog-card app-dialog-card--sm"
+        :data-testid="tid('filter', 'dialog')">
         <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('roleFiltersTitle') }}</q-toolbar-title>
           <q-btn
@@ -97,6 +106,7 @@
             round
             dense
             icon="close"
+            :data-testid="tid('filter', 'btn', 'close')"
             :title="t('close')"
             :aria-label="t('close')"
             @click="closeRoleFilterDialog"/>
@@ -107,12 +117,14 @@
             outlined
             dense
             clearable
+            :data-testid="tid('filter', 'field', 'name')"
             :label="t('name')"/>
           <q-input
             v-model="filterDraft[rk.description]"
             outlined
             dense
             clearable
+            :data-testid="tid('filter', 'field', 'description')"
             :label="t('description')"/>
         </q-card-section>
         <q-card-actions align="right" class="app-dialog-actions">
@@ -121,6 +133,7 @@
             outline
             color="primary"
             class="app-btn-outline"
+            :data-testid="tid('filter', 'btn', 'clear')"
             :title="t('roleFilterClear')"
             :label="t('roleFilterClear')"
             @click="clearRoleFilters"/>
@@ -129,6 +142,7 @@
             unelevated
             class="primary-action"
             color="primary"
+            :data-testid="tid('filter', 'btn', 'apply')"
             :title="t('roleFilterApply')"
             :label="t('roleFilterApply')"
             @click="applyRoleFilters"/>
@@ -138,6 +152,7 @@
 
     <ModalComponent
       v-model="deleteConfirmOpen"
+      :test-id-prefix="deleteConfirmTestIdPrefix"
       :title="t('deleteRoleTitle')"
       :message="deleteRoleMessage"
       :confirm-text="t('confirm')"
@@ -151,7 +166,8 @@
       :transition-hide="quasarTransitions.scale">
       <q-card
         v-if="roleViewing"
-        class="modal-card app-dialog-card app-dialog-card--lg">
+        class="modal-card app-dialog-card app-dialog-card--lg"
+        :data-testid="tid('view', 'dialog')">
         <q-toolbar class="app-dialog-toolbar">
           <q-toolbar-title>{{ t('viewRoleTitle') }}</q-toolbar-title>
           <q-btn
@@ -159,6 +175,7 @@
             round
             dense
             icon="close"
+            :data-testid="tid('view', 'btn', 'close')"
             :title="t('close')"
             :aria-label="t('close')"
             @click="closeViewRole"/>
@@ -209,6 +226,7 @@
             no-caps
             unelevated
             color="primary"
+            :data-testid="tid('view', 'btn', 'close-footer')"
             :title="t('close')"
             :label="t('close')"
             @click="closeViewRole"/>
@@ -247,7 +265,16 @@ import {
 } from 'components/helpers.js'
 import { useRoleAddForm } from 'src/composables/useRoleAddForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
+import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
+
+const {
+  tid,
+  rowTid,
+  tableTestId,
+  formTestIdPrefix,
+  deleteConfirmTestIdPrefix,
+} = useAdminPageTestIds('roles')
 
 const rk = roleFieldKeys
 const ttk = tenantFieldKeys
