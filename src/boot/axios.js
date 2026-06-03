@@ -29,7 +29,7 @@ let lastSessionExpiredNotifyAt = 0
 
 const api = axios.create({
   baseURL:
-    'https://96c3-2a0c-5a81-e10e-7800-d466-d09e-fae4-d5b9.ngrok-free.app',
+    'https://b2dc-79-112-135-22.ngrok-free.app',
 })
 
 let refreshInFlight = null
