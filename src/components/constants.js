@@ -14,6 +14,12 @@ export const siteBreakpointsPx = {
 /** Below this width the drawer uses overlay (mobile) behavior. */
 export const drawerMobileMaxPx = 499
 
+/** Desktop drawer width when expanded on hover (overlay). */
+export const drawerWidthPx = 200
+
+/** Desktop drawer rail width (layout always reserves this). */
+export const drawerMiniWidthPx = 48
+
 export const defaultTenant = 'main'
 
 export const primarySuperadminUser = 'superadmin@fice.medical'

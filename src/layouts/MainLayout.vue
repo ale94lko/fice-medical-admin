@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="hHh Lpr lff" class="app-layout">
+  <q-layout view="hHh Lpr lFf" class="app-layout">
     <q-header bordered class="app-header">
       <q-toolbar>
         <q-btn
@@ -50,10 +50,16 @@
     <q-drawer
       v-model="sidebar"
       class="app-drawer"
+      :class="{ 'app-drawer--pinned': drawerPinned }"
       show-if-above
       bordered
+      :mini-to-overlay="drawerMiniToOverlay"
       :mini="drawerMini"
-      :breakpoint="drawerOverlayBreakpoint">
+      :width="drawerWidthPx"
+      :mini-width="drawerMiniWidthPx"
+      :breakpoint="drawerOverlayBreakpoint"
+      @mouseenter="onDrawerMouseEnter"
+      @mouseleave="onDrawerMouseLeave">
       <q-scroll-area
         class="fit"
         :horizontal-thumb-style="{ opacity: 0 }">
@@ -149,7 +155,7 @@
         </q-list>
       </q-scroll-area>
       <div
-        v-if="showDrawerExpandControl && sidebarExpanded"
+        v-if="showDrawerPinControl && drawerPinned"
         class="absolute icon-hide">
         <q-btn
           dense
@@ -158,10 +164,10 @@
           data-testid="layout-btn-drawer-collapse"
           :title="t('collapseMenu')"
           :aria-label="t('collapseMenu')"
-          @click="collapseDrawerToMini" />
+          @click="unpinDrawerToMini" />
       </div>
       <div
-        v-else-if="showDrawerExpandControl"
+        v-else-if="showDrawerPinControl"
         class="absolute icon-hide">
         <q-btn
           dense
@@ -170,7 +176,7 @@
           data-testid="layout-btn-drawer-expand"
           :title="t('expandMenu')"
           :aria-label="t('expandMenu')"
-          @click="expandDrawer" />
+          @click="pinDrawerExpanded" />
       </div>
     </q-drawer>
     <q-page-container>
@@ -189,48 +195,49 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from 'stores/auth-store.js'
 import {
+  drawerMiniWidthPx,
   drawerMobileMaxPx,
-  siteBreakpointsPx,
+  drawerWidthPx,
 } from 'components/constants.js'
 import { useI18n } from 'vue-i18n'
 import ModalComponent from 'components/ModalComponent.vue'
 
-// Composables
 const $q = useQuasar()
 const router = useRouter()
-const route = useRoute()
 const authStore = useAuthStore()
 
-// State
-const sidebar = ref(false)
-const sidebarExpanded = ref(false)
+const sidebar = ref($q.screen.width > drawerMobileMaxPx)
+const drawerMiniCollapsed = ref(true)
+const drawerPinned = ref(false)
 const showSignOutConfirm = ref(false)
 const drawerOverlayBreakpoint = drawerMobileMaxPx + 1
 
-// Computed
 const windowWidth = computed(() => $q.screen.width)
 
 const mobileView = computed(
   () => windowWidth.value <= drawerMobileMaxPx,
 )
-const tabletView = computed(
-  () => windowWidth.value > drawerMobileMaxPx
-    && windowWidth.value < siteBreakpointsPx.MD,
-)
+
 const drawerMini = computed(
-  () => sidebar.value && !sidebarExpanded.value && !mobileView.value,
+  () => !mobileView.value && sidebar.value && !drawerPinned.value
+    && drawerMiniCollapsed.value,
 )
-const showDrawerExpandControl = computed(
+
+const drawerMiniToOverlay = computed(
+  () => !mobileView.value && !drawerPinned.value,
+)
+
+const showDrawerPinControl = computed(
   () => sidebar.value && !mobileView.value,
 )
+
 const activeClass = computed(() => 'app-nav-item--active')
 
-// Methods
 const { t } = useI18n()
 
 const handleSignOutConfirm = () => {
@@ -242,58 +249,44 @@ const handleSignOutCancel = () => {
 }
 
 const toggleLeftDrawer = () => {
-  if (mobileView.value) {
-    sidebar.value = !sidebar.value
-
-    return
-  }
   sidebar.value = !sidebar.value
-  if (sidebar.value && tabletView.value) {
-    sidebarExpanded.value = false
+}
+
+function onDrawerMouseEnter() {
+  if (!mobileView.value && sidebar.value && !drawerPinned.value) {
+    drawerMiniCollapsed.value = false
   }
 }
 
-function expandDrawer() {
-  if (mobileView.value) {
-    return
+function onDrawerMouseLeave() {
+  if (!mobileView.value && !drawerPinned.value) {
+    drawerMiniCollapsed.value = true
   }
-  sidebar.value = true
-  sidebarExpanded.value = true
 }
 
-function collapseDrawerToMini() {
-  sidebarExpanded.value = false
+function pinDrawerExpanded() {
+  drawerPinned.value = true
+  drawerMiniCollapsed.value = false
 }
 
-function collapseDrawerForTablet() {
-  if (!tabletView.value) {
-    return
-  }
-  sidebarExpanded.value = false
-}
-
-function syncDrawerWithViewport() {
-  if (mobileView.value) {
-    return
-  }
-  if (tabletView.value) {
-    sidebarExpanded.value = false
-  }
+function unpinDrawerToMini() {
+  drawerPinned.value = false
+  drawerMiniCollapsed.value = true
 }
 
 const handleLogout = () => {
   showSignOutConfirm.value = true
 }
 
-onMounted(() => {
-  syncDrawerWithViewport()
-})
-
-watch(() => route.path, () => {
-  collapseDrawerForTablet()
-})
-
-watch(windowWidth, () => {
-  syncDrawerWithViewport()
+watch(mobileView, isMobile => {
+  if (isMobile) {
+    sidebar.value = false
+    drawerMiniCollapsed.value = true
+    drawerPinned.value = false
+  } else {
+    sidebar.value = true
+    drawerMiniCollapsed.value = true
+    drawerPinned.value = false
+  }
 })
 </script>

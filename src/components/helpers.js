@@ -271,14 +271,14 @@ export function mapPermission(row) {
     ? row.module
     : null
   const moduleIdRaw =
-    row.module_id ?? row.moduleId ?? mod?.id
+    row.module_id ?? row.moduleId ?? mod?.id ?? mod?.module_id
   const moduleId =
     moduleIdRaw != null && moduleIdRaw !== ''
       ? Number(moduleIdRaw)
       : null
   const moduleName = mod != null
-    ? String(mod.name ?? '').trim()
-    : ''
+    ? String(mod.name ?? mod.module_name ?? '').trim()
+    : String(row.module_name ?? row.moduleName ?? '').trim()
 
   return {
     id,
@@ -944,31 +944,59 @@ export function buildModuleIdToNameMap(moduleRows) {
   return m
 }
 
+function buildModuleNameToIdMap(moduleRows) {
+  const m = new Map()
+  if (!Array.isArray(moduleRows)) {
+    return m
+  }
+  for (const row of moduleRows) {
+    if (!row || typeof row !== typeNames.object) {
+      continue
+    }
+    const id = Number(row.id)
+    const name = String(row.name ?? '').trim().toLowerCase()
+    if (Number.isFinite(id) && name) {
+      m.set(name, id)
+    }
+  }
+
+  return m
+}
+
 export function enrichPermissionsModuleNames(permissionRows, moduleRows) {
   if (!Array.isArray(permissionRows)) {
     return []
   }
   const pk = permissionFieldKeys
   const byId = buildModuleIdToNameMap(moduleRows)
+  const byName = buildModuleNameToIdMap(moduleRows)
 
   return permissionRows.map(p => {
     if (!p || typeof p !== typeNames.object) {
       return p
     }
-    const existing = p[pk.moduleName]
-    if (existing) {
-      return p
+    let mid = Number(p[pk.moduleId])
+    let moduleName = String(p[pk.moduleName] ?? '').trim()
+
+    if (!Number.isFinite(mid) && moduleName) {
+      const resolved = byName.get(moduleName.toLowerCase())
+      if (Number.isFinite(resolved)) {
+        mid = resolved
+      }
     }
-    const mid = p[pk.moduleId]
-    const n = Number(mid)
-    if (!Number.isFinite(n) || !byId.has(n)) {
-      return p
+    if (!moduleName && Number.isFinite(mid) && byId.has(mid)) {
+      moduleName = byId.get(mid)
     }
 
-    return {
-      ...p,
-      [pk.moduleName]: byId.get(n),
+    const patch = { ...p }
+    if (Number.isFinite(mid)) {
+      patch[pk.moduleId] = mid
     }
+    if (moduleName) {
+      patch[pk.moduleName] = moduleName
+    }
+
+    return patch
   })
 }
 

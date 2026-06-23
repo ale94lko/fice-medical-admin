@@ -9,12 +9,62 @@
       :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
       :title="t('permissions')"
-      :rows="sortedTableRows"
+      :rows="paginatedTableRows"
       :columns="columns"
       :loading="loading"
       :rows-per-page-label="t('rowsPerPage')"
       @request="onTableRequest">
       <template v-slot:top>
+        <div class="permission-module-chips">
+          <q-spinner
+            v-if="modulesFilterLoading"
+            color="primary"
+            size="20px" />
+          <template v-else>
+            <button
+              type="button"
+              class="permission-module-orb"
+              :class="{
+                'permission-module-orb--active': isAllModulesFilterActive,
+              }"
+              :data-testid="tid('btn', 'module-all')"
+              :aria-label="t('all')"
+              @click="clearModuleFilter">
+              <span class="permission-module-orb__glyph">
+                {{ allModulesGlyph }}
+              </span>
+              <q-tooltip
+                class="permission-module-orb-tooltip"
+                anchor="top middle"
+                self="bottom middle"
+                :offset="[0, 6]">
+                {{ t('all') }}
+              </q-tooltip>
+            </button>
+            <button
+              v-for="mod in moduleFilterOptions"
+              :key="mod.value"
+              type="button"
+              class="permission-module-orb"
+              :class="{
+                'permission-module-orb--active': isModuleChipActive(mod.value),
+              }"
+              :data-testid="tid('btn', `module-${mod.value}`)"
+              :aria-label="mod.label"
+              @click="selectModuleFilter(mod.value)">
+              <span class="permission-module-orb__glyph">
+                {{ moduleInitials(mod.label) }}
+              </span>
+              <q-tooltip
+                class="permission-module-orb-tooltip"
+                anchor="top middle"
+                self="bottom middle"
+                :offset="[0, 6]">
+                {{ mod.label }}
+              </q-tooltip>
+            </button>
+          </template>
+        </div>
         <q-space />
         <q-btn
           outline
@@ -204,7 +254,11 @@ import {
   siteBreakpoints,
   siteBreakpointsPx,
 } from 'components/constants.js'
-import { fetchAllEnvelopeList } from 'components/helpers.js'
+import {
+  enrichPermissionsModuleNames,
+  fetchAllEnvelopeList,
+  mapPermission,
+} from 'components/helpers.js'
 import { apiInstance } from 'boot/axios'
 import AdminQTable from 'components/AdminQTable.vue'
 import Dialog from 'components/Dialog.vue'
@@ -212,6 +266,8 @@ import { usePermissionEditForm } from 'src/composables/usePermissionEditForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
+import { fetchAllPaginatedRaw }
+  from 'src/utils/permission-catalog-tree.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const {
@@ -247,54 +303,7 @@ const tablePagination = ref({
   rowsNumber: 0,
 })
 
-function permissionTablePaginationFromStore(paginationPayload) {
-  const meta = siteStore.permissionListPagination
-  const total = meta?.total != null && Number.isFinite(Number(meta.total))
-    ? Number(meta.total)
-    : siteStore.permissionList.length
-  let resolvedPage = paginationPayload.page
-  if (meta && meta.limit > 0 && Number.isFinite(meta.offset)) {
-    resolvedPage = Math.floor(Number(meta.offset) / Number(meta.limit)) + 1
-  }
-
-  return {
-    sortBy: paginationPayload.sortBy,
-    descending: paginationPayload.descending,
-    page: resolvedPage,
-    rowsPerPage: paginationPayload.rowsPerPage,
-    rowsNumber: total,
-  }
-}
-
-async function loadPermissions(paginationPayload) {
-  loading.value = true
-  try {
-    await siteStore.getPermissionList({
-      page: paginationPayload.page,
-      limit: paginationPayload.rowsPerPage,
-    })
-    tablePagination.value = permissionTablePaginationFromStore(
-      paginationPayload,
-    )
-  } catch (error) {
-    if (!isAuthSessionEndUIError(error)) {
-      $q.notify({
-        type: quasarNotifyTypes.negative,
-        message: t('permissionListError'),
-      })
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
-function onTableRequest(props) {
-  return loadPermissions(props.pagination)
-}
-
-onMounted(() => {
-  loadPermissions(tablePagination.value)
-})
+const allPermissions = ref([])
 
 watch(editDialogOpen, open => {
   if (!open) {
@@ -377,7 +386,7 @@ async function loadModuleFilterOptions() {
 }
 
 const filteredRows = computed(() => {
-  let list = siteStore.permissionList
+  let list = allPermissions.value
   const nameQ = String(filterApplied[pk.name] ?? '').trim().toLowerCase()
   if (nameQ) {
     list = list.filter(r =>
@@ -397,6 +406,76 @@ const filteredRows = computed(() => {
   }
 
   return list
+})
+
+watch(
+  () => [
+    filterApplied[pk.name],
+    filterApplied[pk.description],
+    filterApplied[pk.moduleId],
+  ],
+  () => {
+    syncTablePaginationRowsNumber()
+  },
+)
+
+function syncTablePaginationRowsNumber() {
+  const total = filteredRows.value.length
+  const rowsPerPage = tablePagination.value.rowsPerPage
+  const maxPage = Math.max(1, Math.ceil(total / rowsPerPage) || 1)
+  let page = tablePagination.value.page
+  if (page > maxPage) {
+    page = maxPage
+  }
+  tablePagination.value = {
+    ...tablePagination.value,
+    page,
+    rowsNumber: total,
+  }
+}
+
+async function loadAllPermissions() {
+  loading.value = true
+  try {
+    const [permissionRows, moduleRows] = await Promise.all([
+      fetchAllPaginatedRaw(apiPaths.permissionsList),
+      fetchAllEnvelopeList(
+        (path, cfg) => apiInstance.get(path, cfg),
+        apiPaths.modulesList,
+      ).catch(() => []),
+    ])
+    const mapped = permissionRows.map(mapPermission).filter(Boolean)
+    allPermissions.value = enrichPermissionsModuleNames(
+      mapped,
+      moduleRows,
+    )
+    syncTablePaginationRowsNumber()
+  } catch (error) {
+    allPermissions.value = []
+    if (!isAuthSessionEndUIError(error)) {
+      $q.notify({
+        type: quasarNotifyTypes.negative,
+        message: t('permissionListError'),
+      })
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+function onTableRequest(props) {
+  tablePagination.value = {
+    sortBy: props.pagination.sortBy,
+    descending: props.pagination.descending,
+    page: props.pagination.page,
+    rowsPerPage: props.pagination.rowsPerPage,
+    rowsNumber: filteredRows.value.length,
+  }
+}
+
+onMounted(() => {
+  loadAllPermissions()
+  loadModuleFilterOptions()
 })
 
 const activePermissionFilterCount = computed(() => {
@@ -451,9 +530,61 @@ function clearPermissionFilters() {
   filterDialogOpen.value = false
 }
 
+const isAllModulesFilterActive = computed(() => {
+  const modId = filterApplied[pk.moduleId]
+
+  return modId == null || !Number.isFinite(Number(modId))
+})
+
+function isModuleChipActive(moduleId) {
+  const applied = filterApplied[pk.moduleId]
+  if (applied == null || !Number.isFinite(Number(applied))) {
+    return false
+  }
+
+  return Number(applied) === Number(moduleId)
+}
+
+function selectModuleFilter(moduleId) {
+  const id = Number(moduleId)
+  if (!Number.isFinite(id)) {
+    return
+  }
+  if (isModuleChipActive(id)) {
+    clearModuleFilter()
+
+    return
+  }
+  filterApplied[pk.moduleId] = id
+  filterDraft[pk.moduleId] = id
+}
+
+function clearModuleFilter() {
+  filterApplied[pk.moduleId] = null
+  filterDraft[pk.moduleId] = null
+}
+
 function getbadge(n) {
   return n > 0 ? String(n) : undefined
 }
+
+const MODULE_ORB_LABEL_LEN = 10
+
+function moduleInitials(label) {
+  const compact = String(label ?? '')
+    .replace(/\s+/g, '')
+    .toUpperCase()
+  if (!compact) {
+    return '?'
+  }
+
+  return compact.slice(0, MODULE_ORB_LABEL_LEN)
+}
+
+const allModulesGlyph = computed(() =>
+  String(t('all')).replace(/\s+/g, '').toUpperCase()
+    .slice(0, MODULE_ORB_LABEL_LEN),
+)
 
 const columns = computed(() => [
   {
@@ -503,6 +634,14 @@ const sortedTableRows = computed(() => {
     p.descending,
     columns.value,
   )
+})
+
+const paginatedTableRows = computed(() => {
+  const sorted = sortedTableRows.value
+  const p = tablePagination.value
+  const start = (p.page - 1) * p.rowsPerPage
+
+  return sorted.slice(start, start + p.rowsPerPage)
 })
 
 function dashText(v) {
@@ -577,7 +716,7 @@ async function onSavePermissionEdit(payload) {
       message: t('permissionUpdatedSuccess'),
     })
     editDialogOpen.value = false
-    await loadPermissions(tablePagination.value)
+    await loadAllPermissions()
   } catch (error) {
     const msg =
       error?.response?.data?.message
