@@ -29,7 +29,7 @@ let lastSessionExpiredNotifyAt = 0
 
 const api = axios.create({
   baseURL:
-    'https://cdda-79-112-135-22.ngrok-free.app',
+    'https://drippy-phonebook-wildcard.ngrok-free.dev',
 })
 
 let refreshInFlight = null
