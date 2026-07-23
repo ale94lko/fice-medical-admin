@@ -1,5 +1,9 @@
 <template>
   <q-page class="admin-page">
+    <AppLoadingOverlay
+      scope="content"
+      :showing="pageOverlayShowing"
+      :message="pageOverlayMessage" />
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -11,7 +15,7 @@
       :title="t('permissions')"
       :rows="paginatedTableRows"
       :columns="columns"
-      :loading="loading"
+      :loading="false"
       :rows-per-page-label="t('rowsPerPage')"
       @request="onTableRequest">
       <template v-slot:top>
@@ -261,10 +265,12 @@ import {
 } from 'components/helpers.js'
 import { apiInstance } from 'boot/axios'
 import AdminQTable from 'components/AdminQTable.vue'
+import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import { usePermissionEditForm } from 'src/composables/usePermissionEditForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { usePageLoadingOverlay } from 'src/composables/usePageLoadingOverlay.js'
 import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
 import { fetchAllPaginatedRaw }
   from 'src/utils/permission-catalog-tree.js'
@@ -286,6 +292,12 @@ const editSaving = ref(false)
 const permissionBeingEdited = ref(null)
 const viewPermissionDialogOpen = ref(false)
 const permissionViewing = ref(null)
+
+const { showing: pageOverlayShowing, message: pageOverlayMessage } =
+  usePageLoadingOverlay({
+    loading,
+    saving: editSaving,
+  })
 
 const siteStore = useSiteStore()
 const { t } = useI18n()

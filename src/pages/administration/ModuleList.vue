@@ -1,5 +1,9 @@
 <template>
   <q-page class="admin-page">
+    <AppLoadingOverlay
+      scope="content"
+      :showing="pageOverlayShowing"
+      :message="pageOverlayMessage" />
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -11,7 +15,7 @@
       :title="t('modules')"
       :rows="sortedTableRows"
       :columns="columns"
-      :loading="loading"
+      :loading="false"
       :rows-per-page-label="t('rowsPerPage')"
       @request="onTableRequest">
       <template v-slot:top>
@@ -207,12 +211,15 @@ import {
   siteBreakpointsPx,
 } from 'components/constants.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import { useModuleEditForm } from 'src/composables/useModuleEditForm.js'
 import { useModuleViewPermissions }
   from 'src/composables/useModuleViewPermissions.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { usePageLoadingOverlay }
+  from 'src/composables/usePageLoadingOverlay.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const {
@@ -228,9 +235,17 @@ const $q = useQuasar()
 const loading = ref(false)
 const editDialogOpen = ref(false)
 const editSaving = ref(false)
+const formPreparing = ref(false)
 const moduleBeingEdited = ref(null)
 const viewModuleDialogOpen = ref(false)
 const moduleViewing = ref(null)
+
+const { showing: pageOverlayShowing, message: pageOverlayMessage } =
+  usePageLoadingOverlay({
+    loading,
+    saving: editSaving,
+    preparing: formPreparing,
+  })
 
 const siteStore = useSiteStore()
 const { t } = useI18n()
@@ -504,22 +519,27 @@ function closeViewModule() {
 }
 
 async function openEditModule(row) {
+  formPreparing.value = true
   let seed = row
   try {
-    const detail = await siteStore.getModuleById(row.id)
-    if (detail) {
-      seed = detail
+    try {
+      const detail = await siteStore.getModuleById(row.id)
+      if (detail) {
+        seed = detail
+      }
+    } catch (error) {
+      if (!isAuthSessionEndUIError(error)) {
+        $q.notify({
+          type: quasarNotifyTypes.negative,
+          message: t('moduleDetailLoadError'),
+        })
+      }
     }
-  } catch (error) {
-    if (!isAuthSessionEndUIError(error)) {
-      $q.notify({
-        type: quasarNotifyTypes.negative,
-        message: t('moduleDetailLoadError'),
-      })
-    }
+    moduleBeingEdited.value = seed
+    editDialogOpen.value = true
+  } finally {
+    formPreparing.value = false
   }
-  moduleBeingEdited.value = seed
-  editDialogOpen.value = true
 }
 
 async function onSaveModuleEdit(payload) {

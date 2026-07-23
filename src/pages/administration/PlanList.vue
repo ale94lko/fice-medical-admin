@@ -1,5 +1,9 @@
 <template>
   <q-page class="admin-page">
+    <AppLoadingOverlay
+      scope="content"
+      :showing="pageOverlayShowing"
+      :message="pageOverlayMessage" />
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -11,7 +15,7 @@
       :title="t('plans')"
       :rows="sortedTableRows"
       :columns="columns"
-      :loading="loading"
+      :loading="false"
       :rows-per-page-label="t('rowsPerPage')"
       @request="onTableRequest">
       <template v-slot:top>
@@ -84,8 +88,8 @@
       :title="planFormDialogTitle"
       :fields="planFormFields"
       :initial-values="planFormInitialValues"
-      :on-open="onPlanFormDialogOpen"
-      :after-open="afterPlanFormOpen"
+      :on-open="onPlanFormDialogOpenWithOverlay"
+      :after-open="afterPlanFormOpenWithOverlay"
       :format-payload="formatPlanPayload"
       :saving="planFormSaving"
       @save="onSavePlanForm"/>
@@ -263,12 +267,15 @@ import {
   siteBreakpointsPx,
 } from 'components/constants.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import { clonePermissionTreeForViewReadonly } from 'components/helpers.js'
 import { usePlanForm } from 'src/composables/usePlanForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { usePageLoadingOverlay, createDialogPreparingHandlers }
+  from 'src/composables/usePageLoadingOverlay.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const {
@@ -294,6 +301,17 @@ const planViewing = ref(null)
 const viewPlanTicked = ref([])
 let viewPlanTreeSeq = 0
 
+const pageSaving = computed(
+  () => planFormSaving.value || deleteSaving.value,
+)
+const formPreparing = ref(false)
+const { showing: pageOverlayShowing, message: pageOverlayMessage } =
+  usePageLoadingOverlay({
+    loading,
+    saving: pageSaving,
+    preparing: formPreparing,
+  })
+
 const siteStore = useSiteStore()
 const { t } = useI18n()
 
@@ -306,6 +324,14 @@ const {
   permissionsTreeLoading,
   loadPermissionCatalog,
 } = usePlanForm(planEditingRow)
+
+const {
+  onOpen: onPlanFormDialogOpenWithOverlay,
+  afterOpen: afterPlanFormOpenWithOverlay,
+} = createDialogPreparingHandlers(formPreparing, {
+  onOpen: onPlanFormDialogOpen,
+  afterOpen: afterPlanFormOpen,
+})
 
 const planFormDialogTitle = computed(() =>
   planEditingRow.value ? t('editPlan') : t('newPlan'),

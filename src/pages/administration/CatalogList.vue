@@ -1,5 +1,9 @@
 <template>
   <q-page class="admin-page">
+    <AppLoadingOverlay
+      scope="content"
+      :showing="pageOverlayShowing"
+      :message="pageOverlayMessage" />
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -11,7 +15,7 @@
       :title="t('catalogs')"
       :rows="sortedTableRows"
       :columns="columns"
-      :loading="loading"
+      :loading="false"
       :rows-per-page-label="t('rowsPerPage')"
       @request="onTableRequest">
       <template v-slot:top>
@@ -244,11 +248,13 @@ import {
   siteBreakpointsPx,
 } from 'components/constants.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import CatalogFormDialog from 'components/CatalogFormDialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import { buildCatalogMutationBody } from 'components/helpers.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { usePageLoadingOverlay } from 'src/composables/usePageLoadingOverlay.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const {
@@ -273,6 +279,17 @@ const catalogPendingDelete = ref(null)
 const deleteSaving = ref(false)
 const viewCatalogDialogOpen = ref(false)
 const catalogViewing = ref(null)
+
+const pageSaving = computed(
+  () => catalogFormSaving.value || deleteSaving.value,
+)
+const formPreparing = ref(false)
+const { showing: pageOverlayShowing, message: pageOverlayMessage } =
+  usePageLoadingOverlay({
+    loading,
+    saving: pageSaving,
+    preparing: formPreparing,
+  })
 
 const siteStore = useSiteStore()
 const { t } = useI18n()
@@ -651,6 +668,7 @@ async function openEditCatalog(row) {
   if (!row?.id) {
     return
   }
+  formPreparing.value = true
   try {
     const fresh = await siteStore.getCatalogById(row.id)
     if (fresh && catalogFormDialogOpen.value) {
@@ -664,6 +682,8 @@ async function openEditCatalog(row) {
         message: t('catalogDetailLoadError'),
       })
     }
+  } finally {
+    formPreparing.value = false
   }
 }
 

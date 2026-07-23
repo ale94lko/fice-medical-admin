@@ -152,6 +152,72 @@
             </q-item-section>
             <q-item-section>{{ t('plans') }}</q-item-section>
           </q-item>
+          <q-expansion-item
+            dense
+            expand-separator
+            icon="menu_book"
+            :label="t('referenceData')"
+            data-testid="nav-reference-data"
+            header-class="app-drawer-expansion-header"
+            expand-icon-class="app-drawer-expansion-icon"
+            :default-opened="isReferenceDataRoute">
+            <q-item
+              clickable
+              v-ripple
+              dense
+              to="/reference-data/catalogs"
+              data-testid="nav-reference-catalogs"
+              :active-class="activeClass">
+              <q-item-section avatar>
+                <q-icon name="list_alt" />
+              </q-item-section>
+              <q-item-section>
+                {{ t('referenceDataCatalogs') }}
+              </q-item-section>
+            </q-item>
+            <q-item
+              clickable
+              v-ripple
+              dense
+              to="/reference-data/taxonomies"
+              data-testid="nav-reference-taxonomies"
+              :active-class="activeClass">
+              <q-item-section avatar>
+                <q-icon name="medical_services" />
+              </q-item-section>
+              <q-item-section>
+                {{ t('referenceDataTaxonomies') }}
+              </q-item-section>
+            </q-item>
+            <q-item
+              clickable
+              v-ripple
+              dense
+              to="/reference-data/places-of-service"
+              data-testid="nav-reference-pos"
+              :active-class="activeClass">
+              <q-item-section avatar>
+                <q-icon name="place" />
+              </q-item-section>
+              <q-item-section>
+                {{ t('referenceDataPlacesOfService') }}
+              </q-item-section>
+            </q-item>
+            <q-item
+              clickable
+              v-ripple
+              dense
+              to="/reference-data/imports"
+              data-testid="nav-reference-imports"
+              :active-class="activeClass">
+              <q-item-section avatar>
+                <q-icon name="cloud_upload" />
+              </q-item-section>
+              <q-item-section>
+                {{ t('referenceDataImports') }}
+              </q-item-section>
+            </q-item>
+          </q-expansion-item>
         </q-list>
       </q-scroll-area>
       <div
@@ -179,7 +245,9 @@
           @click="pinDrawerExpanded" />
       </div>
     </q-drawer>
-    <q-page-container>
+    <q-page-container
+      id="app-content-root"
+      class="app-content-root">
       <router-view />
     </q-page-container>
   </q-layout>
@@ -196,7 +264,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from 'stores/auth-store.js'
 import {
@@ -209,6 +277,7 @@ import ModalComponent from 'components/ModalComponent.vue'
 
 const $q = useQuasar()
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const sidebar = ref($q.screen.width > drawerMobileMaxPx)
@@ -221,6 +290,10 @@ const windowWidth = computed(() => $q.screen.width)
 
 const mobileView = computed(
   () => windowWidth.value <= drawerMobileMaxPx,
+)
+
+const isReferenceDataRoute = computed(
+  () => String(route.path || '').startsWith('/reference-data'),
 )
 
 const drawerMini = computed(

@@ -1,5 +1,9 @@
 <template>
   <q-page class="admin-page">
+    <AppLoadingOverlay
+      scope="content"
+      :showing="pageOverlayShowing"
+      :message="pageOverlayMessage" />
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -11,7 +15,7 @@
       :title="t('users')"
       :rows="sortedTableRows"
       :columns="columns"
-      :loading="loading"
+      :loading="false"
       :table-row-class-fn="userRowClass"
       :card-class-fn="userRowClass"
       :rows-per-page-label="t('rowsPerPage')"
@@ -102,8 +106,8 @@
       :title-key="userDialogTitleKey"
       :fields="userAddFields"
       :initial-values="userDialogInitialValues"
-      :on-open="onUserDialogOpen"
-      :after-open="onUserDialogReady"
+      :on-open="onUserDialogOpenWithOverlay"
+      :after-open="onUserDialogReadyWithOverlay"
       :format-payload="formatUserDialogPayload"
       :saving="addSaving"
       @save="onSaveUser"/>
@@ -366,6 +370,7 @@ import {
 } from 'components/constants.js'
 import PasswordToggleIcon from 'components/PasswordToggleIcon.vue'
 import AdminQTable from 'components/AdminQTable.vue'
+import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import {
@@ -376,6 +381,8 @@ import {
 import { useUserAddForm } from 'src/composables/useUserAddForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { usePageLoadingOverlay, createDialogPreparingHandlers }
+  from 'src/composables/usePageLoadingOverlay.js'
 import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
 import { usePasswordVisibilityByKey }
   from 'src/composables/usePasswordVisibility.js'
@@ -417,6 +424,18 @@ const passwordVisibilityKey = {
   confirm: 'user-password-confirm',
 }
 
+const pageSaving = computed(
+  () => addSaving.value || deleteSaving.value
+    || passwordChangeSaving.value,
+)
+const formPreparing = ref(false)
+const { showing: pageOverlayShowing, message: pageOverlayMessage } =
+  usePageLoadingOverlay({
+    loading,
+    saving: pageSaving,
+    preparing: formPreparing,
+  })
+
 const siteStore = useSiteStore()
 const { t } = useI18n()
 
@@ -427,6 +446,14 @@ const {
   onDialogReady: onUserDialogReady,
   defaultNewUserTenantId,
 } = useUserAddForm(userBeingEdited)
+
+const {
+  onOpen: onUserDialogOpenWithOverlay,
+  afterOpen: onUserDialogReadyWithOverlay,
+} = createDialogPreparingHandlers(formPreparing, {
+  onOpen: onUserDialogOpen,
+  afterOpen: onUserDialogReady,
+})
 
 function passwordChangeRequiredRule(val) {
   return (!!val && String(val).trim().length > 0) || t('fieldRequired')
@@ -946,6 +973,7 @@ async function editRow(row) {
   if (isPrimarySuperadmin(row)) {
     return
   }
+  formPreparing.value = true
   let seed = row
   try {
     const detail = await siteStore.getUserById(row.id)

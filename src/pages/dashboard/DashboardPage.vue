@@ -1,5 +1,8 @@
 <template>
   <q-page class="admin-page dashboard-page">
+    <AppLoadingOverlay
+      scope="content"
+      :showing="loading" />
     <header class="dashboard-header">
       <div>
         <h1 class="dashboard-header__title">{{ t('dashboardTitle') }}</h1>
@@ -344,6 +347,7 @@ import {
   tenantFieldKeys,
 } from 'components/constants.js'
 import DashboardStatCard from 'components/dashboard/DashboardStatCard.vue'
+import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import DashboardDonutChart from 'components/dashboard/DashboardDonutChart.vue'
 import DashboardBarChart from 'components/dashboard/DashboardBarChart.vue'
 import { useDashboardStats } from 'src/composables/useDashboardStats.js'

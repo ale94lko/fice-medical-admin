@@ -41,10 +41,63 @@ export const apiPaths = {
   moduleAdminItem: '/admin-tenant/v1/module',
   catalogList: '/admin-tenant/v1/catalog',
   catalogCreate: '/admin-tenant/v1/catalog/create',
+  referenceDataBase: '/admin-tenant/v1/reference-data',
+  referenceDataCatalogs: '/admin-tenant/v1/reference-data/catalogs',
+  referenceDataTaxonomies:
+    '/admin-tenant/v1/reference-data/taxonomies',
+  referenceDataPlacesOfService:
+    '/admin-tenant/v1/reference-data/places-of-service',
+  referenceDataImports: '/admin-tenant/v1/reference-data/imports',
+  referenceDataImportsFromSource:
+    '/admin-tenant/v1/reference-data/imports/from-source',
+  referenceDataImportsHttp:
+    '/admin-tenant/v1/reference-data/imports/http',
+  referenceDataVersions: '/admin-tenant/v1/reference-data/versions',
   oauthLogin: '/oauth/v1/login',
   oauthRefresh: '/oauth/v1/refresh',
   oauthResetPassword: '/oauth/v1/reset-password',
   logout: '/logout',
+}
+
+/** Reference Data (terminologies) — not UI enum catalogs. */
+export const referenceDataCatalogCodes = {
+  nuccTaxonomy: 'NUCC_TAXONOMY',
+  placeOfService: 'PLACE_OF_SERVICE',
+}
+
+export const referenceDataCatalogStatuses = {
+  active: 'ACTIVE',
+  stub: 'STUB',
+}
+
+export const referenceDataImportFormats = {
+  csv: 'CSV',
+  json: 'JSON',
+  xml: 'XML',
+  zip: 'ZIP',
+}
+
+export const referenceDataImportStatuses = {
+  pending: 'PENDING',
+  running: 'RUNNING',
+  completed: 'COMPLETED',
+  failed: 'FAILED',
+  rolledBack: 'ROLLED_BACK',
+}
+
+export const referenceDataImportSourceTypes = {
+  upload: 'UPLOAD',
+  http: 'HTTP',
+  scheduled: 'SCHEDULED',
+}
+
+export const referenceDataTaxonomySortFields = {
+  code: 'code',
+  grouping: 'grouping',
+  classification: 'classification',
+  specialization: 'specialization',
+  displayName: 'display_name',
+  createdAt: 'created_at',
 }
 
 export const authStorageKeys = {

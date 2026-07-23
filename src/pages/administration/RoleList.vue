@@ -1,5 +1,9 @@
 <template>
   <q-page class="admin-page">
+    <AppLoadingOverlay
+      scope="content"
+      :showing="pageOverlayShowing"
+      :message="pageOverlayMessage" />
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -11,7 +15,7 @@
       :title="t('roles')"
       :rows="sortedTableRows"
       :columns="columns"
-      :loading="loading"
+      :loading="false"
       :rows-per-page-label="t('rowsPerPage')"
       @request="onTableRequest">
       <template v-slot:top>
@@ -86,7 +90,7 @@
       :title="roleFormDialogTitle"
       :fields="roleAddFields"
       :initial-values="roleFormInitialValues"
-      :on-open="onRoleFormDialogOpen"
+      :on-open="onRoleFormDialogOpenWithOverlay"
       :format-payload="formatRolePayload"
       :saving="roleFormSaving"
       @save="onSaveRoleForm"/>
@@ -255,6 +259,7 @@ import {
   tenantFieldKeys,
 } from 'components/constants.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import {
@@ -266,6 +271,8 @@ import {
 import { useRoleAddForm } from 'src/composables/useRoleAddForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { usePageLoadingOverlay, createDialogPreparingHandlers }
+  from 'src/composables/usePageLoadingOverlay.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
 const {
@@ -291,6 +298,17 @@ const viewRoleDialogOpen = ref(false)
 const roleViewing = ref(null)
 const viewRoleTicked = ref([])
 let viewRoleTreeSeq = 0
+
+const pageSaving = computed(
+  () => roleFormSaving.value || deleteSaving.value,
+)
+const formPreparing = ref(false)
+const { showing: pageOverlayShowing, message: pageOverlayMessage } =
+  usePageLoadingOverlay({
+    loading,
+    saving: pageSaving,
+    preparing: formPreparing,
+  })
 
 const tenantIdToLabel = ref(new Map())
 
@@ -341,6 +359,11 @@ async function onRoleFormDialogOpen() {
   await onRoleDialogOpen()
   await nextTick()
 }
+
+const { onOpen: onRoleFormDialogOpenWithOverlay } =
+  createDialogPreparingHandlers(formPreparing, {
+    onOpen: onRoleFormDialogOpen,
+  })
 
 const viewRolePermissionTreeNodes = computed(() =>
   clonePermissionTreeForViewReadonly(permissionTreeNodes.value),

@@ -1,5 +1,9 @@
 <template>
   <q-page class="admin-page">
+    <AppLoadingOverlay
+      scope="content"
+      :showing="pageOverlayShowing"
+      :message="pageOverlayMessage" />
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -11,7 +15,7 @@
       :title="t('tenants')"
       :rows="sortedTableRows"
       :columns="columns"
-      :loading="loading"
+      :loading="false"
       :table-row-class-fn="tenantRowClass"
       :card-class-fn="tenantRowClass"
       :rows-per-page-label="t('rowsPerPage')"
@@ -90,7 +94,7 @@
       :fields="tenantAddFields"
       :initial-values="tenantDialogInitialValues"
       :editable-keys-when-edit="tenantDialogEditableKeys"
-      :on-open="onTenantDialogOpen"
+      :on-open="onTenantDialogOpenWithOverlay"
       :format-payload="formatTenantDialogPayload"
       :saving="addSaving"
       @save="onSaveTenant"/>
@@ -288,6 +292,7 @@ import {
   usStateLabelFromCode,
 } from 'components/helpers.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import {
@@ -296,6 +301,8 @@ import {
 } from 'src/composables/useTenantAddForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { usePageLoadingOverlay, createDialogPreparingHandlers }
+  from 'src/composables/usePageLoadingOverlay.js'
 import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
@@ -320,6 +327,17 @@ const tenantBeingEdited = ref(null)
 const viewTenantDialogOpen = ref(false)
 const tenantViewing = ref(null)
 
+const pageSaving = computed(
+  () => addSaving.value || deleteSaving.value,
+)
+const formPreparing = ref(false)
+const { showing: pageOverlayShowing, message: pageOverlayMessage } =
+  usePageLoadingOverlay({
+    loading,
+    saving: pageSaving,
+    preparing: formPreparing,
+  })
+
 const siteStore = useSiteStore()
 const { t } = useI18n()
 
@@ -329,6 +347,11 @@ const {
   formatTenantPayload: formatTenantPayloadBase,
   formatTenantUpdatePayload,
 } = useTenantAddForm()
+
+const { onOpen: onTenantDialogOpenWithOverlay } =
+  createDialogPreparingHandlers(formPreparing, {
+    onOpen: onTenantDialogOpen,
+  })
 
 function formatTenantDialogPayload(form) {
   if (!tenantBeingEdited.value) {
