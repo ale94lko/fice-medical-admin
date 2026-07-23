@@ -1,0 +1,1 @@
+import{s as e,x as t}from"./runtime-core.esm-bundler-BMQkza_a.js";import{b as n,s as r}from"./dom-BIul9T6b.js";var i=n({name:`QCardSection`,props:{tag:{type:String,default:`div`},horizontal:Boolean},setup(n,{slots:i}){let a=e(()=>`q-card__section q-card__section--${n.horizontal===!0?`horiz row no-wrap`:`vert`}`);return()=>t(n.tag,{class:a.value},r(i.default))}});export{i as t};

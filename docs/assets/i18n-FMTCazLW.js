@@ -1,0 +1,1 @@
+import{n as e,t}from"./i18n-D51eMiMP.js";export{e as default,t as i18nGlobalT};
