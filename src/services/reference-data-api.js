@@ -3,7 +3,8 @@
  * (`/admin-tenant/v1/reference-data/**`).
  *
  * @typedef {'ACTIVE'|'STUB'} ReferenceCatalogStatus
- * @typedef {'NUCC_TAXONOMY'|'PLACE_OF_SERVICE'|string} ReferenceCatalogCode
+ * @typedef {'NUCC_TAXONOMY'|'PLACE_OF_SERVICE'|'MEDICATION'|string}
+ *   ReferenceCatalogCode
  * @typedef {'CSV'|'JSON'|'XML'|'ZIP'} ReferenceImportFormat
  * @typedef {'PENDING'|'RUNNING'|'COMPLETED'|'FAILED'|'ROLLED_BACK'}
  *   ReferenceImportStatus
@@ -22,6 +23,27 @@
  * @property {ReferenceCatalogStatus} status
  * @property {boolean} [supports_clinic_override]
  * @property {string|null} [active_version]
+ *
+ * @typedef {object} ReferenceMedication
+ * @property {number} id
+ * @property {string} code
+ * @property {string} name
+ * @property {string|null} [generic_name]
+ * @property {boolean} active
+ * @property {string|null} [version]
+ * @property {string|null} [external_rxnorm]
+ * @property {string|null} [external_ndc]
+ * @property {string|null} [created_at]
+ * @property {string|null} [updated_at]
+ *
+ * @typedef {object} MedicationListQuery
+ * @property {string} [q]
+ * @property {string} [code]
+ * @property {boolean|string} [active]
+ * @property {number} [page]
+ * @property {number} [limit]
+ * @property {string} [sort_by]
+ * @property {'ASC'|'DESC'} [sort_dir]
  *
  * @typedef {object} ReferencePageMeta
  * @property {number} limit
@@ -366,17 +388,95 @@ export async function createImportUpload({
 }
 
 /**
+ * Browse medications (RxNorm). Admin uses the tenant read API until
+ * an admin-tenant medications route exists.
+ *
+ * @param {MedicationListQuery} [query]
+ * @returns {Promise<{
+ *   items: ReferenceMedication[],
+ *   meta: ReferencePageMeta|null,
+ * }>}
+ */
+export async function listMedications(query = {}) {
+  const response = await apiInstance.get(
+    apiPaths.referenceDataMedications,
+    { params: query },
+  )
+  const root = unwrapData(response.data)
+
+  return {
+    items: /** @type {ReferenceMedication[]} */ (
+      extractReferenceItems(root)
+    ),
+    meta: extractReferenceMeta(root),
+  }
+}
+
+/**
+ * @param {number|string} id
+ * @returns {Promise<ReferenceMedication|null>}
+ */
+export async function getMedicationById(id) {
+  const path =
+    `${apiPaths.referenceDataMedications}/`
+    + `${encodeURIComponent(String(id))}`
+  const response = await apiInstance.get(path)
+  const root = unwrapData(response.data)
+  if (root && typeof root === typeNames.object && !Array.isArray(root)) {
+    return /** @type {ReferenceMedication} */ (root)
+  }
+
+  return null
+}
+
+/**
+ * @param {ReferenceCatalog|null|undefined} catalog
+ * @returns {boolean}
+ */
+export function isReferenceCatalogImportable(catalog) {
+  const code = String(catalog?.code ?? '').toUpperCase()
+  // RXNORM is a documentary stub alias — import with MEDICATION.
+  if (code === 'RXNORM') {
+    return false
+  }
+
+  return String(catalog?.status ?? '').toUpperCase() === 'ACTIVE'
+}
+
+/**
+ * @param {ReferenceCatalog|null|undefined} catalog
+ * @returns {boolean}
+ */
+export function supportsReferenceAutoDownload(catalog) {
+  return isReferenceCatalogImportable(catalog)
+    && Boolean(catalog?.supports_auto_download)
+}
+
+/**
+ * @param {string|null|undefined} catalogCode
+ * @returns {boolean}
+ */
+export function isMedicationCatalogCode(catalogCode) {
+  return String(catalogCode ?? '').toUpperCase() === 'MEDICATION'
+}
+
+/** Long-running from-source (e.g. RxNorm ZIP ~75 MB). */
+export const REFERENCE_FROM_SOURCE_TIMEOUT_MS = 10 * 60 * 1000
+
+/**
  * Import from catalog official source (download_url / download_format).
  * Do not send url or format — backend resolves them from the catalog.
  *
  * @param {object} opts
  * @param {ReferenceCatalogCode} opts.catalogCode
  * @param {string} [opts.versionLabel]
+ * @param {number} [opts.timeoutMs]
  * @returns {Promise<ReferenceImportJob|null>}
  */
 export async function createImportFromSource({
   catalogCode,
   versionLabel,
+  timeoutMs,
 }) {
   /** @type {FromSourceImportBody} */
   const body = { 'catalog_code': catalogCode }
@@ -384,9 +484,14 @@ export async function createImportFromSource({
   if (label) {
     body['version_label'] = label
   }
+  const longRunning = isMedicationCatalogCode(catalogCode)
   const response = await apiInstance.post(
     apiPaths.referenceDataImportsFromSource,
     body,
+    {
+      timeout: timeoutMs
+        ?? (longRunning ? REFERENCE_FROM_SOURCE_TIMEOUT_MS : 0),
+    },
   )
   const root = unwrapData(response.data)
   if (root && typeof root === typeNames.object) {
@@ -482,21 +587,4 @@ export async function activateReferenceVersion(versionId) {
   const response = await apiInstance.post(path)
 
   return unwrapData(response.data)
-}
-
-/**
- * @param {ReferenceCatalog|null|undefined} catalog
- * @returns {boolean}
- */
-export function isReferenceCatalogImportable(catalog) {
-  return String(catalog?.status ?? '').toUpperCase() === 'ACTIVE'
-}
-
-/**
- * @param {ReferenceCatalog|null|undefined} catalog
- * @returns {boolean}
- */
-export function supportsReferenceAutoDownload(catalog) {
-  return isReferenceCatalogImportable(catalog)
-    && Boolean(catalog?.supports_auto_download)
 }

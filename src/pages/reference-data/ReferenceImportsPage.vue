@@ -83,6 +83,11 @@
                 {{ t('referenceDataFromSourceHint') }}
               </div>
               <div
+                v-if="isMedicationImport"
+                class="text-body2 text-weight-medium q-mt-sm">
+                {{ t('referenceDataMedicationImportWait') }}
+              </div>
+              <div
                 v-if="selectedCatalog.download_url"
                 class="text-caption q-mt-xs">
                 {{ t('referenceDataDownloadUrl') }}:
@@ -100,6 +105,13 @@
                 {{ t('referenceDataFormat') }}:
                 {{ selectedCatalog.download_format }}
               </div>
+            </q-banner>
+          </div>
+          <div
+            v-if="submitting && isMedicationImport"
+            class="col-12">
+            <q-banner dense rounded class="bg-warning text-dark">
+              {{ t('referenceDataMedicationImportInProgress') }}
             </q-banner>
           </div>
           <div class="col-12 flex items-center q-gutter-sm">
@@ -292,6 +304,7 @@ import {
   createImportFromSource,
   createImportUpload,
   getImportById,
+  isMedicationCatalogCode,
   isReferenceCatalogImportable,
   listImports,
   listReferenceCatalogs,
@@ -363,6 +376,10 @@ const historyCatalogOptions = computed(() => {
       label: referenceDataCatalogCodes.placeOfService,
       value: referenceDataCatalogCodes.placeOfService,
     },
+    {
+      label: referenceDataCatalogCodes.medication,
+      value: referenceDataCatalogCodes.medication,
+    },
   ]
 })
 
@@ -372,6 +389,10 @@ const selectedCatalog = computed(() =>
 
 const selectedSupportsAutoDownload = computed(() =>
   supportsReferenceAutoDownload(selectedCatalog.value),
+)
+
+const isMedicationImport = computed(() =>
+  isMedicationCatalogCode(form.catalogCode),
 )
 
 const modeOptions = computed(() => {
@@ -565,6 +586,14 @@ function applyQueryCatalog() {
   syncImportModeForCatalog()
 }
 
+async function openJobFromQuery() {
+  const jobId = Number(route.query.job_id)
+  if (!Number.isFinite(jobId) || jobId <= 0) {
+    return
+  }
+  await openJobDetail({ id: jobId })
+}
+
 function syncImportModeForCatalog() {
   if (
     importMode.value === 'from-source'
@@ -591,6 +620,13 @@ function fallbackActiveCatalogs() {
       name: referenceDataCatalogCodes.placeOfService,
       status: 'ACTIVE',
       'supports_auto_download': false,
+    },
+    {
+      code: referenceDataCatalogCodes.medication,
+      name: 'Medications (RxNorm Prescribable)',
+      status: 'ACTIVE',
+      'supports_auto_download': true,
+      'download_format': 'ZIP',
     },
   ]
 }
@@ -688,7 +724,9 @@ async function submitImport() {
     }
     $q.notify({
       type: quasarNotifyTypes.positive,
-      message: t('referenceDataImportStarted'),
+      message: isMedicationCatalogCode(form.catalogCode)
+        ? t('referenceDataMedicationImportStarted')
+        : t('referenceDataImportStarted'),
     })
     form.file = null
     await loadJobs({ ...tablePagination.value, page: 1 })
@@ -798,5 +836,6 @@ watch(selectedSupportsAutoDownload, () => {
 onMounted(async() => {
   await loadCatalogOptions()
   await loadJobs(tablePagination.value)
+  await openJobFromQuery()
 })
 </script>

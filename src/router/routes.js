@@ -58,6 +58,12 @@ const routes = [
         ),
       },
       {
+        path: 'reference-data/medications',
+        component: () => import(
+          'pages/reference-data/MedicationListPage.vue'
+        ),
+      },
+      {
         path: 'reference-data/imports',
         component: () => import(
           'pages/reference-data/ReferenceImportsPage.vue'

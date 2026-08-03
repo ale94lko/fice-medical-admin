@@ -290,6 +290,10 @@ export default {
   referenceDataPlacesOfService: 'Places of Service',
   referenceDataPlacesOfServiceSubtitle:
     'CMS Place of Service codes with optional clinic overrides.',
+  referenceDataMedications: 'Medications',
+  referenceDataMedicationsSubtitle:
+    'RxNorm Current Prescribable Content. Manage via import; '
+    + 'browse and search concepts.',
   referenceDataImports: 'Imports / Versions',
   referenceDataImportsSubtitle:
     'Upload or fetch catalog files, review jobs, rollback or activate.',
@@ -301,9 +305,33 @@ export default {
   referenceDataImport: 'Import',
   referenceDataUploadFile: 'Upload file',
   referenceDataImportFromSource: 'Import from official source',
+  referenceDataBrowse: 'Browse',
+  referenceDataViewImportJobs: 'View import jobs',
   referenceDataAutoImportUnavailable:
     'Official auto-download is not available for this catalog',
   referenceDataComingSoon: 'Coming soon',
+  referenceDataMedicationMasterHint:
+    'Do not edit names manually. The master data comes from RxNorm. '
+    + 'Use import to update the catalog.',
+  referenceDataMedicationBrowse: 'Medication concepts',
+  referenceDataRecentMedicationJobs: 'Recent MEDICATION imports',
+  referenceDataGenericName: 'Generic name',
+  referenceDataExternalRxNorm: 'RxNorm code',
+  referenceDataExternalNdc: 'NDC',
+  referenceDataUpdatedAt: 'Updated',
+  referenceDataEmptyMedications: 'No medications found.',
+  referenceDataMedicationsLoadError:
+    'Could not load medications.',
+  referenceDataMedicationDetailError:
+    'Could not load medication details.',
+  referenceDataMedicationImportWait:
+    'Official import downloads a large RxNorm ZIP (~75 MB) and may take '
+    + 'several minutes. Keep this tab open.',
+  referenceDataMedicationImportInProgress:
+    'Import in progress. Please wait and do not close this tab.',
+  referenceDataMedicationImportStarted:
+    'Medication import started. Review job logs when finished '
+    + '(upserted / deactivated / skipped).',
   referenceDataStatusActive: 'Active',
   referenceDataStatusStub: 'Stub',
   referenceDataEmptyCatalogs: 'No reference catalogs found.',

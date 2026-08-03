@@ -53,6 +53,8 @@ export const apiPaths = {
   referenceDataImportsHttp:
     '/admin-tenant/v1/reference-data/imports/http',
   referenceDataVersions: '/admin-tenant/v1/reference-data/versions',
+  /** Tenant/staff read API used to browse MEDICATION in admin. */
+  referenceDataMedications: '/reference-data/v1/medications',
   oauthLogin: '/oauth/v1/login',
   oauthRefresh: '/oauth/v1/refresh',
   oauthResetPassword: '/oauth/v1/reset-password',
@@ -63,6 +65,17 @@ export const apiPaths = {
 export const referenceDataCatalogCodes = {
   nuccTaxonomy: 'NUCC_TAXONOMY',
   placeOfService: 'PLACE_OF_SERVICE',
+  medication: 'MEDICATION',
+  /** Documentary stub alias — never use for import. */
+  rxnormStub: 'RXNORM',
+}
+
+export const referenceDataMedicationSortFields = {
+  code: 'code',
+  name: 'name',
+  genericName: 'generic_name',
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 }
 
 export const referenceDataCatalogStatuses = {

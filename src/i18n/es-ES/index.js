@@ -305,6 +305,10 @@ export default {
   referenceDataPlacesOfService: 'Places of Service',
   referenceDataPlacesOfServiceSubtitle:
     'Códigos CMS Place of Service con override opcional por clínica.',
+  referenceDataMedications: 'Medicamentos',
+  referenceDataMedicationsSubtitle:
+    'RxNorm Current Prescribable Content. Gestión por import; '
+    + 'exploración y búsqueda de conceptos.',
   referenceDataImports: 'Imports / Versiones',
   referenceDataImportsSubtitle:
     'Sube o descarga archivos, revisa jobs, rollback o activa versión.',
@@ -316,9 +320,33 @@ export default {
   referenceDataImport: 'Importar',
   referenceDataUploadFile: 'Subir archivo',
   referenceDataImportFromSource: 'Importar desde fuente oficial',
+  referenceDataBrowse: 'Explorar',
+  referenceDataViewImportJobs: 'Ver jobs de import',
   referenceDataAutoImportUnavailable:
     'La descarga oficial no está disponible para este catálogo',
   referenceDataComingSoon: 'Próximamente',
+  referenceDataMedicationMasterHint:
+    'No edites nombres a mano. El master viene de RxNorm. '
+    + 'Usa import para actualizar el catálogo.',
+  referenceDataMedicationBrowse: 'Conceptos de medicamentos',
+  referenceDataRecentMedicationJobs: 'Imports recientes de MEDICATION',
+  referenceDataGenericName: 'Nombre genérico',
+  referenceDataExternalRxNorm: 'Código RxNorm',
+  referenceDataExternalNdc: 'NDC',
+  referenceDataUpdatedAt: 'Actualizado',
+  referenceDataEmptyMedications: 'No se encontraron medicamentos.',
+  referenceDataMedicationsLoadError:
+    'No se pudieron cargar los medicamentos.',
+  referenceDataMedicationDetailError:
+    'No se pudo cargar el detalle del medicamento.',
+  referenceDataMedicationImportWait:
+    'El import oficial descarga un ZIP RxNorm grande (~75 MB) y puede '
+    + 'tardar varios minutos. No cierres esta pestaña.',
+  referenceDataMedicationImportInProgress:
+    'Import en curso. Espera y no cierres esta pestaña.',
+  referenceDataMedicationImportStarted:
+    'Import de medicamentos iniciado. Revisa los logs del job al terminar '
+    + '(upserted / deactivated / skipped).',
   referenceDataStatusActive: 'Activo',
   referenceDataStatusStub: 'Stub',
   referenceDataEmptyCatalogs: 'No hay catálogos de referencia.',

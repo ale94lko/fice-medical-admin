@@ -73,6 +73,18 @@
       </template>
       <template #row-actions="{ row }">
         <q-btn
+          v-if="isMedicationRow(row)"
+          flat
+          dense
+          no-caps
+          color="primary"
+          icon="visibility"
+          class="q-mr-xs"
+          :data-testid="rowTid(row.id, 'browse')"
+          :disable="!canImport(row)"
+          :label="t('referenceDataBrowse')"
+          @click="goBrowse(row)" />
+        <q-btn
           flat
           dense
           no-caps
@@ -122,6 +134,7 @@ import { usePageLoadingOverlay }
   from 'src/composables/usePageLoadingOverlay.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import {
+  isMedicationCatalogCode,
   isReferenceCatalogImportable,
   listReferenceCatalogs,
   referenceDataErrorMessage,
@@ -202,6 +215,10 @@ function canAutoImport(row) {
   return supportsReferenceAutoDownload(row)
 }
 
+function isMedicationRow(row) {
+  return isMedicationCatalogCode(row?.code)
+}
+
 function statusLabel(status) {
   const s = String(status ?? '').toUpperCase()
   if (s === referenceDataCatalogStatuses.active) {
@@ -243,6 +260,13 @@ function autoImportButtonTitle(row) {
   }
 
   return t('referenceDataComingSoon')
+}
+
+function goBrowse(row) {
+  if (!isMedicationRow(row)) {
+    return
+  }
+  router.push({ path: '/reference-data/medications' })
 }
 
 function goUpload(row) {
