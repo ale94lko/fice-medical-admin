@@ -234,7 +234,7 @@
     align-items: center;
     gap: 8px;
     min-width: 0;
-    max-height: calc(34px * 2 + 8px);
+    max-height: calc(34px * 3 + 8px * 2);
     padding-right: 4px;
     overflow-x: auto;
     overflow-y: hidden;
@@ -774,11 +774,38 @@ input:-webkit-autofill {
   }
 }
 
+.dashboard-stat-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+
+  &--active {
+    cursor: pointer;
+
+    &:hover .dashboard-stat-card {
+      border-color: rgba($primary, 0.35) !important;
+      box-shadow: $shadow-md;
+    }
+
+    &:focus-visible .dashboard-stat-card {
+      outline: 2px solid $primary;
+      outline-offset: 2px;
+    }
+  }
+}
+
 .dashboard-stat-card {
   border-radius: $radius-lg !important;
   border-color: $border-subtle !important;
   background: $surface !important;
   box-shadow: $shadow-sm;
+  height: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &--link {
+    cursor: pointer;
+  }
 
   &__body {
     display: flex;

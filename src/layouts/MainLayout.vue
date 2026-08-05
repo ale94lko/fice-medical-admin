@@ -44,7 +44,7 @@
     </q-header>
     <q-footer class="app-footer">
       <q-toolbar class="justify-center">
-        <label>&copy; 2025 FiCE Medical Admin. Powered by LandA Apps</label>
+        <label>&copy; 2026 FiCE Medical Admin. Powered by LandA Apps</label>
       </q-toolbar>
     </q-footer>
     <q-drawer

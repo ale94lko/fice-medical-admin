@@ -43,6 +43,7 @@
         :value="summary.tenants"
         :hint="kpiTenantHint"
         :loading="loading"
+        to="/tenants"
         icon-color="#0f766e"
         icon-bg="rgba(15, 118, 110, 0.12)"
         test-id="dashboard-kpi-tenants" />
@@ -52,6 +53,7 @@
         :value="summary.users"
         :hint="kpiUserHint"
         :loading="loading"
+        to="/users"
         icon-color="#0ea5e9"
         icon-bg="rgba(14, 165, 233, 0.12)"
         test-id="dashboard-kpi-users" />
@@ -60,6 +62,7 @@
         :label="t('roles')"
         :value="summary.roles"
         :loading="loading"
+        to="/roles"
         icon-color="#6366f1"
         icon-bg="rgba(99, 102, 241, 0.12)"
         test-id="dashboard-kpi-roles" />
@@ -68,6 +71,7 @@
         :label="t('permissions')"
         :value="summary.permissions"
         :loading="loading"
+        to="/permissions"
         icon-color="#d97706"
         icon-bg="rgba(217, 119, 6, 0.12)"
         test-id="dashboard-kpi-permissions" />
@@ -76,6 +80,7 @@
         :label="t('modules')"
         :value="summary.modules"
         :loading="loading"
+        to="/modules"
         icon-color="#16a34a"
         icon-bg="rgba(22, 163, 74, 0.12)"
         test-id="dashboard-kpi-modules" />
@@ -85,6 +90,7 @@
         :value="summary.plans"
         :hint="kpiPlanHint"
         :loading="loading"
+        to="/plans"
         icon-color="#14b8a6"
         icon-bg="rgba(20, 184, 166, 0.12)"
         test-id="dashboard-kpi-plans" />
@@ -94,6 +100,7 @@
         :value="summary.catalogs"
         :hint="kpiCatalogHint"
         :loading="loading"
+        to="/catalogs"
         icon-color="#ec4899"
         icon-bg="rgba(236, 72, 153, 0.12)"
         test-id="dashboard-kpi-catalogs" />
@@ -102,6 +109,7 @@
         :label="t('dashboardCatalogItems')"
         :value="summary.catalogItems"
         :loading="loading"
+        to="/catalogs"
         icon-color="#64748b"
         icon-bg="rgba(100, 116, 139, 0.12)"
         test-id="dashboard-kpi-catalog-items" />
