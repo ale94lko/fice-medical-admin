@@ -1,0 +1,1 @@
+import{n as e,t}from"./i18n-Ck_paAZ5.js";export{e as default,t as i18nGlobalT};
