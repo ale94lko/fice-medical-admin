@@ -2,10 +2,13 @@ import { defineConfig } from '#q-app/wrappers'
 import { fileURLToPath } from 'node:url'
 
 export default defineConfig((ctx) => {
+  const isCapacitor = ctx.modeName === 'capacitor'
+
   return {
     boot: [
       'i18n',
-      'axios'
+      'axios',
+      ...(ctx.mode.capacitor ? ['capacitor'] : []),
     ],
     css: [
       'app.scss'
@@ -19,8 +22,12 @@ export default defineConfig((ctx) => {
         browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],
         node: 'node20'
       },
-      vueRouterMode: 'history',
-      publicPath: 'fice-medical-admin',
+      // Capacitor serves from app root; GitHub Pages uses project path.
+      vueRouterMode: isCapacitor ? 'hash' : 'history',
+      publicPath: isCapacitor ? '/' : 'fice-medical-admin',
+      env: {
+        VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || '',
+      },
       vitePlugins: [
         ['@intlify/unplugin-vue-i18n/vite', {
           ssr: ctx.modeName === 'ssr',
@@ -37,7 +44,7 @@ export default defineConfig((ctx) => {
     },
     devServer: {
       port: 8090,
-      open: true
+      open: !isCapacitor
     },
     framework: {
       config: {
@@ -70,7 +77,9 @@ export default defineConfig((ctx) => {
     },
     cordova: {},
     capacitor: {
-      hideSplashscreen: true
+      hideSplashscreen: true,
+      // Capacitor 7 / Quasar: appId & appName live in
+      // src-capacitor/capacitor.config.json
     },
     electron: {
       preloadScripts: ['electron-preload'],

@@ -27,9 +27,20 @@ import { i18nGlobalT } from './i18n.js'
 
 let lastSessionExpiredNotifyAt = 0
 
+const DEFAULT_API_BASE_URL =
+  'https://drippy-phonebook-wildcard.ngrok-free.dev'
+
+function resolveApiBaseUrl() {
+  const fromEnv = import.meta.env.VITE_API_BASE_URL
+  if (typeof fromEnv === typeNames.string && fromEnv.trim()) {
+    return fromEnv.trim().replace(/\/$/, '')
+  }
+
+  return DEFAULT_API_BASE_URL
+}
+
 const api = axios.create({
-  baseURL:
-    'https://drippy-phonebook-wildcard.ngrok-free.dev',
+  baseURL: resolveApiBaseUrl(),
 })
 
 let refreshInFlight = null
