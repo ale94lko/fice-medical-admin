@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./web-BvSb-wBd.js","./dist-DYoY1Ot3.js"])))=>i.map(i=>d[i]);
+import{Mn as e}from"./axios-LiRTT0kj.js";import{r as t}from"./dist-DYoY1Ot3.js";import{t as n}from"./preload-helper-B9f2vbQQ.js";var r=e({App:()=>i}),i=t(`App`,{web:()=>n(()=>import(`./web-BvSb-wBd.js`).then(e=>new e.AppWeb),__vite__mapDeps([0,1]),import.meta.url)});export{r as t};
