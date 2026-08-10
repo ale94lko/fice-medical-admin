@@ -113,6 +113,13 @@
             </q-banner>
           </div>
           <div
+            v-if="importMode === 'upload' && isIcd10CmImport"
+            class="col-12">
+            <q-banner dense rounded class="bg-grey-2 text-grey-9">
+              {{ t('referenceDataIcd10CmUploadHint') }}
+            </q-banner>
+          </div>
+          <div
             v-if="submitting && isLongRunningImport"
             class="col-12">
             <q-banner dense rounded class="bg-warning text-dark">
@@ -426,15 +433,19 @@ const longRunningImportInProgressMessage = computed(() => {
 })
 
 const modeOptions = computed(() => {
-  const options = [
-    { label: t('referenceDataModeUpload'), value: 'upload' },
-  ]
+  const options = []
   if (selectedSupportsAutoDownload.value) {
     options.push({
       label: t('referenceDataModeFromSource'),
       value: 'from-source',
     })
   }
+  options.push({
+    label: isIcd10CmImport.value
+      ? t('referenceDataUploadFileFallback')
+      : t('referenceDataModeUpload'),
+    value: 'upload',
+  })
 
   return options
 })

@@ -535,12 +535,23 @@ export function isReferenceCatalogImportable(catalog) {
 }
 
 /**
+ * Official from-source catalogs resolve ZIP/URL on the server.
+ * Prefer API `supports_auto_download`, but keep ICD10_CM / MEDICATION
+ * enabled when ACTIVE even if the flag is missing or stale.
+ *
  * @param {ReferenceCatalog|null|undefined} catalog
  * @returns {boolean}
  */
 export function supportsReferenceAutoDownload(catalog) {
-  return isReferenceCatalogImportable(catalog)
-    && Boolean(catalog?.supports_auto_download)
+  if (!isReferenceCatalogImportable(catalog)) {
+    return false
+  }
+  if (catalog?.supports_auto_download) {
+    return true
+  }
+
+  return isIcd10CmCatalogCode(catalog?.code)
+    || isMedicationCatalogCode(catalog?.code)
 }
 
 /**

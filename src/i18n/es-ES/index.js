@@ -311,8 +311,8 @@ export default {
     + 'exploración y búsqueda de conceptos.',
   referenceDataIcd10Cm: 'ICD-10-CM',
   referenceDataIcd10CmSubtitle:
-    'Códigos de diagnóstico CMS ICD-10-CM. Gestión por import; '
-    + 'exploración y búsqueda de códigos facturables.',
+    'Códigos de diagnóstico CMS. Actualiza con Importar desde fuente '
+    + 'oficial (el servidor baja el ZIP más reciente). Sin sync automático.',
   referenceDataImports: 'Imports / Versiones',
   referenceDataImportsSubtitle:
     'Sube o descarga archivos, revisa jobs, rollback o activa versión.',
@@ -323,6 +323,7 @@ export default {
   referenceDataSourceLink: 'Abrir fuente',
   referenceDataImport: 'Importar',
   referenceDataUploadFile: 'Subir archivo',
+  referenceDataUploadFileFallback: 'Subir archivo (plan B)',
   referenceDataImportFromSource: 'Importar desde fuente oficial',
   referenceDataBrowse: 'Explorar',
   referenceDataViewImportJobs: 'Ver jobs de import',
@@ -352,8 +353,11 @@ export default {
     'Import de medicamentos iniciado. Revisa los logs del job al terminar '
     + '(upserted / deactivated / skipped).',
   referenceDataIcd10CmMasterHint:
-    'No edites códigos a mano. El master viene de CMS ICD-10-CM. '
-    + 'Usa import para actualizar el catálogo.',
+    'No bajes el ZIP de CMS a mano. Importar desde fuente oficial hace '
+    + 'que el servidor elija el ZIP Code Descriptions más reciente e '
+    + 'importe a icd10_cm_code. Lanza un import cada vez que quieras '
+    + 'refrescar tras un release de CMS; no hay sync en background. '
+    + 'Subir archivo es solo plan B.',
   referenceDataIcd10CmBrowse: 'Códigos ICD-10-CM',
   referenceDataRecentIcd10CmJobs: 'Imports recientes de ICD10_CM',
   referenceDataBillable: 'Facturable',
@@ -364,19 +368,24 @@ export default {
   referenceDataLongDescription: 'Descripción larga',
   referenceDataOrderNumber: 'Número de orden',
   referenceDataEmptyIcd10Cm:
-    'No hay códigos ICD-10-CM. Importa el catálogo primero.',
+    'Aún no hay códigos ICD-10-CM. Usa Importar desde fuente oficial '
+    + '(no hace falta subir el ZIP).',
   referenceDataIcd10CmLoadError:
     'No se pudieron cargar los códigos ICD-10-CM.',
   referenceDataIcd10CmDetailError:
     'No se pudo cargar el detalle del código ICD-10-CM.',
   referenceDataIcd10CmImportWait:
-    'El import oficial resuelve el ZIP CMS más reciente y puede tardar '
-    + 'varios minutos. No cierres esta pestaña.',
+    'El servidor abre la página CMS, elige el ZIP Code Descriptions más '
+    + 'reciente, lo descarga e importa. Tú no subes el archivo. '
+    + 'Puede tardar varios minutos — no cierres esta pestaña.',
   referenceDataIcd10CmImportInProgress:
     'Import ICD-10-CM en curso. Espera y no cierres esta pestaña.',
   referenceDataIcd10CmImportStarted:
     'Import ICD-10-CM iniciado. Revisa los logs del job al terminar '
     + '(upserted / deactivated / skipped).',
+  referenceDataIcd10CmUploadHint:
+    'Subir un ZIP es plan B (offline o una versión concreta). '
+    + 'Para actualizaciones normales usa Importar desde fuente oficial.',
   referenceDataStatusActive: 'Activo',
   referenceDataStatusStub: 'Stub',
   referenceDataEmptyCatalogs: 'No hay catálogos de referencia.',

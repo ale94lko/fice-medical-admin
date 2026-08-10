@@ -297,8 +297,8 @@ export default {
     + 'browse and search concepts.',
   referenceDataIcd10Cm: 'ICD-10-CM',
   referenceDataIcd10CmSubtitle:
-    'CMS ICD-10-CM diagnosis codes. Manage via import; '
-    + 'browse and search billable codes.',
+    'CMS diagnosis codes. Refresh with Import from official source '
+    + '(server fetches the latest ZIP). No background sync.',
   referenceDataImports: 'Imports / Versions',
   referenceDataImportsSubtitle:
     'Upload or fetch catalog files, review jobs, rollback or activate.',
@@ -309,6 +309,7 @@ export default {
   referenceDataSourceLink: 'Open source',
   referenceDataImport: 'Import',
   referenceDataUploadFile: 'Upload file',
+  referenceDataUploadFileFallback: 'Upload file (fallback)',
   referenceDataImportFromSource: 'Import from official source',
   referenceDataBrowse: 'Browse',
   referenceDataViewImportJobs: 'View import jobs',
@@ -338,8 +339,10 @@ export default {
     'Medication import started. Review job logs when finished '
     + '(upserted / deactivated / skipped).',
   referenceDataIcd10CmMasterHint:
-    'Do not edit codes manually. The master data comes from CMS ICD-10-CM. '
-    + 'Use import to update the catalog.',
+    'Do not download the CMS ZIP yourself. Import from official source '
+    + 'lets the server pick the latest Code Descriptions ZIP and load '
+    + 'icd10_cm_code. Run a new import whenever CMS publishes a release; '
+    + 'there is no automatic sync. Manual upload is only a fallback.',
   referenceDataIcd10CmBrowse: 'ICD-10-CM codes',
   referenceDataRecentIcd10CmJobs: 'Recent ICD10_CM imports',
   referenceDataBillable: 'Billable',
@@ -350,19 +353,24 @@ export default {
   referenceDataLongDescription: 'Long description',
   referenceDataOrderNumber: 'Order number',
   referenceDataEmptyIcd10Cm:
-    'No ICD-10-CM codes found. Import the catalog first.',
+    'No ICD-10-CM codes yet. Use Import from official source '
+    + '(no ZIP upload needed).',
   referenceDataIcd10CmLoadError:
     'Could not load ICD-10-CM codes.',
   referenceDataIcd10CmDetailError:
     'Could not load ICD-10-CM details.',
   referenceDataIcd10CmImportWait:
-    'Official import resolves the latest CMS ZIP and may take several '
-    + 'minutes. Keep this tab open.',
+    'The server opens the CMS page, selects the latest Code Descriptions '
+    + 'ZIP, downloads it, and imports. You do not upload a file. '
+    + 'This may take several minutes — keep this tab open.',
   referenceDataIcd10CmImportInProgress:
     'ICD-10-CM import in progress. Please wait and do not close this tab.',
   referenceDataIcd10CmImportStarted:
     'ICD-10-CM import started. Review job logs when finished '
     + '(upserted / deactivated / skipped).',
+  referenceDataIcd10CmUploadHint:
+    'Manual ZIP upload is a fallback (offline or a specific version). '
+    + 'Prefer Import from official source for routine updates.',
   referenceDataStatusActive: 'Active',
   referenceDataStatusStub: 'Stub',
   referenceDataEmptyCatalogs: 'No reference catalogs found.',

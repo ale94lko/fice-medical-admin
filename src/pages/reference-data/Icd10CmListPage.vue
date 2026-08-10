@@ -70,7 +70,8 @@
                 class="app-btn-outline"
                 icon="upload_file"
                 :disable="!canImport"
-                :label="t('referenceDataUploadFile')"
+                :label="t('referenceDataUploadFileFallback')"
+                :title="t('referenceDataIcd10CmUploadHint')"
                 :data-testid="tid('btn', 'upload')"
                 @click="goUpload" />
               <q-btn
@@ -543,16 +544,37 @@ function jobStatusColor(status) {
   return 'grey'
 }
 
+function fallbackIcd10CmCatalog() {
+  return {
+    code: referenceDataCatalogCodes.icd10Cm,
+    name: 'ICD-10-CM',
+    status: 'ACTIVE',
+    'supports_auto_download': true,
+    'download_format': 'ZIP',
+  }
+}
+
 async function loadCatalog() {
   catalogLoading.value = true
   try {
     const catalogs = await listReferenceCatalogs()
-    catalog.value = catalogs.find(c =>
+    const found = catalogs.find(c =>
       String(c.code).toUpperCase()
         === referenceDataCatalogCodes.icd10Cm,
-    ) || null
+    )
+    if (!found) {
+      catalog.value = fallbackIcd10CmCatalog()
+      return
+    }
+    // Ensure from-source stays available once the catalog is ACTIVE.
+    catalog.value = {
+      ...found,
+      'supports_auto_download':
+        found.supports_auto_download
+        || String(found.status || '').toUpperCase() === 'ACTIVE',
+    }
   } catch (error) {
-    catalog.value = null
+    catalog.value = fallbackIcd10CmCatalog()
     if (!isAuthSessionEndUIError(error)) {
       $q.notify({
         type: quasarNotifyTypes.warning,
