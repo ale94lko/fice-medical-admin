@@ -64,6 +64,12 @@ const routes = [
         ),
       },
       {
+        path: 'reference-data/icd10-cm',
+        component: () => import(
+          'pages/reference-data/Icd10CmListPage.vue'
+        ),
+      },
+      {
         path: 'reference-data/imports',
         component: () => import(
           'pages/reference-data/ReferenceImportsPage.vue'

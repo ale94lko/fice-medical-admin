@@ -3,7 +3,7 @@
  * (`/admin-tenant/v1/reference-data/**`).
  *
  * @typedef {'ACTIVE'|'STUB'} ReferenceCatalogStatus
- * @typedef {'NUCC_TAXONOMY'|'PLACE_OF_SERVICE'|'MEDICATION'|string}
+ * @typedef {'NUCC_TAXONOMY'|'PLACE_OF_SERVICE'|'MEDICATION'|'ICD10_CM'|string}
  *   ReferenceCatalogCode
  * @typedef {'CSV'|'JSON'|'XML'|'ZIP'} ReferenceImportFormat
  * @typedef {'PENDING'|'RUNNING'|'COMPLETED'|'FAILED'|'ROLLED_BACK'}
@@ -36,9 +36,30 @@
  * @property {string|null} [created_at]
  * @property {string|null} [updated_at]
  *
+ * @typedef {object} ReferenceIcd10Cm
+ * @property {number} id
+ * @property {string} code
+ * @property {string|null} [code_dotted]
+ * @property {number|null} [order_number]
+ * @property {boolean} [billable]
+ * @property {string|null} [short_description]
+ * @property {string|null} [long_description]
+ * @property {boolean} active
+ * @property {string|null} [version_label]
+ *
  * @typedef {object} MedicationListQuery
  * @property {string} [q]
  * @property {string} [code]
+ * @property {boolean|string} [active]
+ * @property {number} [page]
+ * @property {number} [limit]
+ * @property {string} [sort_by]
+ * @property {'ASC'|'DESC'} [sort_dir]
+ *
+ * @typedef {object} Icd10CmListQuery
+ * @property {string} [q]
+ * @property {string} [code]
+ * @property {boolean|string} [billable]
  * @property {boolean|string} [active]
  * @property {number} [page]
  * @property {number} [limit]
@@ -430,6 +451,76 @@ export async function getMedicationById(id) {
 }
 
 /**
+ * Browse ICD-10-CM codes (CMS). Admin uses the tenant read API.
+ *
+ * @param {Icd10CmListQuery} [query]
+ * @returns {Promise<{
+ *   items: ReferenceIcd10Cm[],
+ *   meta: ReferencePageMeta|null,
+ * }>}
+ */
+export async function listIcd10CmCodes(query = {}) {
+  const response = await apiInstance.get(
+    apiPaths.referenceDataIcd10Cm,
+    { params: query },
+  )
+  const root = unwrapData(response.data)
+
+  return {
+    items: /** @type {ReferenceIcd10Cm[]} */ (
+      extractReferenceItems(root)
+    ),
+    meta: extractReferenceMeta(root),
+  }
+}
+
+/** @param {Icd10CmListQuery} [query] */
+export function searchIcd10CmCodes(query = {}) {
+  return listIcd10CmCodes(query)
+}
+
+/**
+ * @param {number|string} id
+ * @returns {Promise<ReferenceIcd10Cm|null>}
+ */
+export async function getIcd10CmById(id) {
+  const path =
+    `${apiPaths.referenceDataIcd10Cm}/`
+    + `${encodeURIComponent(String(id))}`
+  const response = await apiInstance.get(path)
+  const root = unwrapData(response.data)
+  if (root && typeof root === typeNames.object && !Array.isArray(root)) {
+    return /** @type {ReferenceIcd10Cm} */ (root)
+  }
+
+  return null
+}
+
+/** @param {number|string} id */
+export function fetchIcd10CmCode(id) {
+  return getIcd10CmById(id)
+}
+
+/**
+ * Label for pickers: "E11.9 — Type 2 diabetes mellitus without…"
+ *
+ * @param {ReferenceIcd10Cm|null|undefined} row
+ * @returns {string}
+ */
+export function formatIcd10CmLabel(row) {
+  if (!row) {
+    return ''
+  }
+  const code = String(row.code_dotted || row.code || '').trim()
+  const desc = String(row.short_description || '').trim()
+  if (code && desc) {
+    return `${code} — ${desc}`
+  }
+
+  return code || desc
+}
+
+/**
  * @param {ReferenceCatalog|null|undefined} catalog
  * @returns {boolean}
  */
@@ -460,7 +551,26 @@ export function isMedicationCatalogCode(catalogCode) {
   return String(catalogCode ?? '').toUpperCase() === 'MEDICATION'
 }
 
-/** Long-running from-source (e.g. RxNorm ZIP ~75 MB). */
+/**
+ * @param {string|null|undefined} catalogCode
+ * @returns {boolean}
+ */
+export function isIcd10CmCatalogCode(catalogCode) {
+  return String(catalogCode ?? '').toUpperCase() === 'ICD10_CM'
+}
+
+/**
+ * Catalogs whose from-source import may take several minutes.
+ *
+ * @param {string|null|undefined} catalogCode
+ * @returns {boolean}
+ */
+export function isLongRunningReferenceImport(catalogCode) {
+  return isMedicationCatalogCode(catalogCode)
+    || isIcd10CmCatalogCode(catalogCode)
+}
+
+/** Long-running from-source (e.g. RxNorm / ICD-10-CM ZIP). */
 export const REFERENCE_FROM_SOURCE_TIMEOUT_MS = 10 * 60 * 1000
 
 /**
@@ -484,7 +594,7 @@ export async function createImportFromSource({
   if (label) {
     body['version_label'] = label
   }
-  const longRunning = isMedicationCatalogCode(catalogCode)
+  const longRunning = isLongRunningReferenceImport(catalogCode)
   const response = await apiInstance.post(
     apiPaths.referenceDataImportsFromSource,
     body,

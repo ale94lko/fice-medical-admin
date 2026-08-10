@@ -283,7 +283,8 @@ export default {
   referenceData: 'Reference Data',
   referenceDataCatalogs: 'Catalogs',
   referenceDataCatalogsSubtitle:
-    'Official terminology catalogs (NUCC, Place of Service, and stubs).',
+    'Official terminology catalogs '
+    + '(NUCC, Place of Service, ICD-10-CM, and stubs).',
   referenceDataTaxonomies: 'Provider Taxonomies',
   referenceDataTaxonomiesSubtitle:
     'NUCC provider taxonomy codes. Import only — no manual CRUD.',
@@ -294,6 +295,10 @@ export default {
   referenceDataMedicationsSubtitle:
     'RxNorm Current Prescribable Content. Manage via import; '
     + 'browse and search concepts.',
+  referenceDataIcd10Cm: 'ICD-10-CM',
+  referenceDataIcd10CmSubtitle:
+    'CMS ICD-10-CM diagnosis codes. Manage via import; '
+    + 'browse and search billable codes.',
   referenceDataImports: 'Imports / Versions',
   referenceDataImportsSubtitle:
     'Upload or fetch catalog files, review jobs, rollback or activate.',
@@ -331,6 +336,32 @@ export default {
     'Import in progress. Please wait and do not close this tab.',
   referenceDataMedicationImportStarted:
     'Medication import started. Review job logs when finished '
+    + '(upserted / deactivated / skipped).',
+  referenceDataIcd10CmMasterHint:
+    'Do not edit codes manually. The master data comes from CMS ICD-10-CM. '
+    + 'Use import to update the catalog.',
+  referenceDataIcd10CmBrowse: 'ICD-10-CM codes',
+  referenceDataRecentIcd10CmJobs: 'Recent ICD10_CM imports',
+  referenceDataBillable: 'Billable',
+  referenceDataBillableYes: 'Billable',
+  referenceDataBillableNo: 'Non-billable',
+  referenceDataCodeDotted: 'Dotted code',
+  referenceDataShortDescription: 'Short description',
+  referenceDataLongDescription: 'Long description',
+  referenceDataOrderNumber: 'Order number',
+  referenceDataEmptyIcd10Cm:
+    'No ICD-10-CM codes found. Import the catalog first.',
+  referenceDataIcd10CmLoadError:
+    'Could not load ICD-10-CM codes.',
+  referenceDataIcd10CmDetailError:
+    'Could not load ICD-10-CM details.',
+  referenceDataIcd10CmImportWait:
+    'Official import resolves the latest CMS ZIP and may take several '
+    + 'minutes. Keep this tab open.',
+  referenceDataIcd10CmImportInProgress:
+    'ICD-10-CM import in progress. Please wait and do not close this tab.',
+  referenceDataIcd10CmImportStarted:
+    'ICD-10-CM import started. Review job logs when finished '
     + '(upserted / deactivated / skipped).',
   referenceDataStatusActive: 'Active',
   referenceDataStatusStub: 'Stub',

@@ -298,7 +298,7 @@ export default {
   referenceData: 'Reference Data',
   referenceDataCatalogs: 'Catálogos',
   referenceDataCatalogsSubtitle:
-    'Terminologías oficiales (NUCC, Place of Service y stubs).',
+    'Terminologías oficiales (NUCC, Place of Service, ICD-10-CM y stubs).',
   referenceDataTaxonomies: 'Taxonomías de proveedores',
   referenceDataTaxonomiesSubtitle:
     'Códigos NUCC. Solo importación — sin CRUD manual.',
@@ -309,6 +309,10 @@ export default {
   referenceDataMedicationsSubtitle:
     'RxNorm Current Prescribable Content. Gestión por import; '
     + 'exploración y búsqueda de conceptos.',
+  referenceDataIcd10Cm: 'ICD-10-CM',
+  referenceDataIcd10CmSubtitle:
+    'Códigos de diagnóstico CMS ICD-10-CM. Gestión por import; '
+    + 'exploración y búsqueda de códigos facturables.',
   referenceDataImports: 'Imports / Versiones',
   referenceDataImportsSubtitle:
     'Sube o descarga archivos, revisa jobs, rollback o activa versión.',
@@ -346,6 +350,32 @@ export default {
     'Import en curso. Espera y no cierres esta pestaña.',
   referenceDataMedicationImportStarted:
     'Import de medicamentos iniciado. Revisa los logs del job al terminar '
+    + '(upserted / deactivated / skipped).',
+  referenceDataIcd10CmMasterHint:
+    'No edites códigos a mano. El master viene de CMS ICD-10-CM. '
+    + 'Usa import para actualizar el catálogo.',
+  referenceDataIcd10CmBrowse: 'Códigos ICD-10-CM',
+  referenceDataRecentIcd10CmJobs: 'Imports recientes de ICD10_CM',
+  referenceDataBillable: 'Facturable',
+  referenceDataBillableYes: 'Facturable',
+  referenceDataBillableNo: 'No facturable',
+  referenceDataCodeDotted: 'Código con puntos',
+  referenceDataShortDescription: 'Descripción corta',
+  referenceDataLongDescription: 'Descripción larga',
+  referenceDataOrderNumber: 'Número de orden',
+  referenceDataEmptyIcd10Cm:
+    'No hay códigos ICD-10-CM. Importa el catálogo primero.',
+  referenceDataIcd10CmLoadError:
+    'No se pudieron cargar los códigos ICD-10-CM.',
+  referenceDataIcd10CmDetailError:
+    'No se pudo cargar el detalle del código ICD-10-CM.',
+  referenceDataIcd10CmImportWait:
+    'El import oficial resuelve el ZIP CMS más reciente y puede tardar '
+    + 'varios minutos. No cierres esta pestaña.',
+  referenceDataIcd10CmImportInProgress:
+    'Import ICD-10-CM en curso. Espera y no cierres esta pestaña.',
+  referenceDataIcd10CmImportStarted:
+    'Import ICD-10-CM iniciado. Revisa los logs del job al terminar '
     + '(upserted / deactivated / skipped).',
   referenceDataStatusActive: 'Activo',
   referenceDataStatusStub: 'Stub',

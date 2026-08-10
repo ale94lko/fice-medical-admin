@@ -73,7 +73,7 @@
       </template>
       <template #row-actions="{ row }">
         <q-btn
-          v-if="isMedicationRow(row)"
+          v-if="hasBrowsePage(row)"
           flat
           dense
           no-caps
@@ -134,6 +134,7 @@ import { usePageLoadingOverlay }
   from 'src/composables/usePageLoadingOverlay.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import {
+  isIcd10CmCatalogCode,
   isMedicationCatalogCode,
   isReferenceCatalogImportable,
   listReferenceCatalogs,
@@ -219,6 +220,14 @@ function isMedicationRow(row) {
   return isMedicationCatalogCode(row?.code)
 }
 
+function isIcd10CmRow(row) {
+  return isIcd10CmCatalogCode(row?.code)
+}
+
+function hasBrowsePage(row) {
+  return isMedicationRow(row) || isIcd10CmRow(row)
+}
+
 function statusLabel(status) {
   const s = String(status ?? '').toUpperCase()
   if (s === referenceDataCatalogStatuses.active) {
@@ -263,10 +272,13 @@ function autoImportButtonTitle(row) {
 }
 
 function goBrowse(row) {
-  if (!isMedicationRow(row)) {
+  if (isMedicationRow(row)) {
+    router.push({ path: '/reference-data/medications' })
     return
   }
-  router.push({ path: '/reference-data/medications' })
+  if (isIcd10CmRow(row)) {
+    router.push({ path: '/reference-data/icd10-cm' })
+  }
 }
 
 function goUpload(row) {

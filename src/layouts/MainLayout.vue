@@ -221,6 +221,20 @@
               clickable
               v-ripple
               dense
+              to="/reference-data/icd10-cm"
+              data-testid="nav-reference-icd10cm"
+              :active-class="activeClass">
+              <q-item-section avatar>
+                <q-icon name="healing" />
+              </q-item-section>
+              <q-item-section>
+                {{ t('referenceDataIcd10Cm') }}
+              </q-item-section>
+            </q-item>
+            <q-item
+              clickable
+              v-ripple
+              dense
               to="/reference-data/imports"
               data-testid="nav-reference-imports"
               :active-class="activeClass">

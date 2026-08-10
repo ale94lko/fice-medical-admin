@@ -88,6 +88,11 @@
                 {{ t('referenceDataMedicationImportWait') }}
               </div>
               <div
+                v-if="isIcd10CmImport"
+                class="text-body2 text-weight-medium q-mt-sm">
+                {{ t('referenceDataIcd10CmImportWait') }}
+              </div>
+              <div
                 v-if="selectedCatalog.download_url"
                 class="text-caption q-mt-xs">
                 {{ t('referenceDataDownloadUrl') }}:
@@ -108,10 +113,10 @@
             </q-banner>
           </div>
           <div
-            v-if="submitting && isMedicationImport"
+            v-if="submitting && isLongRunningImport"
             class="col-12">
             <q-banner dense rounded class="bg-warning text-dark">
-              {{ t('referenceDataMedicationImportInProgress') }}
+              {{ longRunningImportInProgressMessage }}
             </q-banner>
           </div>
           <div class="col-12 flex items-center q-gutter-sm">
@@ -304,6 +309,8 @@ import {
   createImportFromSource,
   createImportUpload,
   getImportById,
+  isIcd10CmCatalogCode,
+  isLongRunningReferenceImport,
   isMedicationCatalogCode,
   isReferenceCatalogImportable,
   listImports,
@@ -380,6 +387,10 @@ const historyCatalogOptions = computed(() => {
       label: referenceDataCatalogCodes.medication,
       value: referenceDataCatalogCodes.medication,
     },
+    {
+      label: referenceDataCatalogCodes.icd10Cm,
+      value: referenceDataCatalogCodes.icd10Cm,
+    },
   ]
 })
 
@@ -394,6 +405,25 @@ const selectedSupportsAutoDownload = computed(() =>
 const isMedicationImport = computed(() =>
   isMedicationCatalogCode(form.catalogCode),
 )
+
+const isIcd10CmImport = computed(() =>
+  isIcd10CmCatalogCode(form.catalogCode),
+)
+
+const isLongRunningImport = computed(() =>
+  isLongRunningReferenceImport(form.catalogCode),
+)
+
+const longRunningImportInProgressMessage = computed(() => {
+  if (isIcd10CmImport.value) {
+    return t('referenceDataIcd10CmImportInProgress')
+  }
+  if (isMedicationImport.value) {
+    return t('referenceDataMedicationImportInProgress')
+  }
+
+  return t('referenceDataMedicationImportInProgress')
+})
 
 const modeOptions = computed(() => {
   const options = [
@@ -628,6 +658,13 @@ function fallbackActiveCatalogs() {
       'supports_auto_download': true,
       'download_format': 'ZIP',
     },
+    {
+      code: referenceDataCatalogCodes.icd10Cm,
+      name: 'ICD-10-CM',
+      status: 'ACTIVE',
+      'supports_auto_download': true,
+      'download_format': 'ZIP',
+    },
   ]
 }
 
@@ -703,6 +740,17 @@ async function reloadAll() {
   await loadJobs({ ...tablePagination.value, page: 1 })
 }
 
+function importStartedMessage(catalogCode) {
+  if (isMedicationCatalogCode(catalogCode)) {
+    return t('referenceDataMedicationImportStarted')
+  }
+  if (isIcd10CmCatalogCode(catalogCode)) {
+    return t('referenceDataIcd10CmImportStarted')
+  }
+
+  return t('referenceDataImportStarted')
+}
+
 async function submitImport() {
   if (!canSubmit.value) {
     return
@@ -724,9 +772,7 @@ async function submitImport() {
     }
     $q.notify({
       type: quasarNotifyTypes.positive,
-      message: isMedicationCatalogCode(form.catalogCode)
-        ? t('referenceDataMedicationImportStarted')
-        : t('referenceDataImportStarted'),
+      message: importStartedMessage(form.catalogCode),
     })
     form.file = null
     await loadJobs({ ...tablePagination.value, page: 1 })
