@@ -8,6 +8,8 @@ import {
   catalogFieldKeys,
   catalogItemFieldKeys,
   moduleFieldKeys,
+  aiConfigFieldKeys,
+  aiSuggestionFieldKeys,
   planFieldKeys,
   permissionFieldKeys,
   roleDetailNumericIdArrayKeys,
@@ -415,6 +417,124 @@ export function buildModulePatchBody(payload) {
   return {
     name: String(payload[mk.name] ?? '').trim(),
     description: String(payload[mk.description] ?? '').trim(),
+  }
+}
+
+export function mapAiConfig(row) {
+  if (!row || typeof row !== typeNames.object) {
+    return null
+  }
+  const id = Number(row.id)
+  const version = Number(
+    row.prompt_version ?? row.promptVersion,
+  )
+
+  return {
+    id: Number.isFinite(id) ? id : null,
+    feature: String(row.feature ?? '').trim(),
+    enabled: row.enabled === true || row.enabled === 1,
+    promptVersion: Number.isFinite(version) && version >= 1
+      ? Math.round(version)
+      : 1,
+    promptBody: String(
+      row.prompt_body ?? row.promptBody ?? '',
+    ),
+  }
+}
+
+export function mapAiSuggestion(row) {
+  if (!row || typeof row !== typeNames.object) {
+    return null
+  }
+  const sk = aiSuggestionFieldKeys
+  const id = Number(row.id)
+
+  return {
+    id: Number.isFinite(id) ? id : null,
+    [sk.tenantId]: optionalNumber(row.tenant_id ?? row.tenantId),
+    [sk.tenantName]: String(row.tenant_name ?? row.tenantName ?? ''),
+    [sk.subtenantId]: optionalNumber(
+      row.subtenant_id ?? row.subtenantId,
+    ),
+    [sk.feature]: String(row.feature ?? ''),
+    [sk.status]: String(row.status ?? ''),
+    [sk.provider]: String(row.provider ?? ''),
+    [sk.model]: String(row.model ?? ''),
+    [sk.promptVersion]: String(
+      row.prompt_version ?? row.promptVersion ?? '',
+    ),
+    [sk.createdAt]: row.created_at ?? row.createdAt ?? '',
+    [sk.createdBy]: optionalNumber(row.created_by ?? row.createdBy),
+    [sk.clientId]: optionalNumber(row.client_id ?? row.clientId),
+    [sk.encounterId]: optionalNumber(
+      row.encounter_id ?? row.encounterId,
+    ),
+    [sk.tokensPrompt]: optionalNumber(
+      row.tokens_prompt ?? row.tokensPrompt,
+    ),
+    [sk.tokensCompletion]: optionalNumber(
+      row.tokens_completion ?? row.tokensCompletion,
+    ),
+    [sk.result]: row.result ?? null,
+    [sk.request]: row.request ?? null,
+    [sk.acceptedAt]: row.accepted_at ?? row.acceptedAt ?? '',
+    [sk.acceptedBy]: optionalNumber(
+      row.accepted_by ?? row.acceptedBy,
+    ),
+    [sk.rejectedAt]: row.rejected_at ?? row.rejectedAt ?? '',
+    [sk.rejectedBy]: optionalNumber(
+      row.rejected_by ?? row.rejectedBy,
+    ),
+    [sk.rejectionReason]: String(
+      row.rejection_reason ?? row.rejectionReason ?? '',
+    ),
+    [sk.committedToRecordAt]:
+      row.committed_to_record_at
+      ?? row.committedToRecordAt
+      ?? '',
+  }
+}
+
+export function formatJsonPretty(value) {
+  if (value == null || value === '') {
+    return ''
+  }
+  if (typeof value === typeNames.string) {
+    try {
+      return JSON.stringify(JSON.parse(value), null, 2)
+    } catch {
+      return value
+    }
+  }
+  try {
+    return JSON.stringify(value, null, 2)
+  } catch {
+    return String(value)
+  }
+}
+
+function optionalNumber(value) {
+  if (value == null || value === '') {
+    return null
+  }
+  const n = Number(value)
+
+  return Number.isFinite(n) ? n : null
+}
+
+export function buildAiConfigPatchBody(payload) {
+  if (!payload || typeof payload !== typeNames.object) {
+    return {}
+  }
+  const ck = aiConfigFieldKeys
+  const version = Number(payload[ck.promptVersion])
+
+  return {
+    enabled: payload[ck.enabled] === true,
+    promptVersion: Number.isFinite(version) && version >= 1
+      ? Math.round(version)
+      : 1,
+    promptBody: String(payload[ck.promptBody] ?? ''),
   }
 }
 

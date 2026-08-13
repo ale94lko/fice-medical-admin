@@ -133,6 +133,28 @@
           <q-item
             clickable
             v-ripple
+            to="/ai-config"
+            data-testid="nav-ai-config"
+            :active-class="activeClass">
+            <q-item-section avatar>
+              <q-icon name="auto_awesome" />
+            </q-item-section>
+            <q-item-section>{{ t('aiConfig') }}</q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-ripple
+            to="/ai-suggestions"
+            data-testid="nav-ai-suggestions"
+            :active-class="activeClass">
+            <q-item-section avatar>
+              <q-icon name="history" />
+            </q-item-section>
+            <q-item-section>{{ t('aiSuggestions') }}</q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-ripple
             to="/catalogs"
             data-testid="nav-catalogs"
             :active-class="activeClass">

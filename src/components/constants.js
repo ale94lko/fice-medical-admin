@@ -39,6 +39,8 @@ export const apiPaths = {
   modulesList: '/admin-tenant/v1/module',
   modulesUpdate: '/admin-tenant/v1/modules/update',
   moduleAdminItem: '/admin-tenant/v1/module',
+  aiConfigList: '/admin-tenant/v1/ai-config',
+  aiSuggestionsList: '/admin-tenant/v1/ai-suggestions',
   catalogList: '/admin-tenant/v1/catalog',
   catalogCreate: '/admin-tenant/v1/catalog/create',
   referenceDataBase: '/admin-tenant/v1/reference-data',
@@ -270,6 +272,66 @@ export const moduleListColumnKeys = {
   actions: 'actions',
 }
 
+export const aiConfigFieldKeys = {
+  feature: 'feature',
+  enabled: 'enabled',
+  promptVersion: 'promptVersion',
+  promptBody: 'promptBody',
+}
+
+export const aiConfigListColumnKeys = {
+  actions: 'actions',
+}
+
+export const aiSuggestionFieldKeys = {
+  tenantId: 'tenantId',
+  tenantName: 'tenantName',
+  subtenantId: 'subtenantId',
+  feature: 'feature',
+  status: 'status',
+  provider: 'provider',
+  model: 'model',
+  promptVersion: 'promptVersion',
+  createdAt: 'createdAt',
+  createdBy: 'createdBy',
+  clientId: 'clientId',
+  encounterId: 'encounterId',
+  tokensPrompt: 'tokensPrompt',
+  tokensCompletion: 'tokensCompletion',
+  result: 'result',
+  request: 'request',
+  acceptedAt: 'acceptedAt',
+  acceptedBy: 'acceptedBy',
+  rejectedAt: 'rejectedAt',
+  rejectedBy: 'rejectedBy',
+  rejectionReason: 'rejectionReason',
+  committedToRecordAt: 'committedToRecordAt',
+}
+
+export const aiSuggestionListColumnKeys = {
+  actions: 'actions',
+}
+
+export const aiSuggestionFeatures = [
+  'ICD10_SUGGEST',
+  'SOAP_DRAFT',
+  'CLINICAL_SUMMARY',
+  'CARE_PLAN_DRAFT',
+  'CHART_CHAT',
+  'ASSISTANT_ROUTER',
+  'FREE_TEXT',
+]
+
+export const aiSuggestionStatuses = [
+  'PENDING',
+  'EDITED',
+  'PARTIALLY_ACCEPTED',
+  'ACCEPTED',
+  'REJECTED',
+  'FAILED',
+  'EXPIRED',
+]
+
 export const catalogFieldKeys = {
   name: 'name',
   scope: 'scope',
@@ -378,6 +440,7 @@ export const htmlInputTypes = {
   password: 'password',
   tel: 'tel',
   textarea: 'textarea',
+  number: 'number',
 }
 
 export const htmlInputModes = {

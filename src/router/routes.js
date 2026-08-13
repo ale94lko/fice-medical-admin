@@ -28,6 +28,18 @@ const routes = [
         component: () => import('pages/administration/ModuleList.vue'),
       },
       {
+        path: 'ai-config',
+        component: () => import(
+          'pages/administration/AiConfigList.vue'
+        ),
+      },
+      {
+        path: 'ai-suggestions',
+        component: () => import(
+          'pages/administration/AiSuggestionList.vue'
+        ),
+      },
+      {
         path: 'catalogs',
         component: () => import('pages/administration/CatalogList.vue'),
       },
