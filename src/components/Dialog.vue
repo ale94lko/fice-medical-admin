@@ -208,7 +208,12 @@
                   :loading="loadingFor(field)"
                   :test-id="tid('field', field.key, 'picker')"
                   :empty-label="pickerEmptyLabel(field)"
-                  :default-icon="field.optionIcon || ''"
+                  :default-icon="
+                    field.optionIcon
+                      || (field.key === planFieldKeys.modules
+                        ? 'view_module'
+                        : '')
+                  "
                   :item-key="pickerItemKey(field)"
                   @update:model-value="
                     v => onSelectModelValue(field, v)
@@ -315,6 +320,7 @@ import {
   htmlInputTypes,
   keyboardKeys,
   phoneInputNavKeys,
+  planFieldKeys,
   qSelectOptionKeys,
   quasarNotifyTypes,
   quasarTransitions,
@@ -471,13 +477,15 @@ function showFieldRow(field) {
 function isOptionCardPickerField(field) {
   return field.kind === fieldTypes.rolePicker
     || field.kind === fieldTypes.modulePicker
+    || field.key === planFieldKeys.modules
 }
 
 function pickerEmptyLabel(field) {
   if (field.emptyLabelKey) {
     return t(field.emptyLabelKey)
   }
-  if (field.kind === fieldTypes.modulePicker) {
+  if (isOptionCardPickerField(field)
+    && field.kind !== fieldTypes.rolePicker) {
     return t('modulePickerEmpty')
   }
 
@@ -485,7 +493,8 @@ function pickerEmptyLabel(field) {
 }
 
 function pickerItemKey(field) {
-  if (field.kind === fieldTypes.modulePicker) {
+  if (field.key === planFieldKeys.modules
+    || field.kind === fieldTypes.modulePicker) {
     return 'module'
   }
 
