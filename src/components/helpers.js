@@ -907,6 +907,7 @@ export function mapPlan(p) {
     [pk.features]: String(p.features ?? '').trim(),
     [pk.modules]: extractPlanModuleIds(p),
     [pk.permissions]: extractPlanPermissionIds(p),
+    modulePickerOptions: extractPlanModuleSelectOptions(p),
     moduleNames: formatPlanModuleNames(p),
     permissionNames: formatPlanPermissionNames(p),
   }
@@ -1161,6 +1162,10 @@ export function isMainTenant(row) {
 }
 
 export function extractPlanModuleIds(plan) {
+  return extractPlanModuleSelectOptions(plan).map(opt => opt.value)
+}
+
+export function extractPlanModuleSelectOptions(plan) {
   if (!plan || typeof plan !== typeNames.object) {
     return []
   }
@@ -1168,15 +1173,17 @@ export function extractPlanModuleIds(plan) {
   if (!Array.isArray(modules)) {
     return []
   }
-  const ids = []
+  const out = []
   for (const mod of modules) {
     const id = Number(mod?.id)
-    if (Number.isFinite(id)) {
-      ids.push(id)
+    if (!Number.isFinite(id)) {
+      continue
     }
+    const label = String(mod?.name ?? '').trim() || String(id)
+    out.push({ label, value: id })
   }
 
-  return ids
+  return out
 }
 
 export function mapTenant(tenant) {

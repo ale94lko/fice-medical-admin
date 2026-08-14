@@ -238,13 +238,6 @@ export function usePlanForm(editingPlanRef) {
         defaultValue: planFormDefaults.billingCycle,
       },
       {
-        key: pk.features,
-        kind: fieldTypes.textarea,
-        labelKey: 'planFeatures',
-        rows: 3,
-        autogrow: false,
-      },
-      {
         key: pk.modules,
         kind: fieldTypes.modulePicker,
         labelKey: 'planModules',
@@ -265,6 +258,13 @@ export function usePlanForm(editingPlanRef) {
         loading: permissionsTreeLoading,
         treeNoNodesLabelKey: 'planPermissionsSelectModules',
         disable: form => intIdList(form[pk.modules]).length === 0,
+      },
+      {
+        key: pk.features,
+        kind: fieldTypes.textarea,
+        labelKey: 'planFeatures',
+        rows: 3,
+        autogrow: false,
       },
       {
         key: pk.description,

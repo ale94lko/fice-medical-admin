@@ -161,69 +161,67 @@
                 class="dialog-checkbox-field"
                 :disable="isFieldReadonly(field)"
                 :label="labelFor(field)"/>
-              <q-field
+              <div
                 v-else-if="field.kind === fieldTypes.permissionTree"
-                :data-testid="resolveFieldTestId(field)"
-                borderless
-                stack-label
-                class="full-width permission-tree-qfield"
-                :lazy-rules="lazyRulesFor(field)"
-                :reactive-rules="hasRules(field)"
-                :model-value="form[field.key]"
-                :label="labelFor(field)"
-                :hint="hintFor(field)"
-                :rules="rulesFor(field)"
-                :readonly="isFieldReadonly(field) || disableFor(field)">
-                <template #control>
-                  <PermissionModulePicker
-                    v-model="form[field.key]"
-                    class="full-width"
-                    :nodes="treeNodesFor(field)"
-                    :readonly="
-                      isFieldReadonly(field) || disableFor(field)
-                    "
-                    :loading="loadingFor(field)"
-                    :test-id="tid('field', field.key, 'tree')"
-                    :empty-label="
-                      field.treeNoNodesLabelKey
-                        ? t(field.treeNoNodesLabelKey)
-                        : undefined
-                    "
-                  />
-                </template>
-              </q-field>
-              <q-field
+                class="dialog-option-picker"
+                :data-testid="resolveFieldTestId(field)">
+                <div class="dialog-option-picker__label">
+                  {{ labelFor(field) }}
+                </div>
+                <PermissionModulePicker
+                  v-model="form[field.key]"
+                  class="full-width"
+                  :nodes="treeNodesFor(field)"
+                  :readonly="
+                    isFieldReadonly(field) || disableFor(field)
+                  "
+                  :loading="loadingFor(field)"
+                  :test-id="tid('field', field.key, 'tree')"
+                  :empty-label="
+                    field.treeNoNodesLabelKey
+                      ? t(field.treeNoNodesLabelKey)
+                      : undefined
+                  "
+                />
+                <q-field
+                  v-if="hasRules(field)"
+                  borderless
+                  hide-bottom-space
+                  class="dialog-option-picker__rules"
+                  :model-value="form[field.key]"
+                  :rules="rulesFor(field)"/>
+              </div>
+              <div
                 v-else-if="isOptionCardPickerField(field)"
-                :data-testid="resolveFieldTestId(field)"
-                borderless
-                stack-label
-                class="full-width permission-tree-qfield"
-                :lazy-rules="lazyRulesFor(field)"
-                :reactive-rules="hasRules(field)"
-                :model-value="form[field.key]"
-                :label="labelFor(field)"
-                :hint="hintFor(field)"
-                :rules="rulesFor(field)"
-                :readonly="isFieldReadonly(field) || disableFor(field)">
-                <template #control>
-                  <RoleOptionPicker
-                    v-model="form[field.key]"
-                    class="full-width"
-                    :options="optionsFor(field)"
-                    :readonly="
-                      isFieldReadonly(field) || disableFor(field)
-                    "
-                    :loading="loadingFor(field)"
-                    :test-id="tid('field', field.key, 'picker')"
-                    :empty-label="pickerEmptyLabel(field)"
-                    :default-icon="field.optionIcon || ''"
-                    :item-key="pickerItemKey(field)"
-                    @update:model-value="
-                      v => onSelectModelValue(field, v)
-                    "
-                  />
-                </template>
-              </q-field>
+                class="dialog-option-picker"
+                :data-testid="resolveFieldTestId(field)">
+                <div class="dialog-option-picker__label">
+                  {{ labelFor(field) }}
+                </div>
+                <RoleOptionPicker
+                  v-model="form[field.key]"
+                  class="full-width"
+                  :options="optionsFor(field)"
+                  :readonly="
+                    isFieldReadonly(field) || disableFor(field)
+                  "
+                  :loading="loadingFor(field)"
+                  :test-id="tid('field', field.key, 'picker')"
+                  :empty-label="pickerEmptyLabel(field)"
+                  :default-icon="field.optionIcon || ''"
+                  :item-key="pickerItemKey(field)"
+                  @update:model-value="
+                    v => onSelectModelValue(field, v)
+                  "
+                />
+                <q-field
+                  v-if="hasRules(field)"
+                  borderless
+                  hide-bottom-space
+                  class="dialog-option-picker__rules"
+                  :model-value="form[field.key]"
+                  :rules="rulesFor(field)"/>
+              </div>
               <q-select
                 v-else-if="field.kind === fieldTypes.select"
                 v-model="form[field.key]"
@@ -386,7 +384,7 @@ const props = defineProps({
   persistent: { type: Boolean, default: true },
   minWidth: { type: String, default: 'min(720px, 100vw - 24px)' },
   maxWidth: { type: String, default: '920px' },
-  bodyMaxHeight: { type: String, default: 'min(520px, 70vh)' },
+  bodyMaxHeight: { type: String, default: 'min(720px, 82vh)' },
   editableKeysWhenEdit: { type: Array, default: null },
   testIdPrefix: { type: String, default: 'form-dialog' },
 })
@@ -1083,7 +1081,8 @@ async function onFormSubmit() {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@import 'src/css/quasar.variables';
   :deep(.dialog-textarea-inner) {
     min-height: 6.5rem;
     resize: vertical;
@@ -1123,15 +1122,20 @@ async function onFormSubmit() {
     margin-left: -0.25em;
   }
 
-  .permission-tree-qfield :deep(.q-field__control) {
-    padding-top: 8px;
-    height: auto !important;
-    min-height: 0;
-    align-items: flex-start;
+  .dialog-option-picker {
+    width: 100%;
+    min-width: 0;
   }
 
-  .permission-tree-qfield :deep(.q-field__native) {
-    width: 100%;
-    padding: 0;
+  .dialog-option-picker__label {
+    margin: 0 0 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: $text-muted;
+  }
+
+  .dialog-option-picker__rules {
+    min-height: 0;
   }
 </style>

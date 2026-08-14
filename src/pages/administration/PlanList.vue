@@ -212,6 +212,20 @@
             </div>
             <div class="col-12">
               <div class="text-subtitle2 q-mb-sm">
+                {{ t('planModules') }}
+              </div>
+              <RoleOptionPicker
+                :model-value="viewPlanModuleIds"
+                :options="viewPlanModuleOptions"
+                readonly
+                default-icon="view_module"
+                item-key="module"
+                :test-id="tid('view', 'modules')"
+                :empty-label="t('modulePickerEmpty')"
+              />
+            </div>
+            <div class="col-12">
+              <div class="text-subtitle2 q-mb-sm">
                 {{ t('permissions') }}
               </div>
               <PermissionModulePicker
@@ -263,6 +277,8 @@ import AdminTablePanel from
   'components/admin-table/AdminTablePanel.vue'
 import PermissionModulePicker from
   'components/PermissionModulePicker.vue'
+import RoleOptionPicker from
+  'components/RoleOptionPicker.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
@@ -711,12 +727,31 @@ const planDetailRows = computed(() => {
       label: t('planFeatures'),
       value: dashText(r[pk.features]),
     },
-    {
-      key: 'modules',
-      label: t('planModules'),
-      value: dashText(r.moduleNames),
-    },
   ]
+})
+
+const viewPlanModuleIds = computed(
+  () => planViewing.value?.[pk.modules] ?? [],
+)
+
+const viewPlanModuleOptions = computed(() => {
+  const r = planViewing.value
+  if (!r) {
+    return []
+  }
+  if (Array.isArray(r.modulePickerOptions)
+    && r.modulePickerOptions.length) {
+    return r.modulePickerOptions
+  }
+  const names = String(r.moduleNames ?? '')
+    .split(',')
+    .map(name => name.trim())
+    .filter(Boolean)
+
+  return (r[pk.modules] ?? []).map((id, index) => ({
+    value: id,
+    label: names[index] || String(id),
+  }))
 })
 
 function openViewPlan(row) {
