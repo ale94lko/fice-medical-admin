@@ -16,7 +16,7 @@
     <div
       v-else-if="!options.length"
       class="role-option-picker__state">
-      <q-icon name="badge" size="22px" />
+      <q-icon :name="defaultIcon || 'badge'" size="22px" />
       <span>{{ emptyText }}</span>
     </div>
 
@@ -59,7 +59,7 @@
             color="primary"
             keep-color
             class="role-option-picker__checkbox"
-            :data-testid="`${testId}-role-${option.value}`"
+            :data-testid="`${testId}-${itemKey}-${option.value}`"
             @update:model-value="
               onToggle(option, Boolean($event))
             "
@@ -118,6 +118,14 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  defaultIcon: {
+    type: String,
+    default: '',
+  },
+  itemKey: {
+    type: String,
+    default: 'role',
+  },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -161,6 +169,9 @@ function isSelected(option) {
 }
 
 function roleIcon(option) {
+  if (props.defaultIcon) {
+    return props.defaultIcon
+  }
   const label = String(option?.label ?? '').toLowerCase()
   if (label.includes('admin')) {
     return 'admin_panel_settings'

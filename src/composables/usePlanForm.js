@@ -246,13 +246,13 @@ export function usePlanForm(editingPlanRef) {
       },
       {
         key: pk.modules,
-        kind: fieldTypes.select,
+        kind: fieldTypes.modulePicker,
         labelKey: 'planModules',
-        multiple: true,
-        clearable: true,
+        defaultValue: [],
         options: () => moduleSelectOptions.value,
         loading: modulesLoading,
-        defaultValue: [],
+        emptyLabelKey: 'modulePickerEmpty',
+        optionIcon: 'view_module',
         afterModelUpdate: (form, value) =>
           afterModulesSelected(form, value),
       },

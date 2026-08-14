@@ -294,6 +294,7 @@ export default {
   permissionSelectAll: 'Seleccionar todo',
   permissionDeselectAll: 'Quitar selección',
   rolePickerEmpty: 'No hay roles disponibles.',
+  modulePickerEmpty: 'No hay módulos disponibles.',
   catalogs: 'Catálogos',
   catalogName: 'Nombre del catálogo',
   catalogScope: 'Ámbito',

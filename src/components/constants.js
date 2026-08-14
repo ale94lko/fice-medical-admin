@@ -194,6 +194,7 @@ export const fieldTypes = {
   addressSuggest: 'addressSuggest',
   permissionTree: 'permissionTree',
   rolePicker: 'rolePicker',
+  modulePicker: 'modulePicker',
 }
 
 export const inputNormalizeKeys = {

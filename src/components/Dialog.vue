@@ -38,7 +38,7 @@
               'dialog-field-row--full':
                 field.kind === fieldTypes.textarea
                 || field.kind === fieldTypes.permissionTree
-                || field.kind === fieldTypes.rolePicker
+                || isOptionCardPickerField(field)
                 || field.kind === fieldTypes.addressSuggest,
             }">
               <q-input
@@ -193,7 +193,7 @@
                 </template>
               </q-field>
               <q-field
-                v-else-if="field.kind === fieldTypes.rolePicker"
+                v-else-if="isOptionCardPickerField(field)"
                 :data-testid="resolveFieldTestId(field)"
                 borderless
                 stack-label
@@ -215,6 +215,9 @@
                     "
                     :loading="loadingFor(field)"
                     :test-id="tid('field', field.key, 'picker')"
+                    :empty-label="pickerEmptyLabel(field)"
+                    :default-icon="field.optionIcon || ''"
+                    :item-key="pickerItemKey(field)"
                     @update:model-value="
                       v => onSelectModelValue(field, v)
                     "
@@ -467,6 +470,30 @@ function showFieldRow(field) {
     || props.initialValues != null
 }
 
+function isOptionCardPickerField(field) {
+  return field.kind === fieldTypes.rolePicker
+    || field.kind === fieldTypes.modulePicker
+}
+
+function pickerEmptyLabel(field) {
+  if (field.emptyLabelKey) {
+    return t(field.emptyLabelKey)
+  }
+  if (field.kind === fieldTypes.modulePicker) {
+    return t('modulePickerEmpty')
+  }
+
+  return undefined
+}
+
+function pickerItemKey(field) {
+  if (field.kind === fieldTypes.modulePicker) {
+    return 'module'
+  }
+
+  return 'role'
+}
+
 function qSelectBehaviorInModal(field) {
   return field.selectBehavior || selectBehaviors.menu
 }
@@ -493,7 +520,7 @@ function blankForKind(field) {
   if (field.kind === fieldTypes.permissionTree) {
     return []
   }
-  if (field.kind === fieldTypes.rolePicker) {
+  if (isOptionCardPickerField(field)) {
     return []
   }
   switch (field.kind) {
