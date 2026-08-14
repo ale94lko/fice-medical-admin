@@ -7,13 +7,16 @@
     <q-card
       class="modal-card app-dialog-card app-dialog-card--sm"
       :data-testid="dialogTestId">
-      <q-toolbar class="app-dialog-toolbar">
-        <q-toolbar-title>{{ title }}</q-toolbar-title>
-      </q-toolbar>
+      <AppDialogHeader
+        :close-label="t('close')"
+        :close-test-id="tid('btn', 'close')"
+        @close="onCancel">
+        {{ title }}
+      </AppDialogHeader>
       <q-card-section class="app-dialog-body flex flex-center">
         <div class="text-body1 text-grey-9">{{ message }}</div>
       </q-card-section>
-      <q-card-actions align="right" class="app-dialog-actions">
+      <q-card-actions align="right" class="app-dialog-card__actions">
         <q-btn
           no-caps
           v-if="cancelText"
@@ -40,7 +43,9 @@
 
 <script setup>
 import { computed, toRef } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { testId as buildTestId } from 'src/utils/test-id.js'
+import AppDialogHeader from 'components/AppDialogHeader.vue'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -50,6 +55,8 @@ const props = defineProps({
   cancelText: { type: String, default: 'Cancel' },
   testIdPrefix: { type: String, default: 'confirm-dialog' },
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits(['update:modelValue', 'confirm', 'cancel'])
 

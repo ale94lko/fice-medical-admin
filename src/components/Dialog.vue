@@ -6,23 +6,16 @@
     :persistent="persistent"
     @update:model-value="emit('update:modelValue', $event)">
     <q-card
-      class="modal-card"
+      class="modal-card insurance-dialog app-dialog-card"
       :style="cardStyle"
       :data-testid="dialogTestId">
-      <q-toolbar class="app-dialog-toolbar">
-        <q-toolbar-title>{{ titleText }}</q-toolbar-title>
-        <q-btn
-          flat
-          round
-          dense
-          icon="close"
-          :data-testid="tid('btn', 'close')"
-          :disable="saving"
-          :title="t('close')"
-          :aria-label="t('close')"
-          @click="close"
-        />
-      </q-toolbar>
+      <AppDialogHeader
+        :close-label="t('close')"
+        :disable-close="saving"
+        :close-test-id="tid('btn', 'close')"
+        @close="close">
+        {{ titleText }}
+      </AppDialogHeader>
       <q-form
         ref="formRef"
         class="q-gutter-none"
@@ -32,14 +25,22 @@
         @submit.prevent="onFormSubmit"
         @validation-error="onFormValidationError">
         <q-card-section
-          class="app-dialog-body modal-body app-dialog-form-stack"
+          class="app-dialog-card__body q-px-lg q-pt-md q-pb-md
+            app-dialog-form-stack"
           :style="{ maxHeight: bodyMaxHeight }">
           <template
             v-for="field in fields"
             :key="field.key">
           <div
             v-if="showFieldRow(field)"
-            class="dialog-field-row">
+            class="dialog-field-row"
+            :class="{
+              'dialog-field-row--full':
+                field.kind === fieldTypes.textarea
+                || field.kind === fieldTypes.permissionTree
+                || field.kind === fieldTypes.rolePicker
+                || field.kind === fieldTypes.addressSuggest,
+            }">
               <q-input
                 v-if="showPhoneField(field)"
                 :data-testid="resolveFieldTestId(field)"
@@ -163,7 +164,7 @@
               <q-field
                 v-else-if="field.kind === fieldTypes.permissionTree"
                 :data-testid="resolveFieldTestId(field)"
-                outlined
+                borderless
                 stack-label
                 class="full-width permission-tree-qfield"
                 :lazy-rules="lazyRulesFor(field)"
@@ -174,33 +175,50 @@
                 :rules="rulesFor(field)"
                 :readonly="isFieldReadonly(field) || disableFor(field)">
                 <template #control>
-                  <div
-                    class="relative-position full-width permission-tree-scroll"
-                    :class="{
-                      'permission-tree-readonly':
-                        isFieldReadonly(field) || disableFor(field),
-                    }">
-                    <q-inner-loading
-                      :showing="loadingFor(field)"
-                      color="primary"/>
-                    <q-tree
-                      :data-testid="tid('field', field.key, 'tree')"
-                      :nodes="treeNodesFor(field)"
-                      node-key="nodeKey"
-                      label-key="label"
-                      children-key="children"
-                      tick-strategy="leaf"
-                      dense
-                      no-connectors
-                      default-expand-all
-                      class="full-width q-pt-sm text-body2"
-                      v-model:ticked="form[field.key]"
-                      :no-nodes-label="
-                        field.treeNoNodesLabelKey
-                          ? t(field.treeNoNodesLabelKey)
-                          : undefined
-                      "/>
-                  </div>
+                  <PermissionModulePicker
+                    v-model="form[field.key]"
+                    class="full-width"
+                    :nodes="treeNodesFor(field)"
+                    :readonly="
+                      isFieldReadonly(field) || disableFor(field)
+                    "
+                    :loading="loadingFor(field)"
+                    :test-id="tid('field', field.key, 'tree')"
+                    :empty-label="
+                      field.treeNoNodesLabelKey
+                        ? t(field.treeNoNodesLabelKey)
+                        : undefined
+                    "
+                  />
+                </template>
+              </q-field>
+              <q-field
+                v-else-if="field.kind === fieldTypes.rolePicker"
+                :data-testid="resolveFieldTestId(field)"
+                borderless
+                stack-label
+                class="full-width permission-tree-qfield"
+                :lazy-rules="lazyRulesFor(field)"
+                :reactive-rules="hasRules(field)"
+                :model-value="form[field.key]"
+                :label="labelFor(field)"
+                :hint="hintFor(field)"
+                :rules="rulesFor(field)"
+                :readonly="isFieldReadonly(field) || disableFor(field)">
+                <template #control>
+                  <RoleOptionPicker
+                    v-model="form[field.key]"
+                    class="full-width"
+                    :options="optionsFor(field)"
+                    :readonly="
+                      isFieldReadonly(field) || disableFor(field)
+                    "
+                    :loading="loadingFor(field)"
+                    :test-id="tid('field', field.key, 'picker')"
+                    @update:model-value="
+                      v => onSelectModelValue(field, v)
+                    "
+                  />
                 </template>
               </q-field>
               <q-select
@@ -250,7 +268,7 @@
           </div>
           </template>
         </q-card-section>
-        <q-card-actions align="right" class="app-dialog-actions">
+        <q-card-actions align="right" class="app-dialog-card__actions">
           <q-btn
             no-caps
             outline
@@ -314,6 +332,9 @@ import {
 } from './helpers.js'
 import UsFlagIcon from './UsFlagIcon.vue'
 import PasswordToggleIcon from './PasswordToggleIcon.vue'
+import AppDialogHeader from './AppDialogHeader.vue'
+import PermissionModulePicker from './PermissionModulePicker.vue'
+import RoleOptionPicker from './RoleOptionPicker.vue'
 import {
   searchTenantAddressSuggestions,
 } from 'src/services/tenant-address-search.js'
@@ -339,7 +360,7 @@ const DIAL_PHONE_NAV_KEYS = new Set(phoneInputNavKeys)
 const INPUT_NORMALIZER_CONFIG = {
   [inputNormalizeKeys.roleName]: {
     sanitize: sanitizeRoleNameInput,
-    allowKey: key => /^[a-zA-Z ]$/.test(key),
+    allowKey: key => /^[a-zA-Z_ ]$/.test(key),
   },
   [inputNormalizeKeys.tenantDomain]: {
     sanitize: sanitizeTenantDomainInput,
@@ -360,8 +381,8 @@ const props = defineProps({
   afterOpen: { type: Function, default: null },
   initialValues: { type: Object, default: null },
   persistent: { type: Boolean, default: true },
-  minWidth: { type: String, default: 'min(520px, 100vw - 24px)' },
-  maxWidth: { type: String, default: '520px' },
+  minWidth: { type: String, default: 'min(720px, 100vw - 24px)' },
+  maxWidth: { type: String, default: '920px' },
   bodyMaxHeight: { type: String, default: 'min(520px, 70vh)' },
   editableKeysWhenEdit: { type: Array, default: null },
   testIdPrefix: { type: String, default: 'form-dialog' },
@@ -470,6 +491,9 @@ function blankForKind(field) {
     return null
   }
   if (field.kind === fieldTypes.permissionTree) {
+    return []
+  }
+  if (field.kind === fieldTypes.rolePicker) {
     return []
   }
   switch (field.kind) {
@@ -1072,17 +1096,15 @@ async function onFormSubmit() {
     margin-left: -0.25em;
   }
 
-  .permission-tree-scroll {
-    max-height: 320px;
-    overflow-y: auto;
-  }
-
-  .permission-tree-readonly {
-    pointer-events: none;
-    opacity: 0.72;
-  }
-
   .permission-tree-qfield :deep(.q-field__control) {
-    padding-top: 6px;
+    padding-top: 8px;
+    height: auto !important;
+    min-height: 0;
+    align-items: flex-start;
+  }
+
+  .permission-tree-qfield :deep(.q-field__native) {
+    width: 100%;
+    padding: 0;
   }
 </style>

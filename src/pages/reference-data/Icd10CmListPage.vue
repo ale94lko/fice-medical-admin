@@ -1,30 +1,31 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page admin-list-page--stacked">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
 
-    <div class="row items-center q-mb-md q-col-gutter-sm">
-      <div class="col">
-        <div class="text-h6">{{ t('referenceDataIcd10Cm') }}</div>
-        <div class="text-caption text-grey-7">
-          {{ t('referenceDataIcd10CmSubtitle') }}
+    <AdminListPageHeader
+      :title="t('referenceDataIcd10Cm')"
+      :subtitle="t('referenceDataIcd10CmSubtitle')">
+      <template #actions>
+        <div class="admin-list-page__actions">
+          <div class="admin-list-page__actions-bar row items-center
+            q-gutter-sm no-wrap">
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="refresh"
+              :disable="loading || catalogLoading"
+              :label="t('dashboardRefresh')"
+              :data-testid="tid('btn', 'refresh')"
+              @click="reloadPage" />
+          </div>
         </div>
-      </div>
-      <div class="col-auto row q-gutter-sm">
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="refresh"
-          :disable="loading || catalogLoading"
-          :label="t('dashboardRefresh')"
-          :data-testid="tid('btn', 'refresh')"
-          @click="reloadPage" />
-      </div>
-    </div>
+      </template>
+    </AdminListPageHeader>
 
     <q-card flat bordered class="q-mb-md">
       <q-card-section>
@@ -106,24 +107,14 @@
       {{ t('referenceDataIcd10CmBrowse') }}
     </div>
 
-    <AdminQTable
-      class="table admin-data-table"
-      :test-id="tableTestId"
-      row-key="id"
-      binary-state-sort
-      v-model:pagination="tablePagination"
-      :rows-per-page-options="[10, 20, 50, 100]"
-      :rows="rows"
-      :columns="columns"
-      :loading="false"
-      :rows-per-page-label="t('rowsPerPage')"
-      @request="onTableRequest">
-      <template #top>
+    <AdminTablePanel class="admin-list-page__table-panel">
+      <template #toolbar>
         <q-input
           v-model="searchDraft"
           outlined
           dense
           clearable
+          hide-bottom-space
           debounce="400"
           class="q-mr-md"
           style="min-width: 220px"
@@ -137,6 +128,7 @@
           emit-value
           map-options
           clearable
+          hide-bottom-space
           class="q-mr-sm"
           style="min-width: 140px"
           :options="activeFilterOptions"
@@ -150,14 +142,26 @@
           emit-value
           map-options
           clearable
+          hide-bottom-space
           class="q-mr-md"
           style="min-width: 140px"
           :options="billableFilterOptions"
           :label="t('referenceDataBillable')"
           :data-testid="tid('select', 'billable')"
           @update:model-value="onFilterChange" />
-        <q-space />
       </template>
+    <AdminQTable
+      class="table admin-data-table"
+      :test-id="tableTestId"
+      row-key="id"
+      binary-state-sort
+      v-model:pagination="tablePagination"
+      :rows-per-page-options="[10, 20, 50, 100]"
+      :rows="rows"
+      :columns="columns"
+      :loading="false"
+      :rows-per-page-label="t('rowsPerPage')"
+      @request="onTableRequest">
       <template #body-cell-billable="scope">
         <q-td :props="scope">
           <q-badge
@@ -197,6 +201,7 @@
           @click="openDetail(row)" />
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <div
       v-if="!loading && !errorMessage && rows.length === 0"
@@ -207,6 +212,7 @@
     <div class="text-subtitle1 q-mt-lg q-mb-sm">
       {{ t('referenceDataRecentIcd10CmJobs') }}
     </div>
+    <AdminTablePanel class="admin-list-page__table-panel">
     <AdminQTable
       class="table admin-data-table"
       :test-id="tid('jobs', 'table')"
@@ -235,6 +241,7 @@
           @click="goJobDetail(row)" />
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <q-drawer
       v-model="detailOpen"
@@ -284,6 +291,10 @@ import {
   siteBreakpoints,
 } from 'components/constants.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { usePageLoadingOverlay }

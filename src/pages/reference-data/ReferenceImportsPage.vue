@@ -1,30 +1,31 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page admin-list-page--stacked">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
 
-    <div class="row items-center q-mb-md q-col-gutter-sm">
-      <div class="col">
-        <div class="text-h6">{{ t('referenceDataImports') }}</div>
-        <div class="text-caption text-grey-7">
-          {{ t('referenceDataImportsSubtitle') }}
+    <AdminListPageHeader
+      :title="t('referenceDataImports')"
+      :subtitle="t('referenceDataImportsSubtitle')">
+      <template #actions>
+        <div class="admin-list-page__actions">
+          <div class="admin-list-page__actions-bar row items-center
+            q-gutter-sm no-wrap">
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="refresh"
+              :disable="loading"
+              :label="t('dashboardRefresh')"
+              :data-testid="tid('btn', 'refresh')"
+              @click="reloadAll" />
+          </div>
         </div>
-      </div>
-      <div class="col-auto">
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="refresh"
-          :disable="loading"
-          :label="t('dashboardRefresh')"
-          :data-testid="tid('btn', 'refresh')"
-          @click="reloadAll" />
-      </div>
-    </div>
+      </template>
+    </AdminListPageHeader>
 
     <q-card flat bordered class="q-mb-lg">
       <q-card-section>
@@ -170,6 +171,7 @@
       </div>
     </div>
 
+    <AdminTablePanel class="admin-list-page__table-panel">
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -220,6 +222,7 @@
           @click="onActivate(row)" />
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <div
       v-if="!loading && !errorMessage && jobs.length === 0"
@@ -306,6 +309,10 @@ import {
   siteBreakpoints,
 } from 'components/constants.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { usePageLoadingOverlay }

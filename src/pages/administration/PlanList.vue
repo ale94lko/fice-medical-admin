@@ -1,9 +1,43 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
+    <AdminListPageHeader :title="t('plans')">
+      <template #actions>
+        <div class="admin-list-page__actions">
+          <div class="admin-list-page__actions-bar row items-center
+            q-gutter-sm no-wrap">
+            <q-btn
+              no-caps
+              unelevated
+              color="primary"
+              class="app-btn-primary"
+              icon="add"
+              :data-testid="tid('btn', 'add')"
+              :disable="loading || planFormSaving || deleteSaving"
+              :title="t('addPlan')"
+              :label="t('addPlan')"
+              @click="addPlan"/>
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="filter_alt"
+              :data-testid="tid('btn', 'filters')"
+              badge-color="primary"
+              :disable="loading || deleteSaving"
+              :title="t('filters')"
+              :label="t('filters')"
+              :badge="getbadge(activePlanFilterCount)"
+              @click="openPlanFilters"/>
+          </div>
+        </div>
+      </template>
+    </AdminListPageHeader>
+    <AdminTablePanel class="admin-list-page__table-panel">
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -12,39 +46,11 @@
       v-model:pagination="tablePagination"
       :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
-      :title="t('plans')"
       :rows="sortedTableRows"
       :columns="columns"
       :loading="false"
       :rows-per-page-label="t('rowsPerPage')"
       @request="onTableRequest">
-      <template v-slot:top>
-        <q-btn
-          no-caps
-          unelevated
-          color="primary"
-          class="app-btn-primary"
-          icon="add"
-          :data-testid="tid('btn', 'add')"
-          :disable="loading || planFormSaving || deleteSaving"
-          :title="t('addPlan')"
-          :label="t('addPlan')"
-          @click="addPlan"/>
-        <q-space />
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="filter_alt"
-          :data-testid="tid('btn', 'filters')"
-          badge-color="primary"
-          :disable="loading || deleteSaving"
-          :title="t('filters')"
-          :label="t('filters')"
-          :badge="getbadge(activePlanFilterCount)"
-          @click="openPlanFilters"/>
-      </template>
       <template #row-actions="{ row }">
         <q-btn
           flat
@@ -81,6 +87,7 @@
           @click="deleteRow(row)"/>
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <Dialog
       v-model="planFormDialogOpen"
@@ -204,34 +211,17 @@
               <div class="text-body2 text-grey-9">{{ item.value }}</div>
             </div>
             <div class="col-12">
-              <q-field
-                class="full-width plan-view-permission-qfield"
-                outlined
-                stack-label
-                readonly
+              <div class="text-subtitle2 q-mb-sm">
+                {{ t('permissions') }}
+              </div>
+              <PermissionModulePicker
                 :model-value="viewPlanTicked"
-                :label="t('permissions')">
-                <template #control>
-                  <div
-                    class="relative-position full-width permission-tree-scroll">
-                    <q-inner-loading
-                      :showing="permissionsTreeLoading"
-                      color="primary"/>
-                    <q-tree
-                      :nodes="viewPlanPermissionTreeNodes"
-                      node-key="nodeKey"
-                      label-key="label"
-                      children-key="children"
-                      tick-strategy="leaf"
-                      dense
-                      no-connectors
-                      default-expand-all
-                      class="full-width q-pt-sm text-body2"
-                      v-model:ticked="viewPlanTicked"
-                      :no-nodes-label="t('permissionTreeEmpty')"/>
-                  </div>
-                </template>
-              </q-field>
+                :nodes="viewPlanPermissionTreeNodes"
+                readonly
+                :loading="permissionsTreeLoading"
+                :test-id="tid('view', 'permissions')"
+                :empty-label="t('permissionTreeEmpty')"
+              />
             </div>
           </div>
         </q-card-section>
@@ -267,6 +257,12 @@ import {
   siteBreakpointsPx,
 } from 'components/constants.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
+import PermissionModulePicker from
+  'components/PermissionModulePicker.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
@@ -423,6 +419,8 @@ async function loadPlans(paginationPayload) {
     await siteStore.getPlanList({
       page: paginationPayload.page,
       limit: paginationPayload.rowsPerPage,
+      sortBy: paginationPayload.sortBy,
+      descending: paginationPayload.descending,
     })
     tablePagination.value = planTablePaginationFromStore(paginationPayload)
   } catch (error) {

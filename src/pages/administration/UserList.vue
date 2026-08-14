@@ -1,9 +1,48 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
+    <AdminListPageHeader :title="t('users')">
+      <template #actions>
+        <div class="admin-list-page__actions">
+          <div class="admin-list-page__actions-bar row items-center
+            q-gutter-sm no-wrap">
+            <q-btn
+              no-caps
+              unelevated
+              color="primary"
+              class="app-btn-primary"
+              icon="add"
+              :data-testid="tid('btn', 'add')"
+              :disable="
+                loading || addSaving || deleteSaving
+                || passwordChangeSaving
+              "
+              :title="t('addUser')"
+              :label="t('addUser')"
+              @click="addUser"/>
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="filter_alt"
+              :data-testid="tid('btn', 'filters')"
+              badge-color="primary"
+              :disable="
+                loading || deleteSaving || passwordChangeSaving
+              "
+              :title="t('filters')"
+              :label="t('filters')"
+              :badge="getbadge(activeUserFilterCount)"
+              @click="openUserFilters"/>
+          </div>
+        </div>
+      </template>
+    </AdminListPageHeader>
+    <AdminTablePanel class="admin-list-page__table-panel">
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -12,7 +51,6 @@
       v-model:pagination="tablePagination"
       :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
-      :title="t('users')"
       :rows="sortedTableRows"
       :columns="columns"
       :loading="false"
@@ -20,35 +58,6 @@
       :card-class-fn="userRowClass"
       :rows-per-page-label="t('rowsPerPage')"
       @request="onTableRequest">
-      <template v-slot:top>
-        <q-btn
-          no-caps
-          unelevated
-          color="primary"
-          class="app-btn-primary"
-          icon="add"
-          :data-testid="tid('btn', 'add')"
-          :disable="
-            loading || addSaving || deleteSaving || passwordChangeSaving
-          "
-          :title="t('addUser')"
-          :label="t('addUser')"
-          @click="addUser"/>
-        <q-space />
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="filter_alt"
-          :data-testid="tid('btn', 'filters')"
-          badge-color="primary"
-          :disable="loading || deleteSaving || passwordChangeSaving"
-          :title="t('filters')"
-          :label="t('filters')"
-          :badge="getbadge(activeUserFilterCount)"
-          @click="openUserFilters"/>
-      </template>
       <template #row-actions="{ row }">
         <q-btn
           flat
@@ -99,6 +108,7 @@
           @click="deleteRow(row)"/>
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <Dialog
       v-model="addDialogOpen"
@@ -242,7 +252,7 @@
               htmlInputTypes.password,
             )"
             :label="t('password')"
-            :rules="[passwordChangeRequiredRule]">
+            :rules="passwordChangeRules">
             <template #append>
               <PasswordToggleIcon
                 :show-plain="passwordFieldVisibility.isPlainVisible(
@@ -370,6 +380,10 @@ import {
 } from 'components/constants.js'
 import PasswordToggleIcon from 'components/PasswordToggleIcon.vue'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
@@ -387,6 +401,10 @@ import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
 import { usePasswordVisibilityByKey }
   from 'src/composables/usePasswordVisibility.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
+import {
+  buildNewPasswordRules,
+  createPasswordMatchRule,
+} from 'src/utils/password-validation.js'
 
 const {
   tid,
@@ -455,15 +473,13 @@ const {
   afterOpen: onUserDialogReady,
 })
 
-function passwordChangeRequiredRule(val) {
-  return (!!val && String(val).trim().length > 0) || t('fieldRequired')
-}
+const passwordChangeRules = computed(() => buildNewPasswordRules(t))
 
 const passwordConfirmRules = computed(() => [
-  passwordChangeRequiredRule,
-  val => String(val ?? '').trim()
-    === String(passwordChangeDraft.password ?? '').trim()
-    || t('userPasswordMismatch'),
+  createPasswordMatchRule(
+    t,
+    () => passwordChangeDraft.password,
+  ),
 ])
 
 function formatUserDialogPayload(form) {
@@ -716,6 +732,8 @@ async function loadUsers(paginationPayload) {
     await siteStore.getUserList({
       page: paginationPayload.page,
       limit: paginationPayload.rowsPerPage,
+      sortBy: paginationPayload.sortBy,
+      descending: paginationPayload.descending,
     })
     tablePagination.value = userTablePaginationFromStore(paginationPayload)
   } catch (error) {

@@ -6,22 +6,16 @@
     :transition-hide="quasarTransitions.scale"
     @update:model-value="emit('update:modelValue', $event)">
     <q-card
-      class="modal-card app-dialog-card app-dialog-card--lg catalog-form-card"
+      class="modal-card insurance-dialog app-dialog-card catalog-form-card"
       :style="cardStyle"
       :data-testid="dialogTestId">
-      <q-toolbar class="app-dialog-toolbar">
-        <q-toolbar-title>{{ title }}</q-toolbar-title>
-        <q-btn
-          flat
-          round
-          dense
-          icon="close"
-          :data-testid="tid('btn', 'close')"
-          :disable="saving"
-          :title="t('close')"
-          :aria-label="t('close')"
-          @click="close"/>
-      </q-toolbar>
+      <AppDialogHeader
+        :close-label="t('close')"
+        :disable-close="saving"
+        :close-test-id="tid('btn', 'close')"
+        @close="close">
+        {{ title }}
+      </AppDialogHeader>
       <q-form
         ref="formRef"
         greedy
@@ -29,9 +23,10 @@
         autocomplete="off"
         @submit.prevent="submit">
         <q-card-section
-          class="app-dialog-body catalog-form-body"
+          class="app-dialog-card__body q-px-lg q-pt-md q-pb-md
+            catalog-form-body"
           :style="bodyStyle">
-          <div class="catalog-form-fields">
+          <div class="catalog-form-fields app-dialog-form-stack">
             <q-input
               v-model="form[ck.name]"
               outlined
@@ -71,7 +66,7 @@
               :data-testid="tid('field', 'description')"
               :label="t('description')"/>
 
-            <div class="catalog-items-section">
+            <div class="catalog-items-section dialog-field-row--full">
               <div class="row items-center no-wrap">
                 <div class="text-subtitle2">{{ t('catalogItemsTitle') }}</div>
                 <q-space />
@@ -148,7 +143,7 @@
             </div>
           </div>
         </q-card-section>
-        <q-card-actions align="right" class="app-dialog-actions">
+        <q-card-actions align="right" class="app-dialog-card__actions">
           <q-btn
             no-caps
             outline
@@ -179,6 +174,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
+import AppDialogHeader from 'components/AppDialogHeader.vue'
 import {
   catalogFieldKeys,
   catalogFormDefaults,
@@ -215,7 +211,7 @@ const $q = useQuasar()
 const formRef = ref(null)
 
 const cardStyle = {
-  width: 'min(520px, calc(100vw - 24px))',
+  width: 'min(920px, calc(100vw - 24px))',
   maxWidth: 'calc(100vw - 24px)',
 }
 
@@ -353,17 +349,8 @@ watch(
     box-sizing: border-box;
   }
 
-  /* Evita flex de Quasar .column que comprime los hijos al hacer scroll */
   .catalog-form-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
     width: 100%;
-  }
-
-  .catalog-form-fields > * {
-    flex: 0 0 auto;
-    min-height: 0;
   }
 
   .catalog-items-section {
@@ -373,12 +360,12 @@ watch(
   }
 
   .catalog-items-scroll {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     width: 100%;
     max-width: 100%;
-    max-height: min(280px, 38vh);
+    max-height: min(360px, 42vh);
     overflow-x: hidden;
     overflow-y: auto;
     padding-right: 4px;
@@ -387,7 +374,7 @@ watch(
 
   .catalog-item-block {
     box-sizing: border-box;
-    flex: 0 0 auto;
+    min-width: 0;
     width: 100%;
     max-width: 100%;
     padding: 8px 10px 10px;
@@ -435,7 +422,11 @@ watch(
     line-height: 1.35;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 599px) {
+    .catalog-items-scroll {
+      grid-template-columns: 1fr;
+    }
+
     .catalog-item-row-label-code {
       grid-template-columns: 1fr;
     }

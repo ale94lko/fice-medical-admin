@@ -193,6 +193,7 @@ export const fieldTypes = {
   checkbox: 'checkbox',
   addressSuggest: 'addressSuggest',
   permissionTree: 'permissionTree',
+  rolePicker: 'rolePicker',
 }
 
 export const inputNormalizeKeys = {
@@ -296,6 +297,7 @@ export const aiSuggestionFieldKeys = {
   createdBy: 'createdBy',
   clientId: 'clientId',
   encounterId: 'encounterId',
+  conversationId: 'conversationId',
   tokensPrompt: 'tokensPrompt',
   tokensCompletion: 'tokensCompletion',
   result: 'result',

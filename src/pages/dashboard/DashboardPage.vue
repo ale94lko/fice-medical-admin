@@ -232,7 +232,9 @@
             test-id="dashboard-chart-plan-billing" />
         </q-card-section>
       </q-card>
+    </section>
 
+    <section class="dashboard-bottom-grid">
       <q-card
         flat
         bordered
@@ -250,34 +252,6 @@
             :empty-label="t('dashboardNoData')"
             :loading="loading"
             test-id="dashboard-chart-catalog-scope" />
-        </q-card-section>
-      </q-card>
-    </section>
-
-    <section class="dashboard-bottom-grid">
-      <q-card
-        flat
-        bordered
-        class="dashboard-panel">
-        <q-card-section class="dashboard-panel__head">
-          <div class="dashboard-panel__title">
-            {{ t('dashboardQuickAccess') }}
-          </div>
-        </q-card-section>
-        <q-card-section class="dashboard-quick-links">
-          <router-link
-            v-for="link in quickLinks"
-            :key="link.to"
-            :to="link.to"
-            class="dashboard-quick-link"
-            :data-testid="link.testId">
-            <q-icon :name="link.icon" size="20px" />
-            <span>{{ link.label }}</span>
-            <q-icon
-              name="chevron_right"
-              size="18px"
-              class="dashboard-quick-link__arrow" />
-          </router-link>
         </q-card-section>
       </q-card>
 
@@ -443,51 +417,6 @@ const labeledCatalogScope = computed(() =>
     label: catalogScopeLabel(seg.label),
   })),
 )
-
-const quickLinks = computed(() => [
-  {
-    to: '/tenants',
-    icon: 'apartment',
-    label: t('tenants'),
-    testId: 'dashboard-link-tenants',
-  },
-  {
-    to: '/users',
-    icon: 'people',
-    label: t('users'),
-    testId: 'dashboard-link-users',
-  },
-  {
-    to: '/roles',
-    icon: 'badge',
-    label: t('roles'),
-    testId: 'dashboard-link-roles',
-  },
-  {
-    to: '/permissions',
-    icon: 'lock',
-    label: t('permissions'),
-    testId: 'dashboard-link-permissions',
-  },
-  {
-    to: '/modules',
-    icon: 'view_module',
-    label: t('modules'),
-    testId: 'dashboard-link-modules',
-  },
-  {
-    to: '/plans',
-    icon: 'paid',
-    label: t('plans'),
-    testId: 'dashboard-link-plans',
-  },
-  {
-    to: '/catalogs',
-    icon: 'menu_book',
-    label: t('catalogs'),
-    testId: 'dashboard-link-catalogs',
-  },
-])
 
 function planBillingLabel(cycle) {
   const v = String(cycle ?? '').trim()

@@ -1,0 +1,327 @@
+@import 'quasar.variables';
+
+.admin-list-page {
+  &.admin-page {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 12px 24px 0;
+    overflow: hidden;
+  }
+
+  &__header {
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  &__table-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 6px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .admin-table-panel__table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .admin-data-table {
+    flex: 1 1 auto;
+    min-height: 180px;
+    max-height: none;
+    height: 0;
+  }
+
+  &--stacked.admin-page {
+    overflow: auto;
+    height: auto;
+
+    .admin-data-table {
+      height: auto;
+      min-height: 240px;
+    }
+  }
+
+  .admin-data-table .q-table__top {
+    display: none;
+  }
+
+  &__heading {
+    min-width: 0;
+  }
+
+  &__title-row {
+    gap: 12px;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+  }
+
+  &__title {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 48px;
+    letter-spacing: -0.03em;
+    color: $text-strong;
+    margin: 0;
+  }
+
+  &__subtitle {
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: $text-muted;
+  }
+
+  &__actions {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  &__center {
+    flex: 1 1 auto;
+    min-width: 160px;
+    max-width: 360px;
+    margin: 0 16px;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  &__search-input {
+    width: 100%;
+
+    &.q-field--outlined {
+      .q-field__control {
+        min-height: $app-button-height;
+        height: $app-button-height;
+        padding: 0 18px;
+        border-radius: $radius-md;
+        background: $white;
+
+        &::before {
+          border-color: $primary;
+        }
+      }
+
+      .q-field__marginal {
+        height: $app-button-height;
+      }
+
+      .q-field__prepend .q-icon,
+      .q-field__append .q-icon {
+        color: $primary;
+      }
+    }
+  }
+}
+
+@media (max-width: 1023px) {
+  .admin-list-page.admin-page {
+    padding: 12px 12px 72px;
+    overflow: auto;
+    height: auto;
+  }
+
+  .admin-list-page .admin-data-table {
+    height: auto;
+    max-height: none;
+  }
+}
+
+.admin-table-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: $surface;
+  border: 1px solid $table-border;
+  border-radius: $table-radius;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+
+  &__toolbar {
+    padding: 12px 16px;
+    border-bottom: 1px solid $table-border;
+    background: $surface;
+    flex-shrink: 0;
+  }
+
+  &__table-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.admin-data-table {
+  background: $surface;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .q-table__middle {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  &.q-table--grid {
+    max-height: none;
+    display: block;
+    overflow: visible;
+
+    .q-table__middle {
+      flex: none;
+      min-height: auto;
+      overflow: visible;
+      padding-bottom: 8px;
+    }
+  }
+
+  .q-table {
+    thead tr {
+      height: $table-header-height !important;
+    }
+
+    thead tr th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      height: $table-header-height !important;
+      min-height: $table-header-height !important;
+      max-height: $table-header-height !important;
+      padding: 4px 12px !important;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.25;
+      letter-spacing: normal;
+      text-transform: none;
+      vertical-align: middle;
+      box-sizing: border-box;
+      color: $text-muted;
+      background: $table-header-bg !important;
+      border-bottom: 1px solid $table-border;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      height: $table-row-height !important;
+    }
+
+    tbody td {
+      height: $table-row-height !important;
+      min-height: $table-row-height !important;
+      max-height: $table-row-height !important;
+      padding: 2px 12px !important;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.25;
+      color: $table-text-primary;
+      border-bottom: 1px solid $table-border;
+      white-space: nowrap;
+      box-sizing: border-box;
+      vertical-align: middle;
+    }
+  }
+
+  &.table .q-table {
+    thead tr th:last-child {
+      right: 0;
+      z-index: 4;
+      background-color: $table-header-bg !important;
+      box-shadow: -4px 0 12px -4px rgba(15, 23, 42, 0.1);
+    }
+
+    tbody tr td:last-child {
+      position: sticky;
+      right: 0;
+      z-index: 1;
+      background-color: $surface !important;
+      box-shadow: -4px 0 12px -4px rgba(15, 23, 42, 0.1);
+    }
+
+    tbody tr:hover td:last-child {
+      background: $table-hover-bg !important;
+    }
+  }
+
+  .q-table tbody tr:hover td {
+    background: $table-hover-bg !important;
+  }
+
+  .q-table tbody tr.data-row--inactive td:not(:last-child) {
+    background: #fef2f2 !important;
+    box-shadow: inset 3px 0 0 $negative;
+  }
+
+  .q-table--grid .data-row--inactive {
+    background: #fef2f2;
+    box-shadow: inset 3px 0 0 $negative;
+  }
+
+  .q-table__bottom {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+    border-top: 1px solid $table-border;
+    background: $surface;
+    color: $text-muted;
+    font-size: 0.8125rem;
+  }
+
+  .q-table__control .q-btn {
+    color: $text-muted;
+  }
+
+  .admin-table-grid-card {
+    border-radius: $radius-md;
+    background: $surface;
+    overflow: hidden;
+  }
+
+  .admin-table-grid-actions {
+    flex-wrap: wrap;
+    gap: 4px;
+    border-top: 1px solid $table-border;
+  }
+}
+
+.q-table__container.table.admin-data-table {
+  thead tr:last-child th:last-child {
+    background-color: $table-header-bg !important;
+  }
+
+  td:last-child {
+    background-color: $surface !important;
+  }
+
+  th:last-child,
+  td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    box-shadow: -4px 0 12px -4px rgba(15, 23, 42, 0.1);
+  }
+
+  thead tr th:last-child {
+    z-index: 5;
+  }
+}
+
+.q-dialog .admin-data-table {
+  max-height: min(420px, 55vh);
+  height: auto;
+}

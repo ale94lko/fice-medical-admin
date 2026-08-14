@@ -1,24 +1,33 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
-    <AdminQTable
-      class="table admin-data-table"
-      :test-id="tableTestId"
-      row-key="id"
-      binary-state-sort
-      v-model:pagination="tablePagination"
-      :rows-per-page-options="[10, 20, 50, 100]"
-      :grid="showGrid"
-      :title="t('permissions')"
-      :rows="paginatedTableRows"
-      :columns="columns"
-      :loading="false"
-      :rows-per-page-label="t('rowsPerPage')"
-      @request="onTableRequest">
-      <template v-slot:top>
+    <AdminListPageHeader :title="t('permissions')">
+      <template #actions>
+        <div class="admin-list-page__actions">
+          <div class="admin-list-page__actions-bar row items-center
+            q-gutter-sm no-wrap">
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="filter_alt"
+              :data-testid="tid('btn', 'filters')"
+              badge-color="primary"
+              :disable="loading || editSaving"
+              :title="t('filters')"
+              :label="t('filters')"
+              :badge="getbadge(activePermissionFilterCount)"
+              @click="openPermissionFilters"/>
+          </div>
+        </div>
+      </template>
+    </AdminListPageHeader>
+    <AdminTablePanel class="admin-list-page__table-panel">
+      <template #toolbar>
         <div class="permission-module-chips">
           <q-spinner
             v-if="modulesFilterLoading"
@@ -29,7 +38,8 @@
               type="button"
               class="permission-module-orb"
               :class="{
-                'permission-module-orb--active': isAllModulesFilterActive,
+                'permission-module-orb--active':
+                  isAllModulesFilterActive,
               }"
               :data-testid="tid('btn', 'module-all')"
               :aria-label="t('all')"
@@ -51,7 +61,8 @@
               type="button"
               class="permission-module-orb"
               :class="{
-                'permission-module-orb--active': isModuleChipActive(mod.value),
+                'permission-module-orb--active':
+                  isModuleChipActive(mod.value),
               }"
               :data-testid="tid('btn', `module-${mod.value}`)"
               :aria-label="mod.label"
@@ -69,21 +80,20 @@
             </button>
           </template>
         </div>
-        <q-space />
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="filter_alt"
-          :data-testid="tid('btn', 'filters')"
-          badge-color="primary"
-          :disable="loading || editSaving"
-          :title="t('filters')"
-          :label="t('filters')"
-          :badge="getbadge(activePermissionFilterCount)"
-          @click="openPermissionFilters"/>
       </template>
+    <AdminQTable
+      class="table admin-data-table"
+      :test-id="tableTestId"
+      row-key="id"
+      binary-state-sort
+      v-model:pagination="tablePagination"
+      :rows-per-page-options="[10, 20, 50, 100]"
+      :grid="showGrid"
+      :rows="paginatedTableRows"
+      :columns="columns"
+      :loading="false"
+      :rows-per-page-label="t('rowsPerPage')"
+      @request="onTableRequest">
       <template #row-actions="{ row }">
         <q-btn
           flat
@@ -109,6 +119,7 @@
           @click="openEditPermission(row)"/>
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <Dialog
       v-model="editDialogOpen"
@@ -265,6 +276,10 @@ import {
 } from 'components/helpers.js'
 import { apiInstance } from 'boot/axios'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import { usePermissionEditForm } from 'src/composables/usePermissionEditForm.js'

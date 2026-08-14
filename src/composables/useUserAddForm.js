@@ -34,6 +34,8 @@ import {
   filterPermissionTreeByModuleIds,
   moduleIdsFromPermissionIds,
 } from 'src/utils/permission-catalog-tree.js'
+import { buildNewPasswordRules }
+  from 'src/utils/password-validation.js'
 
 const uk = userFieldKeys
 const rk = roleFieldKeys
@@ -772,8 +774,7 @@ function createUserAddFormFields(ctx) {
       return isValidEmail(v) || t('invalidEmail')
     }
     const isEdit = Boolean(editingRef?.value)
-    const passwordRule = val =>
-      (!!val && String(val).trim().length > 0) || t('fieldRequired')
+    const passwordRules = buildNewPasswordRules(t)
     const rolesRule = val =>
       (Array.isArray(val) && val.length > 0) || t('fieldRequired')
     const tenantSelectRule = val =>
@@ -799,7 +800,7 @@ function createUserAddFormFields(ctx) {
       inputType: htmlInputTypes.password,
       inputName: 'fice-user-register-password',
       autocomplete: htmlAutocomplete.newPassword,
-      rules: [passwordRule],
+      rules: passwordRules,
     }
     const tenantField = {
       key: uk.tenantId,
@@ -852,10 +853,8 @@ function createUserAddFormFields(ctx) {
       ...baseFields,
       {
         key: uk.roles,
-        kind: fieldTypes.select,
+        kind: fieldTypes.rolePicker,
         labelKey: 'roles',
-        selectBehavior: selectBehaviors.menu,
-        multiple: true,
         defaultValue: [],
         rules: [rolesRule],
         options: () => catalog.rolesOptions.value,

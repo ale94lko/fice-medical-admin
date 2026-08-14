@@ -1,30 +1,31 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page admin-list-page--stacked">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
 
-    <div class="row items-center q-mb-md q-col-gutter-sm">
-      <div class="col">
-        <div class="text-h6">{{ t('referenceDataCatalogs') }}</div>
-        <div class="text-caption text-grey-7">
-          {{ t('referenceDataCatalogsSubtitle') }}
+    <AdminListPageHeader
+      :title="t('referenceDataCatalogs')"
+      :subtitle="t('referenceDataCatalogsSubtitle')">
+      <template #actions>
+        <div class="admin-list-page__actions">
+          <div class="admin-list-page__actions-bar row items-center
+            q-gutter-sm no-wrap">
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="refresh"
+              :data-testid="tid('btn', 'refresh')"
+              :disable="loading"
+              :label="t('dashboardRefresh')"
+              @click="loadCatalogs" />
+          </div>
         </div>
-      </div>
-      <div class="col-auto">
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="refresh"
-          :data-testid="tid('btn', 'refresh')"
-          :disable="loading"
-          :label="t('dashboardRefresh')"
-          @click="loadCatalogs" />
-      </div>
-    </div>
+      </template>
+    </AdminListPageHeader>
 
     <q-banner
       v-if="errorMessage"
@@ -34,6 +35,7 @@
       {{ errorMessage }}
     </q-banner>
 
+    <AdminTablePanel class="admin-list-page__table-panel">
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -109,6 +111,7 @@
           @click="goFromSource(row)" />
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <div
       v-if="!loading && !errorMessage && rows.length === 0"
@@ -128,6 +131,10 @@ import {
   referenceDataCatalogStatuses,
 } from 'components/constants.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { usePageLoadingOverlay }

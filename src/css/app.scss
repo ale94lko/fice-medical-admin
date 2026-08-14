@@ -1,5 +1,6 @@
 // app global css in SCSS form
 @import 'quasar.variables';
+@import 'admin-table-standard';
 
 // —— Layout shell ——
 .app-layout {
@@ -15,6 +16,11 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+.app-layout .q-page-container.app-content-root > .q-page {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .app-header {
@@ -206,190 +212,67 @@
   }
 }
 
-.admin-data-table {
-  background: $surface;
-  border-radius: $radius-lg;
-  border: 1px solid $border-subtle;
-  box-shadow: $shadow-sm;
-  max-height: calc(100vh - 140px);
+.permission-module-chips {
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-height: calc(34px * 3 + 8px * 2);
+  padding-right: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
 
-  .q-table__top {
-    flex: 0 0 auto;
-    padding: 16px 20px;
-    gap: 12px;
-    border-bottom: 1px solid $border-subtle;
-    background: $surface;
-    flex-wrap: nowrap;
-    align-items: flex-start;
+.permission-module-orb {
+  position: relative;
+  flex: 0 0 auto;
+  width: 96px;
+  min-width: 96px;
+  max-width: 96px;
+  height: 34px;
+  margin: 0;
+  padding: 0 10px;
+  border: 2px solid rgba(15, 118, 110, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  color: $primary;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
   }
 
-  .permission-module-chips {
-    display: flex;
-    flex: 1 1 auto;
-    flex-wrap: wrap;
-    align-content: flex-start;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    max-height: calc(34px * 3 + 8px * 2);
-    padding-right: 4px;
-    overflow-x: auto;
-    overflow-y: hidden;
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
   }
 
-  .permission-module-orb {
-    position: relative;
-    flex: 0 0 auto;
-    width: 96px;
-    min-width: 96px;
-    max-width: 96px;
-    height: 34px;
-    margin: 0;
-    padding: 0 10px;
-    border: 2px solid rgba(15, 118, 110, 0.35);
-    border-radius: 999px;
-    background: transparent;
-    color: $primary;
-    cursor: pointer;
-    transition:
-      background-color 0.15s ease,
-      border-color 0.15s ease,
-      color 0.15s ease,
-      transform 0.15s ease;
-
-    &:hover {
-      transform: translateY(-1px);
-    }
-
-    &:focus-visible {
-      outline: 2px solid $primary;
-      outline-offset: 2px;
-    }
-
-    &--active {
-      background: $primary;
-      border-color: $primary;
-      color: $white;
-    }
-
-    &__glyph {
-      display: block;
-      width: 100%;
-      font-size: 0.5625rem;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      line-height: 30px;
-      text-align: center;
-      user-select: none;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+  &--active {
+    background: $primary;
+    border-color: $primary;
+    color: $white;
   }
 
-  .q-table__middle {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: auto;
-  }
-
-  &.q-table--grid {
-    max-height: none;
+  &__glyph {
     display: block;
-    overflow: visible;
-
-    .q-table__middle {
-      flex: none;
-      min-height: auto;
-      overflow: visible;
-      padding-bottom: 8px;
-    }
-
-    .q-table__grid-content {
-      padding-bottom: 4px;
-    }
-
-    .q-table__bottom {
-      flex: none;
-    }
-  }
-
-  .q-table__title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: $text-strong;
-  }
-
-  thead tr th {
-    position: sticky;
-    top: 0;
-    z-index: 3;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: $text-muted;
-    background: $surface-muted !important;
-    border-bottom: 1px solid $border-subtle;
-    padding: 12px 16px;
-  }
-
-  &.q-table--loading thead tr:last-child th {
-    top: 48px;
-    z-index: 4;
-  }
-
-  thead tr th:last-child {
-    z-index: 5;
-  }
-
-  tbody tr td {
-    padding: 14px 16px;
-    font-size: 0.925rem;
-    color: $text-strong;
-    border-bottom: 1px solid $border-subtle;
-  }
-
-  tbody tr:hover td:not(:last-child) {
-    background: $surface-muted !important;
-  }
-
-  tbody tr.data-row--inactive td:not(:last-child) {
-    background: #fef2f2 !important;
-    box-shadow: inset 3px 0 0 $negative;
-  }
-
-  .q-table--grid .data-row--inactive {
-    background: #fef2f2;
-    box-shadow: inset 3px 0 0 $negative;
-  }
-
-  .admin-table-grid-card {
-    border-radius: $radius-md;
-    background: $surface;
-  }
-
-  .admin-table-grid-actions {
-    flex-wrap: wrap;
-    gap: 4px;
-    border-top: 1px solid $border-subtle;
-  }
-
-  .q-table__bottom {
-    flex: 0 0 auto;
-    padding: 10px 16px;
-    border-top: 1px solid $border-subtle;
-    background: $surface-muted;
-    color: $text-muted;
-    font-size: 0.85rem;
-  }
-
-  .q-table__control .q-btn {
-    color: $text-muted;
+    width: 100%;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    line-height: 30px;
+    text-align: center;
+    user-select: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -432,32 +315,46 @@
 }
 
 .app-dialog-card {
+  display: flex;
+  flex-direction: column;
   min-width: min(520px, calc(100vw - 24px));
-  max-width: min(640px, calc(100vw - 24px));
+  max-width: min(920px, calc(100vw - 24px));
+  max-height: min(90vh, calc(100dvh - 48px));
 }
 
 .app-dialog-card--sm {
   min-width: min(400px, calc(100vw - 32px));
-  max-width: min(440px, calc(100vw - 24px));
+  max-width: min(560px, calc(100vw - 24px));
 }
 
-.app-dialog-card--lg {
-  min-width: min(560px, calc(100vw - 24px));
-  max-width: min(720px, calc(100vw - 24px));
+.app-dialog-card--lg,
+.app-dialog-card:has(.app-dialog-form-stack) {
+  min-width: min(720px, calc(100vw - 24px));
+  max-width: min(920px, calc(100vw - 24px));
+  width: 100%;
+}
+
+.app-dialog-card--sm:not(:has(.app-dialog-form-stack)) {
+  min-width: min(400px, calc(100vw - 32px));
+  max-width: min(560px, calc(100vw - 24px));
 }
 
 .app-dialog-toolbar {
+  flex-shrink: 0;
   background: $surface !important;
   color: $text-strong !important;
   min-height: 56px;
   padding: 0 24px;
   border-bottom: 1px solid $border-subtle;
 
-  .q-toolbar-title {
+  .q-toolbar-title,
+  .app-dialog-toolbar__title {
     font-weight: 600;
     font-size: 1.125rem;
     letter-spacing: -0.02em;
     line-height: 1.3;
+    overflow: visible;
+    text-overflow: unset;
   }
 
   .q-btn {
@@ -470,12 +367,23 @@
   }
 }
 
-// Cuerpo de modal: un solo contenedor, padding simétrico 24px
+.app-dialog-toolbar__close {
+  color: $text-muted !important;
+
+  &:hover:not(.disabled) {
+    color: $text-strong !important;
+    background: $surface-muted !important;
+  }
+}
+
+.app-dialog-card__body,
 .q-card__section.app-dialog-body,
 .app-dialog-body,
 .modal-body {
   box-sizing: border-box;
-  padding: 20px 24px !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 16px 24px !important;
   max-height: min(720px, 82vh);
   overflow-x: hidden;
   overflow-y: auto;
@@ -485,21 +393,37 @@
 }
 
 .app-dialog-form-stack {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   width: 100%;
   min-width: 0;
+  align-items: start;
 }
 
+@media (max-width: 599px) {
+  .app-dialog-form-stack {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dialog-field-row--full,
+.app-dialog-form-stack > .q-card-actions,
+.app-dialog-form-stack > .text-body2,
+.app-dialog-form-stack > .catalog-items-section {
+  grid-column: 1 / -1;
+}
+
+.app-dialog-card__actions,
 .app-dialog-actions {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  flex-shrink: 0;
   flex-wrap: wrap;
-  gap: 10px;
-  padding: 16px 24px 20px;
-  background: $surface-muted;
+  gap: 12px;
+  padding: 16px 24px !important;
+  background: $surface;
   border-top: 1px solid $border-subtle;
 
   .q-btn {
@@ -628,37 +552,6 @@ input:-webkit-autofill {
   }
 }
 
-.q-table__container.table.admin-data-table {
-  max-height: calc(100vh - 140px);
-
-  &.q-table--grid {
-    max-height: none;
-  }
-
-  thead tr:last-child th:last-child {
-    background-color: $surface-muted !important;
-  }
-
-  td:last-child {
-    background-color: $surface !important;
-  }
-
-  th:last-child,
-  td:last-child {
-    position: sticky;
-    right: 0;
-    z-index: 2;
-    box-shadow: -4px 0 12px -4px rgba(15, 23, 42, 0.1);
-  }
-
-  thead tr th:last-child {
-    z-index: 5;
-  }
-}
-
-.q-dialog .admin-data-table {
-  max-height: min(420px, 55vh);
-}
 
 .login-container {
   background: linear-gradient(160deg, $secondary-2 0%, $page-bg 55%, $surface 100%);
@@ -730,26 +623,26 @@ input:-webkit-autofill {
 .dashboard-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 14px;
 
   &__title {
     margin: 0;
-    font-size: 1.375rem;
+    font-size: 40px;
     font-weight: 700;
     letter-spacing: -0.03em;
     color: $text-strong;
-    line-height: 1.2;
+    line-height: 48px;
   }
 
   &__subtitle {
     margin: 2px 0 0;
-    font-size: 0.875rem;
+    font-size: 16px;
     color: $text-muted;
     max-width: 520px;
-    line-height: 1.35;
+    line-height: 24px;
   }
 
   &__updated {
@@ -1074,41 +967,11 @@ input:-webkit-autofill {
 
 .dashboard-bottom-grid {
   display: grid;
-  grid-template-columns: 1fr 1.4fr;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
 
   @media (max-width: 1023px) {
     grid-template-columns: 1fr;
-  }
-}
-
-.dashboard-quick-links {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 4px 12px 16px !important;
-}
-
-.dashboard-quick-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: $radius-md;
-  color: $text-strong;
-  text-decoration: none;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  transition: background-color 0.15s ease;
-
-  &:hover {
-    background: $surface-muted;
-    color: $primary;
-  }
-
-  &__arrow {
-    margin-left: auto;
-    color: $text-muted;
   }
 }
 

@@ -1,9 +1,11 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
+    <AdminListPageHeader :title="t('aiConfig')" />
+    <AdminTablePanel class="admin-list-page__table-panel">
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -12,7 +14,6 @@
       v-model:pagination="tablePagination"
       :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
-      :title="t('aiConfig')"
       :rows="sortedTableRows"
       :columns="columns"
       :loading="false"
@@ -43,6 +44,7 @@
           @click="openEdit(row)"/>
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <Dialog
       v-model="editDialogOpen"
@@ -135,6 +137,10 @@ import {
 } from 'components/helpers.js'
 import { apiInstance } from 'boot/axios'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import { useAiConfigEditForm } from
@@ -146,6 +152,7 @@ import { useAdminPageTestIds } from
 import { usePageLoadingOverlay } from
   'src/composables/usePageLoadingOverlay.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
+import { listSortQueryParams } from 'src/utils/list-sort-query.js'
 
 const {
   rowTid,
@@ -220,7 +227,11 @@ async function loadRows(paginationPayload) {
     const safePage = Number.isFinite(page) && page >= 1 ? page : 1
     const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
     const response = await apiInstance.get(apiPaths.aiConfigList, {
-      params: { page: Math.max(0, safePage - 1), limit: safeLimit },
+      params: {
+        page: Math.max(0, safePage - 1),
+        limit: safeLimit,
+        ...listSortQueryParams(paginationPayload),
+      },
     })
     const root = response?.data?.data
     rows.value = extractTenantList(root).map(mapAiConfig)

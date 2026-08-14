@@ -90,6 +90,19 @@ export default {
   changeUserPasswordTitle: 'Cambiar contraseña',
   userPasswordConfirm: 'Confirmar contraseña',
   userPasswordMismatch: 'Las contraseñas no coinciden',
+  passwordsDoNotMatch: 'Las contraseñas no coinciden.',
+  passwordRequired: 'La contraseña es obligatoria.',
+  passwordMinLength: 'La contraseña debe tener al menos 8 caracteres.',
+  passwordRequiresUppercase:
+    'La contraseña debe incluir al menos una letra mayúscula.',
+  passwordRequiresLowercase:
+    'La contraseña debe incluir al menos una letra minúscula.',
+  passwordRequiresNumber:
+    'La contraseña debe incluir al menos un número.',
+  passwordRequiresSpecial:
+    'La contraseña debe incluir al menos un carácter especial.',
+  passwordPolicyInvalid:
+    'La contraseña no cumple con la política requerida.',
   userPasswordChangeSuccess: 'Contraseña actualizada correctamente',
   userPasswordChangeError: 'No se pudo actualizar la contraseña',
   userPasswordLeaveBlankHint:
@@ -255,6 +268,7 @@ export default {
   aiSuggestionCreatedBy: 'Creada por',
   aiSuggestionClientId: 'ID de cliente',
   aiSuggestionEncounterId: 'ID de encuentro',
+  aiSuggestionConversationId: 'ID de conversación',
   aiSuggestionTokensPrompt: 'Tokens de prompt',
   aiSuggestionTokensCompletion: 'Tokens de respuesta',
   aiSuggestionRequest: 'Request',
@@ -277,6 +291,9 @@ export default {
   permissionId: 'ID del permiso',
   permissionsUncategorized: 'Otros',
   permissionTreeEmpty: 'No hay permisos disponibles.',
+  permissionSelectAll: 'Seleccionar todo',
+  permissionDeselectAll: 'Quitar selección',
+  rolePickerEmpty: 'No hay roles disponibles.',
   catalogs: 'Catálogos',
   catalogName: 'Nombre del catálogo',
   catalogScope: 'Ámbito',

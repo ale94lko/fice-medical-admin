@@ -1,9 +1,43 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
+    <AdminListPageHeader :title="t('roles')">
+      <template #actions>
+        <div class="admin-list-page__actions">
+          <div class="admin-list-page__actions-bar row items-center
+            q-gutter-sm no-wrap">
+            <q-btn
+              no-caps
+              unelevated
+              color="primary"
+              class="app-btn-primary"
+              icon="add"
+              :data-testid="tid('btn', 'add')"
+              :disable="loading || roleFormSaving || deleteSaving"
+              :title="t('addRole')"
+              :label="t('addRole')"
+              @click="addRole"/>
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="filter_alt"
+              :data-testid="tid('btn', 'filters')"
+              badge-color="primary"
+              :disable="loading || deleteSaving"
+              :title="t('filters')"
+              :label="t('filters')"
+              :badge="getbadge(activeRoleFilterCount)"
+              @click="openRoleFilters"/>
+          </div>
+        </div>
+      </template>
+    </AdminListPageHeader>
+    <AdminTablePanel class="admin-list-page__table-panel">
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -12,39 +46,11 @@
       v-model:pagination="tablePagination"
       :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
-      :title="t('roles')"
       :rows="sortedTableRows"
       :columns="columns"
       :loading="false"
       :rows-per-page-label="t('rowsPerPage')"
       @request="onTableRequest">
-      <template v-slot:top>
-        <q-btn
-          no-caps
-          unelevated
-          color="primary"
-          class="app-btn-primary"
-          icon="add"
-          :data-testid="tid('btn', 'add')"
-          :disable="loading || roleFormSaving || deleteSaving"
-          :title="t('addRole')"
-          :label="t('addRole')"
-          @click="addRole"/>
-        <q-space />
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="filter_alt"
-          :data-testid="tid('btn', 'filters')"
-          badge-color="primary"
-          :disable="loading || deleteSaving"
-          :title="t('filters')"
-          :label="t('filters')"
-          :badge="getbadge(activeRoleFilterCount)"
-          @click="openRoleFilters"/>
-      </template>
       <template #row-actions="{ row }">
         <q-btn
           flat
@@ -83,6 +89,7 @@
           @click="deleteRow(row)"/>
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <Dialog
       v-model="roleFormDialogOpen"
@@ -194,34 +201,17 @@
               <div class="text-body2 text-grey-9">{{ item.value }}</div>
             </div>
             <div class="col-12">
-              <q-field
-                class="full-width role-view-permission-qfield"
-                outlined
-                stack-label
-                readonly
+              <div class="text-subtitle2 q-mb-sm">
+                {{ t('permissions') }}
+              </div>
+              <PermissionModulePicker
                 :model-value="viewRoleTicked"
-                :label="t('permissions')">
-                <template #control>
-                  <div
-                    class="relative-position full-width permission-tree-scroll">
-                    <q-inner-loading
-                      :showing="permissionsTreeLoading"
-                      color="primary"/>
-                    <q-tree
-                      :nodes="viewRolePermissionTreeNodes"
-                      node-key="nodeKey"
-                      label-key="label"
-                      children-key="children"
-                      tick-strategy="leaf"
-                      dense
-                      no-connectors
-                      default-expand-all
-                      class="full-width q-pt-sm text-body2"
-                      v-model:ticked="viewRoleTicked"
-                      :no-nodes-label="t('permissionTreeEmpty')"/>
-                  </div>
-                </template>
-              </q-field>
+                :nodes="viewRolePermissionTreeNodes"
+                readonly
+                :loading="permissionsTreeLoading"
+                :test-id="tid('view', 'permissions')"
+                :empty-label="t('permissionTreeEmpty')"
+              />
             </div>
           </div>
         </q-card-section>
@@ -259,6 +249,12 @@ import {
   tenantFieldKeys,
 } from 'components/constants.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
+import PermissionModulePicker from
+  'components/PermissionModulePicker.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
@@ -429,6 +425,8 @@ async function loadRoles(paginationPayload) {
     await siteStore.getRoleList({
       page: paginationPayload.page,
       limit: paginationPayload.rowsPerPage,
+      sortBy: paginationPayload.sortBy,
+      descending: paginationPayload.descending,
     })
     tablePagination.value = roleTablePaginationFromStore(paginationPayload)
   } catch (error) {

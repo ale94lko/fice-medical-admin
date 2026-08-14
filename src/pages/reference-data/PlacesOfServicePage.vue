@@ -1,41 +1,40 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page admin-list-page--stacked">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
 
-    <div class="row items-center q-mb-md q-col-gutter-sm">
-      <div class="col">
-        <div class="text-h6">
-          {{ t('referenceDataPlacesOfService') }}
+    <AdminListPageHeader
+      :title="t('referenceDataPlacesOfService')"
+      :subtitle="t('referenceDataPlacesOfServiceSubtitle')">
+      <template #actions>
+        <div class="admin-list-page__actions">
+          <div class="admin-list-page__actions-bar row items-center
+            q-gutter-sm no-wrap">
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="refresh"
+              :disable="loading"
+              :label="t('dashboardRefresh')"
+              :data-testid="tid('btn', 'refresh')"
+              @click="loadPlaces" />
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="cloud_upload"
+              :label="t('referenceDataImport')"
+              :data-testid="tid('btn', 'import')"
+              @click="goImport" />
+          </div>
         </div>
-        <div class="text-caption text-grey-7">
-          {{ t('referenceDataPlacesOfServiceSubtitle') }}
-        </div>
-      </div>
-      <div class="col-auto row q-gutter-sm">
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="refresh"
-          :disable="loading"
-          :label="t('dashboardRefresh')"
-          :data-testid="tid('btn', 'refresh')"
-          @click="loadPlaces" />
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="cloud_upload"
-          :label="t('referenceDataImport')"
-          :data-testid="tid('btn', 'import')"
-          @click="goImport" />
-      </div>
-    </div>
+      </template>
+    </AdminListPageHeader>
 
     <div class="row q-col-gutter-md q-mb-md">
       <div class="col-12 col-md-4">
@@ -94,6 +93,7 @@
       {{ errorMessage }}
     </q-banner>
 
+    <AdminTablePanel class="admin-list-page__table-panel">
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -133,6 +133,7 @@
         </q-td>
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <div
       v-if="!loading && !errorMessage && rows.length === 0"
@@ -160,6 +161,10 @@ import {
   tenantSubTenantsPath,
 } from 'components/helpers.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { usePageLoadingOverlay }

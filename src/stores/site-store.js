@@ -40,6 +40,7 @@ import {
   tenantByIdPath,
   userByIdPath,
 } from 'components/helpers.js'
+import { listPaginationParams } from 'src/utils/list-sort-query.js'
 
 export const useSiteStore = defineStore('site', {
   state: () => ({
@@ -91,15 +92,14 @@ export const useSiteStore = defineStore('site', {
     },
     async getPlanList(params = {}) {
       try {
-        const page = Number(params.page ?? this.planListQuery.page ?? 1)
-        const limit = Number(params.limit ?? this.planListQuery.limit ?? 20)
-        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
-        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
-        this.planListQuery = { page: safePage, limit: safeLimit }
+        const { query, apiParams } = listPaginationParams(
+          params,
+          this.planListQuery,
+        )
+        this.planListQuery = query
 
-        const apiPage = Math.max(0, safePage - 1)
         const response = await apiInstance.get(apiPaths.plans, {
-          params: { page: apiPage, limit: safeLimit },
+          params: apiParams,
         })
 
         const root = response?.data?.data
@@ -157,18 +157,14 @@ export const useSiteStore = defineStore('site', {
     },
     async getTenantList(params = {}) {
       try {
-        const page = Number(params.page ?? this.tenantListQuery.page ?? 1)
-        const limit = Number(params.limit ?? this.tenantListQuery.limit ?? 20)
-        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
-        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
-        this.tenantListQuery = { page: safePage, limit: safeLimit }
+        const { query, apiParams } = listPaginationParams(
+          params,
+          this.tenantListQuery,
+        )
+        this.tenantListQuery = query
 
-        const apiPage = Math.max(0, safePage - 1)
         const response = await apiInstance.get(apiPaths.tenantsList, {
-          params: {
-            page: apiPage,
-            limit: safeLimit,
-          },
+          params: apiParams,
         })
 
         const tenantRoot = response?.data?.data
@@ -261,15 +257,14 @@ export const useSiteStore = defineStore('site', {
     },
     async getUserList(params = {}) {
       try {
-        const page = Number(params.page ?? this.userListQuery.page ?? 1)
-        const limit = Number(params.limit ?? this.userListQuery.limit ?? 20)
-        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
-        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
-        this.userListQuery = { page: safePage, limit: safeLimit }
+        const { query, apiParams } = listPaginationParams(
+          params,
+          this.userListQuery,
+        )
+        this.userListQuery = query
 
-        const offset = (safePage - 1) * safeLimit
         const response = await apiInstance.get(apiPaths.usersList, {
-          params: { offset, limit: safeLimit },
+          params: apiParams,
         })
 
         const userRoot = response?.data?.data
@@ -365,15 +360,14 @@ export const useSiteStore = defineStore('site', {
     },
     async getRoleList(params = {}) {
       try {
-        const page = Number(params.page ?? this.roleListQuery.page ?? 1)
-        const limit = Number(params.limit ?? this.roleListQuery.limit ?? 20)
-        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
-        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
-        this.roleListQuery = { page: safePage, limit: safeLimit }
+        const { query, apiParams } = listPaginationParams(
+          params,
+          this.roleListQuery,
+        )
+        this.roleListQuery = query
 
-        const apiPage = Math.max(0, safePage - 1)
         const response = await apiInstance.get(apiPaths.rolesList, {
-          params: { page: apiPage, limit: safeLimit },
+          params: apiParams,
         })
 
         const root = response?.data?.data
@@ -426,19 +420,14 @@ export const useSiteStore = defineStore('site', {
     },
     async getPermissionList(params = {}) {
       try {
-        const page = Number(
-          params.page ?? this.permissionListQuery.page ?? 1,
+        const { query, apiParams } = listPaginationParams(
+          params,
+          this.permissionListQuery,
         )
-        const limit = Number(
-          params.limit ?? this.permissionListQuery.limit ?? 20,
-        )
-        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
-        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
-        this.permissionListQuery = { page: safePage, limit: safeLimit }
+        this.permissionListQuery = query
 
-        const apiPage = Math.max(0, safePage - 1)
         const response = await apiInstance.get(apiPaths.permissionsList, {
-          params: { page: apiPage, limit: safeLimit },
+          params: apiParams,
         })
 
         let moduleRows = []
@@ -493,15 +482,14 @@ export const useSiteStore = defineStore('site', {
     },
     async getModuleList(params = {}) {
       try {
-        const page = Number(params.page ?? this.moduleListQuery.page ?? 1)
-        const limit = Number(params.limit ?? this.moduleListQuery.limit ?? 20)
-        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
-        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
-        this.moduleListQuery = { page: safePage, limit: safeLimit }
+        const { query, apiParams } = listPaginationParams(
+          params,
+          this.moduleListQuery,
+        )
+        this.moduleListQuery = query
 
-        const apiPage = Math.max(0, safePage - 1)
         const response = await apiInstance.get(apiPaths.modulesList, {
-          params: { page: apiPage, limit: safeLimit },
+          params: apiParams,
         })
 
         const root = response?.data?.data
@@ -559,15 +547,14 @@ export const useSiteStore = defineStore('site', {
     },
     async getCatalogList(params = {}) {
       try {
-        const page = Number(params.page ?? this.catalogListQuery.page ?? 1)
-        const limit = Number(params.limit ?? this.catalogListQuery.limit ?? 20)
-        const safePage = Number.isFinite(page) && page >= 1 ? page : 1
-        const safeLimit = Number.isFinite(limit) && limit >= 1 ? limit : 20
-        this.catalogListQuery = { page: safePage, limit: safeLimit }
+        const { query, apiParams } = listPaginationParams(
+          params,
+          this.catalogListQuery,
+        )
+        this.catalogListQuery = query
 
-        const apiPage = Math.max(0, safePage - 1)
         const response = await apiInstance.get(apiPaths.catalogList, {
-          params: { page: apiPage, limit: safeLimit },
+          params: apiParams,
         })
 
         const root = response?.data?.data

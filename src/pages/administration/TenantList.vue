@@ -1,9 +1,43 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
+    <AdminListPageHeader :title="t('tenants')">
+      <template #actions>
+        <div class="admin-list-page__actions">
+          <div class="admin-list-page__actions-bar row items-center
+            q-gutter-sm no-wrap">
+            <q-btn
+              no-caps
+              unelevated
+              color="primary"
+              class="app-btn-primary"
+              icon="add"
+              :data-testid="tid('btn', 'add')"
+              :disable="loading || addSaving || deleteSaving"
+              :title="t('addTenant')"
+              :label="t('addTenant')"
+              @click="addTenant"/>
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="filter_alt"
+              :data-testid="tid('btn', 'filters')"
+              badge-color="primary"
+              :disable="loading || deleteSaving"
+              :title="t('filters')"
+              :label="t('filters')"
+              :badge="getbadge(activeTenantFilterCount)"
+              @click="openTenantFilters"/>
+          </div>
+        </div>
+      </template>
+    </AdminListPageHeader>
+    <AdminTablePanel class="admin-list-page__table-panel">
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -12,7 +46,6 @@
       v-model:pagination="tablePagination"
       :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
-      :title="t('tenants')"
       :rows="sortedTableRows"
       :columns="columns"
       :loading="false"
@@ -20,33 +53,6 @@
       :card-class-fn="tenantRowClass"
       :rows-per-page-label="t('rowsPerPage')"
       @request="onTableRequest">
-      <template v-slot:top>
-        <q-btn
-          no-caps
-          unelevated
-          color="primary"
-          class="app-btn-primary"
-          icon="add"
-          :data-testid="tid('btn', 'add')"
-          :disable="loading || addSaving || deleteSaving"
-          :title="t('addTenant')"
-          :label="t('addTenant')"
-          @click="addTenant"/>
-        <q-space />
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="filter_alt"
-          :data-testid="tid('btn', 'filters')"
-          badge-color="primary"
-          :disable="loading || deleteSaving"
-          :title="t('filters')"
-          :label="t('filters')"
-          :badge="getbadge(activeTenantFilterCount)"
-          @click="openTenantFilters"/>
-      </template>
       <template #row-actions="{ row }">
         <q-btn
           flat
@@ -86,6 +92,7 @@
           @click="deleteRow(row)"/>
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <Dialog
       v-model="addDialogOpen"
@@ -292,6 +299,10 @@ import {
   usStateLabelFromCode,
 } from 'components/helpers.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
@@ -529,6 +540,8 @@ async function loadTenants(paginationPayload) {
     await siteStore.getTenantList({
       page: paginationPayload.page,
       limit: paginationPayload.rowsPerPage,
+      sortBy: paginationPayload.sortBy,
+      descending: paginationPayload.descending,
     })
     tablePagination.value = tenantTablePaginationFromStore(paginationPayload)
   } catch (error) {

@@ -1,40 +1,57 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page admin-list-page--stacked">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
 
-    <div class="row items-center q-mb-md q-col-gutter-sm">
-      <div class="col">
-        <div class="text-h6">{{ t('referenceDataTaxonomies') }}</div>
-        <div class="text-caption text-grey-7">
-          {{ t('referenceDataTaxonomiesSubtitle') }}
+    <AdminListPageHeader
+      :title="t('referenceDataTaxonomies')"
+      :subtitle="t('referenceDataTaxonomiesSubtitle')">
+      <template #center>
+        <q-input
+          v-model="searchDraft"
+          outlined
+          clearable
+          hide-bottom-space
+          debounce="400"
+          class="admin-list-page__search-input"
+          :placeholder="t('referenceDataSearch')"
+          :data-testid="tid('input', 'search')"
+          @update:model-value="onSearchChange">
+          <template #prepend>
+            <q-icon name="search" size="18px" />
+          </template>
+        </q-input>
+      </template>
+      <template #actions>
+        <div class="admin-list-page__actions">
+          <div class="admin-list-page__actions-bar row items-center
+            q-gutter-sm no-wrap">
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="filter_alt"
+              :data-testid="tid('btn', 'filters')"
+              :badge="filterBadge"
+              badge-color="primary"
+              :label="t('filters')"
+              @click="filterDialogOpen = true" />
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="cloud_upload"
+              :data-testid="tid('btn', 'import')"
+              :label="t('referenceDataImport')"
+              @click="goImport" />
+          </div>
         </div>
-      </div>
-      <div class="col-auto row q-gutter-sm">
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="filter_alt"
-          :data-testid="tid('btn', 'filters')"
-          :badge="filterBadge"
-          badge-color="primary"
-          :label="t('filters')"
-          @click="filterDialogOpen = true" />
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="cloud_upload"
-          :data-testid="tid('btn', 'import')"
-          :label="t('referenceDataImport')"
-          @click="goImport" />
-      </div>
-    </div>
+      </template>
+    </AdminListPageHeader>
 
     <q-banner
       v-if="errorMessage"
@@ -43,6 +60,7 @@
       {{ errorMessage }}
     </q-banner>
 
+    <AdminTablePanel class="admin-list-page__table-panel">
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -55,20 +73,6 @@
       :loading="false"
       :rows-per-page-label="t('rowsPerPage')"
       @request="onTableRequest">
-      <template #top>
-        <q-input
-          v-model="searchDraft"
-          outlined
-          dense
-          clearable
-          debounce="400"
-          class="q-mr-md"
-          style="min-width: 220px"
-          :label="t('referenceDataSearch')"
-          :data-testid="tid('input', 'search')"
-          @update:model-value="onSearchChange" />
-        <q-space />
-      </template>
       <template #body-cell-active="scope">
         <q-td :props="scope">
           <q-toggle
@@ -93,6 +97,7 @@
           @click="openDetail(row)" />
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <div
       v-if="!loading && !errorMessage && rows.length === 0"
@@ -219,6 +224,10 @@ import {
   siteBreakpoints,
 } from 'components/constants.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { usePageLoadingOverlay }

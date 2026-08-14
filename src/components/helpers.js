@@ -469,6 +469,9 @@ export function mapAiSuggestion(row) {
     [sk.encounterId]: optionalNumber(
       row.encounter_id ?? row.encounterId,
     ),
+    [sk.conversationId]: String(
+      row.conversation_id ?? row.conversationId ?? '',
+    ),
     [sk.tokensPrompt]: optionalNumber(
       row.tokens_prompt ?? row.tokensPrompt,
     ),

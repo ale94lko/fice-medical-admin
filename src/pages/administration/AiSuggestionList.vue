@@ -1,20 +1,13 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page admin-list-page--stacked">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
 
-    <div class="row items-center q-mb-md q-col-gutter-sm">
-      <div class="col">
-        <div class="text-h6">
-          {{ t('aiSuggestions') }}
-        </div>
-        <div class="text-caption text-grey-7">
-          {{ t('aiSuggestionsSubtitle') }}
-        </div>
-      </div>
-    </div>
+    <AdminListPageHeader
+      :title="t('aiSuggestions')"
+      :subtitle="t('aiSuggestionsSubtitle')" />
 
     <div class="row q-col-gutter-md q-mb-md">
       <div class="col-12 col-md-3">
@@ -87,6 +80,7 @@
       {{ t('aiSuggestionSelectTenant') }}
     </q-banner>
 
+    <AdminTablePanel class="admin-list-page__table-panel">
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -95,7 +89,6 @@
       v-model:pagination="tablePagination"
       :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
-      :title="t('aiSuggestions')"
       :rows="sortedTableRows"
       :columns="columns"
       :loading="false"
@@ -115,6 +108,7 @@
           @click="openView(row)"/>
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <div
       v-if="selectedTenantId && !loading && rows.length === 0"
@@ -216,6 +210,10 @@ import {
 } from 'components/helpers.js'
 import { apiInstance } from 'boot/axios'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import { isAuthSessionEndUIError } from
   'src/utils/api-session-error.js'
@@ -226,6 +224,7 @@ import { usePageLoadingOverlay } from
 import { fetchAllPaginatedRaw }
   from 'src/utils/permission-catalog-tree.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
+import { listSortQueryParams } from 'src/utils/list-sort-query.js'
 
 const {
   tid,
@@ -360,6 +359,7 @@ function buildListParams(paginationPayload) {
   const params = {
     page: Math.max(0, safePage - 1),
     limit: safeLimit,
+    ...listSortQueryParams(paginationPayload),
   }
   params['tenant_id'] = Number(selectedTenantId.value)
   const subtenantId = optionalId(selectedSubtenantId.value)
@@ -563,6 +563,14 @@ const columns = computed(() => [
     sortable: true,
   },
   {
+    name: sk.conversationId,
+    required: false,
+    label: t('aiSuggestionConversationId'),
+    align: quasarTableAlign.left,
+    field: row => dashText(row[sk.conversationId]),
+    sortable: false,
+  },
+  {
     name: sk.createdAt,
     required: true,
     label: t('aiSuggestionCreatedAt'),
@@ -653,6 +661,11 @@ const detailRows = computed(() => {
       key: sk.encounterId,
       label: t('aiSuggestionEncounterId'),
       value: dashText(r[sk.encounterId]),
+    },
+    {
+      key: sk.conversationId,
+      label: t('aiSuggestionConversationId'),
+      value: dashText(r[sk.conversationId]),
     },
     {
       key: sk.tokensPrompt,

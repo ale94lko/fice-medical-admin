@@ -12,7 +12,7 @@
             <q-item-label overline class="text-grey-7">
               {{ col.label }}
             </q-item-label>
-            <q-item-label class="text-body2 text-weight-medium">
+            <q-item-label class="text-body2">
               {{ formatColValue(col) }}
             </q-item-label>
           </q-item-section>

@@ -1,9 +1,32 @@
 <template>
-  <q-page class="admin-page">
+  <q-page class="admin-page admin-list-page">
     <AppLoadingOverlay
       scope="content"
       :showing="pageOverlayShowing"
       :message="pageOverlayMessage" />
+    <AdminListPageHeader :title="t('modules')">
+      <template #actions>
+        <div class="admin-list-page__actions">
+          <div class="admin-list-page__actions-bar row items-center
+            q-gutter-sm no-wrap">
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              class="app-btn-outline"
+              icon="filter_alt"
+              :data-testid="tid('btn', 'filters')"
+              badge-color="primary"
+              :disable="loading || editSaving"
+              :title="t('filters')"
+              :label="t('filters')"
+              :badge="getbadge(activeModuleFilterCount)"
+              @click="openModuleFilters"/>
+          </div>
+        </div>
+      </template>
+    </AdminListPageHeader>
+    <AdminTablePanel class="admin-list-page__table-panel">
     <AdminQTable
       class="table admin-data-table"
       :test-id="tableTestId"
@@ -12,28 +35,11 @@
       v-model:pagination="tablePagination"
       :rows-per-page-options="[10, 20, 50, 100]"
       :grid="showGrid"
-      :title="t('modules')"
       :rows="sortedTableRows"
       :columns="columns"
       :loading="false"
       :rows-per-page-label="t('rowsPerPage')"
       @request="onTableRequest">
-      <template v-slot:top>
-        <q-space />
-        <q-btn
-          outline
-          no-caps
-          color="primary"
-          class="app-btn-outline"
-          icon="filter_alt"
-          :data-testid="tid('btn', 'filters')"
-          badge-color="primary"
-          :disable="loading || editSaving"
-          :title="t('filters')"
-          :label="t('filters')"
-          :badge="getbadge(activeModuleFilterCount)"
-          @click="openModuleFilters"/>
-      </template>
       <template #row-actions="{ row }">
         <q-btn
           flat
@@ -59,6 +65,7 @@
           @click="openEditModule(row)"/>
       </template>
     </AdminQTable>
+    </AdminTablePanel>
 
     <Dialog
       v-model="editDialogOpen"
@@ -211,6 +218,10 @@ import {
   siteBreakpointsPx,
 } from 'components/constants.js'
 import AdminQTable from 'components/AdminQTable.vue'
+import AdminListPageHeader from
+  'components/admin-table/AdminListPageHeader.vue'
+import AdminTablePanel from
+  'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import Dialog from 'components/Dialog.vue'
 import { useModuleEditForm } from 'src/composables/useModuleEditForm.js'
@@ -298,6 +309,8 @@ async function loadModules(paginationPayload) {
     await siteStore.getModuleList({
       page: paginationPayload.page,
       limit: paginationPayload.rowsPerPage,
+      sortBy: paginationPayload.sortBy,
+      descending: paginationPayload.descending,
     })
     tablePagination.value = moduleTablePaginationFromStore(
       paginationPayload,
