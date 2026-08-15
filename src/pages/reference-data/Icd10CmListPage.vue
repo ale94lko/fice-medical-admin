@@ -297,6 +297,8 @@ import AdminTablePanel from
   'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { useListFooterPagination } from
+  'src/composables/useListFooterPagination.js'
 import { usePageLoadingOverlay }
   from 'src/composables/usePageLoadingOverlay.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
@@ -644,9 +646,11 @@ async function loadRecentJobs() {
   }
 }
 
-function onTableRequest(props) {
-  return loadCodes(props.pagination)
-}
+const { onTableRequest } = useListFooterPagination({
+  tablePagination,
+  loading,
+  loadPage: loadCodes,
+})
 
 function onSearchChange(value) {
   searchApplied.value = String(value ?? '').trim()

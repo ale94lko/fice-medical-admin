@@ -315,6 +315,8 @@ import AdminTablePanel from
   'components/admin-table/AdminTablePanel.vue'
 import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { useListFooterPagination } from
+  'src/composables/useListFooterPagination.js'
 import { usePageLoadingOverlay }
   from 'src/composables/usePageLoadingOverlay.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
@@ -745,9 +747,11 @@ async function loadJobs(pagination = tablePagination.value) {
   }
 }
 
-function onTableRequest(props) {
-  return loadJobs(props.pagination)
-}
+const { onTableRequest } = useListFooterPagination({
+  tablePagination,
+  loading,
+  loadPage: loadJobs,
+})
 
 function onHistoryFilterChange() {
   return loadJobs({ ...tablePagination.value, page: 1 })

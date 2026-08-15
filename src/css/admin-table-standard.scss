@@ -274,12 +274,7 @@
   }
 
   .q-table__bottom {
-    flex: 0 0 auto;
-    padding: 8px 16px;
-    border-top: 1px solid $table-border;
-    background: $surface;
-    color: $text-muted;
-    font-size: 0.8125rem;
+    display: none !important;
   }
 
   .q-table__control .q-btn {
@@ -324,4 +319,124 @@
 .q-dialog .admin-data-table {
   max-height: min(420px, 55vh);
   height: auto;
+}
+
+.admin-table-pagination {
+  width: 100%;
+  gap: 6px;
+  min-height: 32px;
+  padding: 2px 12px;
+  color: $text-muted;
+  font-size: 12px;
+  line-height: 1.1;
+  box-sizing: border-box;
+
+  &__end {
+    gap: 12px;
+    max-width: 100%;
+  }
+
+  &__summary {
+    flex-shrink: 0;
+    color: $text-muted;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  &__controls {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  &__per-page {
+    min-width: 100px;
+
+    .q-field__control {
+      min-height: 24px !important;
+      height: 24px !important;
+    }
+
+    .q-field__native {
+      min-height: 24px !important;
+      padding-top: 0;
+      padding-bottom: 0;
+      color: $text-muted;
+      font-size: 12px;
+    }
+
+    .q-field__marginal {
+      height: 24px !important;
+    }
+  }
+
+  .q-pagination .q-btn {
+    min-width: 24px !important;
+    width: 24px !important;
+    min-height: 24px !important;
+    height: 24px !important;
+    font-size: 0.6875rem;
+  }
+
+  &--footer {
+    width: auto;
+    min-height: 36px;
+    padding: 0;
+    border-bottom: none;
+    background: transparent;
+    color: $shell-text-muted;
+
+    .admin-table-pagination__summary {
+      color: $shell-text-muted;
+    }
+
+    .admin-table-pagination__per-page {
+      .q-field__native {
+        color: $shell-text-muted;
+      }
+
+      .q-field__append,
+      .q-field__marginal {
+        color: $shell-text-muted;
+      }
+    }
+
+    .q-pagination .q-btn {
+      color: $shell-text !important;
+    }
+  }
+
+  &--compact {
+    width: 100%;
+    justify-content: stretch !important;
+
+    .admin-table-pagination__end {
+      width: 100%;
+      justify-content: space-between;
+      flex-wrap: nowrap;
+      gap: 8px;
+    }
+
+    .admin-table-pagination__controls {
+      width: 100%;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    .admin-table-pagination__per-page {
+      min-width: 0;
+      flex: 1 1 auto;
+      max-width: 140px;
+    }
+
+    .admin-table-pagination__page-indicator {
+      flex: 0 0 auto;
+      font-size: 0.75rem;
+      color: inherit;
+      white-space: nowrap;
+    }
+
+    .admin-table-pagination__nav-btn {
+      color: inherit !important;
+    }
+  }
 }

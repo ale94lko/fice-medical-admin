@@ -1282,6 +1282,7 @@ function applyTenantPayloadToSnakeBody(body, payload, tk) {
   const rows = [
     { p: tk.name, b: 'name' },
     { p: tk.mainSubtenantName, b: 'main_subtenant_name' },
+    { p: tk.clinicType, b: 'clinic_type' },
     { p: tk.domain, b: 'domain' },
     {
       p: tk.planId,

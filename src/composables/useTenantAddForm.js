@@ -12,6 +12,7 @@ import {
   selectBehaviors,
   tenantFieldKeys,
   tenantFormDefaults,
+  clinicTypeValues,
   usStateOptions,
 } from 'components/constants.js'
 import {
@@ -69,6 +70,33 @@ export function useTenantAddForm() {
 
   const timezoneOptions = computed(() => getOfficialUtcOffsetTimezoneOptions())
 
+  const clinicTypeOptions = computed(() => [
+    {
+      label: t('clinicTypePrimaryCare'),
+      value: clinicTypeValues.primaryCare,
+    },
+    {
+      label: t('clinicTypeSpecialty'),
+      value: clinicTypeValues.specialty,
+    },
+    {
+      label: t('clinicTypeBehavioralHealth'),
+      value: clinicTypeValues.behavioralHealth,
+    },
+    {
+      label: t('clinicTypeUrgentCare'),
+      value: clinicTypeValues.urgentCare,
+    },
+    {
+      label: t('clinicTypeTelehealth'),
+      value: clinicTypeValues.telehealth,
+    },
+    {
+      label: t('clinicTypeMultiSpecialty'),
+      value: clinicTypeValues.multiSpecialty,
+    },
+  ])
+
   const fields = computed(() => {
     const requiredRule = val =>
       (!!val && String(val).trim().length > 0) || t('fieldRequired')
@@ -99,6 +127,15 @@ export function useTenantAddForm() {
         labelKey: 'mainSubtenantName',
         createOnly: true,
         rules: [requiredRule, tenantNameLettersRule],
+      },
+      {
+        key: tk.clinicType,
+        kind: fieldTypes.select,
+        labelKey: 'clinicType',
+        createOnly: true,
+        rules: [selectRequiredRule],
+        options: clinicTypeOptions,
+        defaultValue: tenantFormDefaults.clinicType,
       },
       {
         key: tk.domain,
@@ -211,6 +248,7 @@ export function useTenantAddForm() {
     return {
       [tk.name]: form[tk.name].trim(),
       [tk.mainSubtenantName]: form[tk.mainSubtenantName].trim(),
+      [tk.clinicType]: String(form[tk.clinicType] ?? '').trim(),
       [tk.domain]: form[tk.domain].trim(),
       [tk.planId]: Number(form[tk.planId]),
       [tk.schemaName]: deriveSchemaNameFromTenantName(form[tk.name]),

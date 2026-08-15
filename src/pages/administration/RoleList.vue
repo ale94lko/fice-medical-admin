@@ -267,6 +267,8 @@ import {
 import { useRoleAddForm } from 'src/composables/useRoleAddForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { useListFooterPagination } from
+  'src/composables/useListFooterPagination.js'
 import { usePageLoadingOverlay, createDialogPreparingHandlers }
   from 'src/composables/usePageLoadingOverlay.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
@@ -441,9 +443,11 @@ async function loadRoles(paginationPayload) {
   }
 }
 
-function onTableRequest(props) {
-  return loadRoles(props.pagination)
-}
+const { onTableRequest } = useListFooterPagination({
+  tablePagination,
+  loading,
+  loadPage: loadRoles,
+})
 
 watch(roleFormDialogOpen, open => {
   if (!open) {

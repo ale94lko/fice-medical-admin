@@ -123,6 +123,13 @@ export default {
   newTenant: 'Nuevo tenant',
   editTenant: 'Editar tenant',
   mainSubtenantName: 'Nombre del sub-tenant principal',
+  clinicType: 'Tipo de clínica',
+  clinicTypePrimaryCare: 'Atención primaria',
+  clinicTypeSpecialty: 'Especialidad',
+  clinicTypeBehavioralHealth: 'Salud mental',
+  clinicTypeUrgentCare: 'Urgencias',
+  clinicTypeTelehealth: 'Telehealth',
+  clinicTypeMultiSpecialty: 'Multi-especialidad',
   fieldRequired: 'Este campo es obligatorio',
   tenantNameLettersRequired:
     'El nombre debe incluir letras para generar el esquema de base de datos',
@@ -293,6 +300,9 @@ export default {
   permissionTreeEmpty: 'No hay permisos disponibles.',
   permissionSelectAll: 'Seleccionar todo',
   permissionDeselectAll: 'Quitar selección',
+  permissionImplicationWarning:
+    'Tener permisos de escritura sin el de ver suele no funcionar: '
+    + 'el usuario puede no ver la pantalla que puede editar.',
   rolePickerEmpty: 'No hay roles disponibles.',
   modulePickerEmpty: 'No hay módulos disponibles.',
   catalogs: 'Catálogos',
@@ -359,6 +369,12 @@ export default {
   tenantFilterApply: 'Aplicar',
   tenantFilterClear: 'Limpiar todo',
   rowsPerPage: 'Filas por página',
+  adminTablePaginationSummary:
+    'Mostrando {from} a {to} de {total} registros',
+  adminTablePerPage: '{count} por página',
+  adminTablePerPageAll: 'Todos',
+  adminTablePaginationPrev: 'Página anterior',
+  adminTablePaginationNext: 'Página siguiente',
   all: 'Todos',
   open: 'Abierto',
   closed: 'Cerrado',

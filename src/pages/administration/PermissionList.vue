@@ -285,6 +285,8 @@ import Dialog from 'components/Dialog.vue'
 import { usePermissionEditForm } from 'src/composables/usePermissionEditForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { useListFooterPagination } from
+  'src/composables/useListFooterPagination.js'
 import { usePageLoadingOverlay } from 'src/composables/usePageLoadingOverlay.js'
 import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
 import { fetchAllPaginatedRaw }
@@ -490,15 +492,18 @@ async function loadAllPermissions() {
   }
 }
 
-function onTableRequest(props) {
+function applyPermissionPagination(paginationPayload) {
   tablePagination.value = {
-    sortBy: props.pagination.sortBy,
-    descending: props.pagination.descending,
-    page: props.pagination.page,
-    rowsPerPage: props.pagination.rowsPerPage,
+    ...paginationPayload,
     rowsNumber: filteredRows.value.length,
   }
 }
+
+const { onTableRequest } = useListFooterPagination({
+  tablePagination,
+  loading,
+  loadPage: applyPermissionPagination,
+})
 
 onMounted(() => {
   loadAllPermissions()

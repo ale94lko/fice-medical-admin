@@ -43,8 +43,16 @@
       </q-toolbar>
     </q-header>
     <q-footer class="app-footer">
-      <q-toolbar class="justify-center">
-        <label>&copy; 2026 FiCE Medical Admin. Powered by LandA Apps</label>
+      <q-toolbar class="app-footer__toolbar">
+        <p
+          v-if="showFooterCopyright"
+          class="app-footer__copyright q-mb-none">
+          &copy; 2026 FiCE Medical Admin. Powered by LandA Apps
+        </p>
+        <q-space v-if="showFooterCopyright" />
+        <div class="app-footer__pagination">
+          <AppFooterPaginationHost />
+        </div>
       </q-toolbar>
     </q-footer>
     <q-drawer
@@ -324,6 +332,10 @@ import {
 } from 'components/constants.js'
 import { useI18n } from 'vue-i18n'
 import ModalComponent from 'components/ModalComponent.vue'
+import AppFooterPaginationHost from
+  'components/admin-table/AppFooterPaginationHost.vue'
+import { useAppFooterPagination } from
+  'src/composables/useAppFooterPagination.js'
 
 const $q = useQuasar()
 const router = useRouter()
@@ -362,6 +374,10 @@ const showDrawerPinControl = computed(
 const activeClass = computed(() => 'app-nav-item--active')
 
 const { t } = useI18n()
+const { footerPaginationState } = useAppFooterPagination()
+const showFooterCopyright = computed(
+  () => !(mobileView.value && footerPaginationState.visible),
+)
 
 const handleSignOutConfirm = () => {
   authStore.logout(router, t)

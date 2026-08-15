@@ -149,6 +149,8 @@ import { isAuthSessionEndUIError } from
   'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from
   'src/composables/useAdminPageTestIds.js'
+import { useListFooterPagination } from
+  'src/composables/useListFooterPagination.js'
 import { usePageLoadingOverlay } from
   'src/composables/usePageLoadingOverlay.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
@@ -250,9 +252,11 @@ async function loadRows(paginationPayload) {
   }
 }
 
-function onTableRequest(props) {
-  return loadRows(props.pagination)
-}
+const { onTableRequest } = useListFooterPagination({
+  tablePagination,
+  loading,
+  loadPage: loadRows,
+})
 
 onMounted(() => {
   loadRows(tablePagination.value)

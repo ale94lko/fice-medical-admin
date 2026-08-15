@@ -51,7 +51,11 @@
         <section
           v-for="module in nodes"
           :key="moduleNodeKey(module)"
-          class="permission-module-picker__card">
+          class="permission-module-picker__card"
+          :class="{
+            'permission-module-picker__card--warning':
+              moduleHasImplicationWarning(module),
+          }">
           <div class="permission-module-picker__header">
             <q-checkbox
               dense
@@ -84,6 +88,23 @@
               </span>
               <span class="permission-module-picker__title">
                 {{ module.label }}
+              </span>
+              <span
+                v-if="moduleHasImplicationWarning(module)"
+                class="permission-module-picker__hint"
+                :data-testid="`${testId}-module-${
+                  moduleNodeKey(module)
+                }-hint`"
+                :aria-label="t('permissionImplicationWarning')"
+                @click.stop.prevent>
+                ?
+                <q-tooltip
+                  class="permission-module-picker__hint-tooltip"
+                  anchor="top middle"
+                  self="bottom middle"
+                  :offset="[0, 6]">
+                  {{ t('permissionImplicationWarning') }}
+                </q-tooltip>
               </span>
               <span class="permission-module-picker__badge">
                 {{ selectedCount(module) }}/{{ leafCount(module) }}
@@ -142,6 +163,8 @@ import {
   toggleLeafSelection,
   toStoredPermissionId,
 } from 'src/utils/tree-selection.js'
+import { moduleKeysWithMissingViewImplications } from
+  'src/utils/permission-implication.js'
 
 const props = defineProps({
   nodes: {
@@ -209,6 +232,22 @@ const noneSelected = computed(() => {
 
   return allLeaves.value.every(value => !selected.has(String(value)))
 })
+
+const warningModuleKeys = computed(() =>
+  moduleKeysWithMissingViewImplications(
+    props.nodes,
+    props.modelValue,
+  ),
+)
+
+function moduleHasImplicationWarning(module) {
+  const key = moduleNodeKey(module)
+  if (key == null) {
+    return false
+  }
+
+  return warningModuleKeys.value.has(String(key))
+}
 
 watch(
   () => props.nodes,
@@ -399,6 +438,16 @@ function deselectAll() {
     overflow: hidden;
   }
 
+  &__card--warning {
+    background: #fff7ed;
+    border-color: #fdba74;
+  }
+
+  &__card--warning &__icon {
+    background: rgba(#ea580c, 0.14);
+    color: #c2410c;
+  }
+
   &__header {
     display: flex;
     align-items: flex-start;
@@ -447,6 +496,22 @@ function deselectAll() {
     font-size: 0.875rem;
     font-weight: 700;
     line-height: 1.3;
+  }
+
+  &__hint {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: #ffedd5;
+    color: #c2410c;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: help;
   }
 
   &__badge {

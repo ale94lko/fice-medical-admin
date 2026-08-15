@@ -115,6 +115,13 @@ export default {
   newTenant: 'New tenant',
   editTenant: 'Edit tenant',
   mainSubtenantName: 'Main Subtenant Name',
+  clinicType: 'Clinic type',
+  clinicTypePrimaryCare: 'Primary care',
+  clinicTypeSpecialty: 'Specialty',
+  clinicTypeBehavioralHealth: 'Behavioral health',
+  clinicTypeUrgentCare: 'Urgent care',
+  clinicTypeTelehealth: 'Telehealth',
+  clinicTypeMultiSpecialty: 'Multi-specialty',
   fieldRequired: 'This field is required',
   tenantNameLettersRequired:
     'The name must contain letters to generate the database schema',
@@ -278,6 +285,9 @@ export default {
   permissionTreeEmpty: 'No permissions available.',
   permissionSelectAll: 'Select all',
   permissionDeselectAll: 'Deselect all',
+  permissionImplicationWarning:
+    'Write access without view usually does not work: '
+    + 'the user may not see the screen they can edit.',
   rolePickerEmpty: 'No roles available.',
   modulePickerEmpty: 'No modules available.',
   catalogs: 'Catalogs',
@@ -341,6 +351,12 @@ export default {
   tenantFilterApply: 'Apply',
   tenantFilterClear: 'Clear all',
   rowsPerPage: 'Rows per page',
+  adminTablePaginationSummary:
+    'Showing {from} to {to} of {total} records',
+  adminTablePerPage: '{count} per page',
+  adminTablePerPageAll: 'All',
+  adminTablePaginationPrev: 'Previous page',
+  adminTablePaginationNext: 'Next page',
   all: 'All',
   open: 'Open',
   closed: 'Closed',

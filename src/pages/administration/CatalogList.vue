@@ -267,6 +267,8 @@ import ModalComponent from 'components/ModalComponent.vue'
 import { buildCatalogMutationBody } from 'components/helpers.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { useListFooterPagination } from
+  'src/composables/useListFooterPagination.js'
 import { usePageLoadingOverlay } from 'src/composables/usePageLoadingOverlay.js'
 import { sortRowsByColumns } from 'src/utils/table-sort.js'
 
@@ -376,9 +378,11 @@ async function loadCatalogs(paginationPayload) {
   }
 }
 
-function onTableRequest(props) {
-  return loadCatalogs(props.pagination)
-}
+const { onTableRequest } = useListFooterPagination({
+  tablePagination,
+  loading,
+  loadPage: loadCatalogs,
+})
 
 watch(catalogFormDialogOpen, open => {
   if (!open) {

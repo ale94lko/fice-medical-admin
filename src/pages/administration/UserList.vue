@@ -395,6 +395,8 @@ import {
 import { useUserAddForm } from 'src/composables/useUserAddForm.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
+import { useListFooterPagination } from
+  'src/composables/useListFooterPagination.js'
 import { usePageLoadingOverlay, createDialogPreparingHandlers }
   from 'src/composables/usePageLoadingOverlay.js'
 import { filterLabelValueOptions } from 'src/utils/q-select-local-filter.js'
@@ -748,9 +750,11 @@ async function loadUsers(paginationPayload) {
   }
 }
 
-function onTableRequest(props) {
-  return loadUsers(props.pagination)
-}
+const { onTableRequest } = useListFooterPagination({
+  tablePagination,
+  loading,
+  loadPage: loadUsers,
+})
 
 onMounted(() => {
   void loadTenantNameLookup()

@@ -284,6 +284,8 @@ import Dialog from 'components/Dialog.vue'
 import ModalComponent from 'components/ModalComponent.vue'
 import { clonePermissionTreeForViewReadonly } from 'components/helpers.js'
 import { usePlanForm } from 'src/composables/usePlanForm.js'
+import { useListFooterPagination } from
+  'src/composables/useListFooterPagination.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { usePageLoadingOverlay, createDialogPreparingHandlers }
@@ -451,9 +453,11 @@ async function loadPlans(paginationPayload) {
   }
 }
 
-function onTableRequest(props) {
-  return loadPlans(props.pagination)
-}
+const { onTableRequest } = useListFooterPagination({
+  tablePagination,
+  loading,
+  loadPage: loadPlans,
+})
 
 watch(planFormDialogOpen, open => {
   if (!open) {

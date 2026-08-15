@@ -205,6 +205,7 @@ export const inputNormalizeKeys = {
 export const tenantFieldKeys = {
   name: 'name',
   mainSubtenantName: 'mainSubtenantName',
+  clinicType: 'clinicType',
   domain: 'domain',
   planId: 'planId',
   planName: 'planName',
@@ -435,6 +436,16 @@ export const tenantModelFallbacks = {
 export const tenantFormDefaults = {
   timezonePicker: 'UTC-08:00',
   statusActive: 1,
+  clinicType: 'PRIMARY_CARE',
+}
+
+export const clinicTypeValues = {
+  primaryCare: 'PRIMARY_CARE',
+  specialty: 'SPECIALTY',
+  behavioralHealth: 'BEHAVIORAL_HEALTH',
+  urgentCare: 'URGENT_CARE',
+  telehealth: 'TELEHEALTH',
+  multiSpecialty: 'MULTI_SPECIALTY',
 }
 
 export const htmlInputTypes = {
