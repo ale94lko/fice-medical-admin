@@ -6,6 +6,23 @@
         <div class="app-dialog-toolbar__title-text">
           <slot />
         </div>
+        <q-btn
+          v-if="info"
+          flat
+          round
+          dense
+          icon="help_outline"
+          class="app-dialog-toolbar__info q-ml-xs"
+          :data-testid="infoTestId"
+          :aria-label="info">
+          <q-tooltip
+            class="app-dialog-info-tooltip"
+            anchor="bottom middle"
+            self="top middle"
+            :offset="[0, 8]">
+            {{ info }}
+          </q-tooltip>
+        </q-btn>
       </div>
     </q-toolbar-title>
     <q-space />
@@ -36,6 +53,14 @@ defineProps({
     default: false,
   },
   closeTestId: {
+    type: String,
+    default: '',
+  },
+  info: {
+    type: String,
+    default: '',
+  },
+  infoTestId: {
     type: String,
     default: '',
   },

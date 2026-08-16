@@ -397,7 +397,8 @@
 }
 
 .app-dialog-card--lg,
-.app-dialog-card:has(.app-dialog-form-stack) {
+.app-dialog-card:has(.app-dialog-form-stack),
+.app-dialog-card:has(.dialog-form-sections) {
   min-width: min(720px, calc(100vw - 24px));
   max-width: min(920px, calc(100vw - 24px));
   width: 100%;
@@ -436,13 +437,20 @@
   }
 }
 
-.app-dialog-toolbar__close {
+.app-dialog-toolbar__close,
+.app-dialog-toolbar__info {
   color: $text-muted !important;
 
   &:hover:not(.disabled) {
     color: $text-strong !important;
     background: $surface-muted !important;
   }
+}
+
+.app-dialog-info-tooltip {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  max-width: 280px;
 }
 
 .app-dialog-card__body,
@@ -459,6 +467,19 @@
   scrollbar-gutter: stable both-edges;
   background: $surface;
   -webkit-overflow-scrolling: touch;
+}
+
+.app-dialog-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.app-dialog-form > .app-dialog-card__body {
+  max-height: none;
 }
 
 .app-dialog-form-stack {
@@ -494,6 +515,8 @@
   padding: 16px 24px !important;
   background: $surface;
   border-top: 1px solid $border-subtle;
+  position: relative;
+  z-index: 1;
 
   .q-btn {
     min-height: 40px;

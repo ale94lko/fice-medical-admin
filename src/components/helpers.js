@@ -59,6 +59,10 @@ export function tenantByIdPath(id) {
   return `${apiPaths.tenantsList}/${encodeURIComponent(String(id))}`
 }
 
+export function tenantLogoPath(id) {
+  return `${tenantByIdPath(id)}/logo`
+}
+
 export function tenantSubTenantsPath(id) {
   return `${tenantByIdPath(id)}/sub-tenants`
 }
@@ -1278,6 +1282,13 @@ export function mapTenant(tenant) {
     [tk.contactPhone]: tenant.contact_phone ?? tenant.contactPhone ?? '',
     [tk.contactAddress]: tenant.contact_address ?? tenant.contactAddress ?? '',
     [tk.notes]: tenant.notes ?? '',
+    [tk.legalBusinessName]:
+      tenant.legal_business_name ?? tenant.legalBusinessName ?? '',
+    [tk.taxId]: tenant.tax_id ?? tenant.taxId ?? '',
+    [tk.billingEmail]: tenant.billing_email ?? tenant.billingEmail ?? '',
+    [tk.billingPhone]: tenant.billing_phone ?? tenant.billingPhone ?? '',
+    [tk.billingAddress]:
+      tenant.billing_address ?? tenant.billingAddress ?? '',
     [tk.state]: tenant.state ?? null,
     [tk.country]: tenant.country ?? null,
     planModuleIds: extractPlanModuleIds(tenant.plan),
@@ -1332,6 +1343,23 @@ export function mergeTenantWithPayload(mapped, payload, plans) {
       payload[tk.contactAddress],
     ),
     [tk.notes]: pickStr(mapped[tk.notes], payload[tk.notes]),
+    [tk.legalBusinessName]: pickStr(
+      mapped[tk.legalBusinessName],
+      payload[tk.legalBusinessName],
+    ),
+    [tk.taxId]: pickStr(mapped[tk.taxId], payload[tk.taxId]),
+    [tk.billingEmail]: pickStr(
+      mapped[tk.billingEmail],
+      payload[tk.billingEmail],
+    ),
+    [tk.billingPhone]: pickStr(
+      mapped[tk.billingPhone],
+      payload[tk.billingPhone],
+    ),
+    [tk.billingAddress]: pickStr(
+      mapped[tk.billingAddress],
+      payload[tk.billingAddress],
+    ),
     [tk.state]: mapped[tk.state] ?? payload[tk.state] ?? null,
     [tk.country]: mapped[tk.country] ?? payload[tk.country] ?? null,
     [tk.status]: normalizeTenantStatus(
@@ -1362,6 +1390,19 @@ function applyTenantPayloadToSnakeBody(body, payload, tk) {
     { p: tk.contactPhone, b: 'contact_phone', map: v => v ?? '' },
     { p: tk.contactAddress, b: 'contact_address', map: v => v ?? '' },
     { p: tk.notes, b: 'notes', map: v => v ?? '' },
+    {
+      p: tk.legalBusinessName,
+      b: 'legal_business_name',
+      map: v => v ?? '',
+    },
+    { p: tk.taxId, b: 'tax_id', map: v => v ?? '' },
+    { p: tk.billingEmail, b: 'billing_email', map: v => v ?? '' },
+    { p: tk.billingPhone, b: 'billing_phone', map: v => v ?? '' },
+    {
+      p: tk.billingAddress,
+      b: 'billing_address',
+      map: v => v ?? '',
+    },
     { p: tk.state, b: 'state' },
     { p: tk.country, b: 'country' },
     {

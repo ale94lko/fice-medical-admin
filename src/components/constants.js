@@ -201,11 +201,21 @@ export const fieldTypes = {
   permissionTree: 'permissionTree',
   rolePicker: 'rolePicker',
   modulePicker: 'modulePicker',
+  heading: 'heading',
+  logo: 'logo',
 }
 
 export const inputNormalizeKeys = {
   roleName: 'roleName',
   tenantDomain: 'tenantDomain',
+  ein: 'ein',
+}
+
+export const tenantFormSectionIds = {
+  basic: 'basic',
+  contact: 'contact',
+  legal: 'legal',
+  credentials: 'credentials',
 }
 
 export const tenantFieldKeys = {
@@ -225,6 +235,13 @@ export const tenantFieldKeys = {
   contactAddress: 'contactAddress',
   notes: 'notes',
   schemaName: 'schemaName',
+  legalBusinessName: 'legalBusinessName',
+  taxId: 'taxId',
+  billingEmail: 'billingEmail',
+  billingPhone: 'billingPhone',
+  billingAddress: 'billingAddress',
+  sameAsContactAddress: 'sameAsContactAddress',
+  logoFile: 'logoFile',
 }
 
 export const tenantListColumnKeys = {
@@ -465,12 +482,14 @@ export const htmlInputTypes = {
 
 export const htmlInputModes = {
   tel: 'tel',
+  numeric: 'numeric',
 }
 
 export const htmlAutocomplete = {
   off: 'off',
   newPassword: 'new-password',
   telNational: 'tel-national',
+  email: 'email',
 }
 
 export const qSelectOptionKeys = {
@@ -490,6 +509,8 @@ export const quasarNotifyTypes = {
   warning: 'warning',
   info: 'info',
 }
+
+export const storedFileMaxBytes = 25 * 1024 * 1024
 
 export const clipboardMimeTypes = {
   textPlain: 'text/plain',

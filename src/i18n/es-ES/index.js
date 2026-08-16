@@ -143,7 +143,63 @@ export default {
   viewTenantTitle: 'Detalle del tenant',
   schemaName: 'Nombre del esquema',
   newTenant: 'Nuevo tenant',
+  newTenantSubtitle:
+    'Introduce la información para crear un tenant o subtenant.',
   editTenant: 'Editar tenant',
+  editTenantSubtitle:
+    'Actualiza la información de este tenant.',
+  tenantSectionBasic: 'Información básica',
+  tenantSectionContact: 'Contacto y dirección',
+  tenantSectionLegal: 'Legal y facturación',
+  tenantSectionLegalHelper:
+    'Proporciona la información legal y de facturación '
+    + 'de esta organización.',
+  tenantSectionCredentials: 'Credenciales',
+  tenantSectionCredentialsHelper:
+    'Inscripción de pagadores, identificadores de proveedor '
+    + 'y credenciales de la organización.',
+  tenantSectionBadgeRequired: 'Obligatorio',
+  tenantSectionBadgeFuture: 'Futuro',
+  tenantLegalBillingFooterHint:
+    'Puedes actualizar la información legal y de facturación '
+    + 'más tarde en la configuración del tenant.',
+  tenantLogoUpload: 'Subir logo',
+  tenantLogoReplace: 'Reemplazar',
+  tenantLogoInvalidType:
+    'Usa una imagen JPEG, PNG, WebP o GIF.',
+  tenantLogoTooLarge: 'El archivo del logo es demasiado grande.',
+  tenantLogoUploadError: 'No se pudo subir el logo.',
+  tenantNamePlaceholder: 'Introduce el nombre del tenant',
+  mainSubtenantNamePlaceholder:
+    'Introduce el nombre del sub-tenant principal (si aplica)',
+  tenantDomainPlaceholder: 'p. ej. acmecare.com',
+  tenantPlanPlaceholder: 'Selecciona un plan',
+  tenantTimezonePlaceholder: 'Selecciona la zona horaria',
+  tenantLanguagePlaceholder: 'Selecciona el idioma',
+  tenantCountryPlaceholder: 'Selecciona el país',
+  tenantStatePlaceholder: 'Selecciona el estado / provincia',
+  contactEmailPlaceholder: "nombre{'@'}dominio.com",
+  contactPhonePlaceholder: '(555) 123-4567',
+  contactAddressPlaceholder: 'Introduce la dirección',
+  notesOptional: 'Notas (opcional)',
+  tenantNotesPlaceholder: 'Introduce notas adicionales',
+  legalBusinessName: 'Nombre legal (DBA)',
+  legalBusinessNamePlaceholder: 'Introduce el nombre legal',
+  taxIdEin: 'Tax ID / EIN',
+  taxIdEinPlaceholder: '12-3456789',
+  taxIdEinHint:
+    'Obligatorio para facturación, reclamaciones '
+    + 'e integraciones de pagadores.',
+  taxIdEinInvalid:
+    'Introduce un EIN de 9 dígitos (123456789 o 12-3456789).',
+  billingEmail: 'Correo de facturación',
+  billingEmailPlaceholder: "billing{'@'}dominio.com",
+  billingPhone: 'Teléfono de facturación',
+  billingAddress: 'Dirección de facturación',
+  billingAddressPlaceholder: 'Introduce la dirección de facturación',
+  sameAsContactAddress: 'Igual que la dirección de contacto',
+  sameAsContactAddressHint:
+    'Copiar la dirección de contacto a la de facturación',
   mainSubtenantName: 'Nombre del sub-tenant principal',
   clinicType: 'Tipo de clínica',
   clinicTypePrimaryCare: 'Atención primaria',

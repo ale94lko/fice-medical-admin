@@ -38,6 +38,7 @@ import {
   mergeUserWithPayload,
   roleByIdPath,
   tenantByIdPath,
+  tenantLogoPath,
   userByIdPath,
 } from 'components/helpers.js'
 import { listPaginationParams } from 'src/utils/list-sort-query.js'
@@ -237,6 +238,33 @@ export const useSiteStore = defineStore('site', {
         return updated
       } catch (error) {
         console.error('Error updating tenant:', error)
+        throw error
+      }
+    },
+    async uploadTenantLogo(id, file) {
+      const formData = new FormData()
+      formData.append('file', file)
+      await apiInstance.post(tenantLogoPath(id), formData)
+    },
+    async fetchTenantLogo(id) {
+      try {
+        const response = await apiInstance.get(
+          tenantLogoPath(id),
+          { responseType: 'blob' },
+        )
+        const blob = response.data
+        if (!(blob instanceof Blob) || blob.size === 0) {
+          return null
+        }
+        if (String(blob.type || '').includes('json')) {
+          return null
+        }
+
+        return blob
+      } catch (error) {
+        if (error?.response?.status === 404) {
+          return null
+        }
         throw error
       }
     },

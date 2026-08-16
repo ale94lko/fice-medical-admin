@@ -36,6 +36,7 @@ export function createDialogPreparingHandlers(preparingRef, {
   const stop = () => {
     preparingRef.value = false
   }
+  const hasAfterOpen = typeof afterOpen === 'function'
 
   return {
     onOpen: async() => {
@@ -44,6 +45,9 @@ export function createDialogPreparingHandlers(preparingRef, {
         if (typeof onOpen === 'function') {
           await onOpen()
         }
+        if (!hasAfterOpen) {
+          stop()
+        }
       } catch (error) {
         stop()
         throw error
@@ -51,7 +55,7 @@ export function createDialogPreparingHandlers(preparingRef, {
     },
     afterOpen: async(form) => {
       try {
-        if (typeof afterOpen === 'function') {
+        if (hasAfterOpen) {
           await afterOpen(form)
         }
       } finally {

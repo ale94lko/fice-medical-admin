@@ -33,9 +33,13 @@
                 {{ t('loginMfaSubtitle') }}
               </p>
               <text-input
+                ref="mfaInputRef"
                 v-model="mfaCode"
                 icon-left="pin"
                 test-id="input_mfa_code"
+                autocomplete="one-time-code"
+                autofocus
+                float-label-on-value
                 :label="t('loginMfaCodeLabel')"
               />
             </template>
@@ -80,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from 'stores/auth-store'
@@ -94,6 +98,7 @@ const email = ref('')
 const password = ref('')
 const mfaCode = ref('')
 const mfaChallengeToken = ref('')
+const mfaInputRef = ref(null)
 const phase = ref('password')
 
 const isEmailInvalid = ref(false)
@@ -113,6 +118,14 @@ const passwordErrorMessage = computed(() => {
 })
 
 const { t } = useI18n()
+
+watch(phase, async(nextPhase) => {
+  if (nextPhase !== 'mfa') {
+    return
+  }
+  await nextTick()
+  mfaInputRef.value?.focus()
+})
 
 function backToPassword() {
   phase.value = 'password'

@@ -215,7 +215,7 @@ export function usePlanForm(editingPlanRef) {
       {
         key: pk.price,
         kind: fieldTypes.input,
-        labelKey: pk.price,
+        labelKey: 'planPrice',
         inputType: htmlInputTypes.text,
         rules: [requiredRule, priceRule],
       },

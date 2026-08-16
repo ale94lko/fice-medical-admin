@@ -135,7 +135,61 @@ export default {
   viewTenantTitle: 'Tenant details',
   schemaName: 'Schema name',
   newTenant: 'New tenant',
+  newTenantSubtitle:
+    'Enter the information below to create a new tenant '
+    + 'or subtenant.',
   editTenant: 'Edit tenant',
+  editTenantSubtitle:
+    'Update the information below for this tenant.',
+  tenantSectionBasic: 'Basic Information',
+  tenantSectionContact: 'Contact & Address',
+  tenantSectionLegal: 'Legal & Billing',
+  tenantSectionLegalHelper:
+    'Provide legal and billing information for this organization.',
+  tenantSectionCredentials: 'Credentials',
+  tenantSectionCredentialsHelper:
+    'Payer enrollment, provider identifiers '
+    + 'and organization credentials.',
+  tenantSectionBadgeRequired: 'Required',
+  tenantSectionBadgeFuture: 'Future',
+  tenantLegalBillingFooterHint:
+    'You can update legal and billing information later '
+    + 'from tenant settings.',
+  tenantLogoUpload: 'Upload logo',
+  tenantLogoReplace: 'Replace',
+  tenantLogoInvalidType:
+    'Use a JPEG, PNG, WebP, or GIF image.',
+  tenantLogoTooLarge: 'Logo file is too large.',
+  tenantLogoUploadError: 'Could not upload the logo.',
+  tenantNamePlaceholder: 'Enter tenant name',
+  mainSubtenantNamePlaceholder:
+    'Enter main subtenant name (if applicable)',
+  tenantDomainPlaceholder: 'e.g. acmecare.com',
+  tenantPlanPlaceholder: 'Select plan',
+  tenantTimezonePlaceholder: 'Select timezone',
+  tenantLanguagePlaceholder: 'Select language',
+  tenantCountryPlaceholder: 'Select country',
+  tenantStatePlaceholder: 'Select state / province',
+  contactEmailPlaceholder: "name{'@'}domain.com",
+  contactPhonePlaceholder: '(555) 123-4567',
+  contactAddressPlaceholder: 'Enter street address',
+  notesOptional: 'Notes (optional)',
+  tenantNotesPlaceholder: 'Enter any additional notes',
+  legalBusinessName: 'Legal Business Name (DBA)',
+  legalBusinessNamePlaceholder: 'Enter legal business name',
+  taxIdEin: 'Tax ID / EIN',
+  taxIdEinPlaceholder: '12-3456789',
+  taxIdEinHint:
+    'Required for billing, claims and future payer integrations.',
+  taxIdEinInvalid:
+    'Enter a valid 9-digit EIN (123456789 or 12-3456789).',
+  billingEmail: 'Billing Email',
+  billingEmailPlaceholder: "billing{'@'}domain.com",
+  billingPhone: 'Billing Phone',
+  billingAddress: 'Billing Address',
+  billingAddressPlaceholder: 'Enter billing address',
+  sameAsContactAddress: 'Same as contact address',
+  sameAsContactAddressHint: 'Copy contact address to billing address',
   mainSubtenantName: 'Main Subtenant Name',
   clinicType: 'Clinic type',
   clinicTypePrimaryCare: 'Primary care',

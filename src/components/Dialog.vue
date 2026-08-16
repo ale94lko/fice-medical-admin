@@ -13,23 +13,43 @@
         :close-label="t('close')"
         :disable-close="saving"
         :close-test-id="tid('btn', 'close')"
+        :info="subtitleText"
+        :info-test-id="tid('btn', 'info')"
         @close="close">
         {{ titleText }}
       </AppDialogHeader>
       <q-form
         ref="formRef"
-        class="q-gutter-none"
+        class="q-gutter-none app-dialog-form"
         greedy
         novalidate
         autocomplete="off"
         @submit.prevent="onFormSubmit"
         @validation-error="onFormValidationError">
         <q-card-section
-          class="app-dialog-card__body q-px-lg q-pt-md q-pb-md
-            app-dialog-form-stack"
-          :style="{ maxHeight: bodyMaxHeight }">
+          class="app-dialog-card__body q-px-lg q-pt-md q-pb-md"
+          :class="hasSections
+            ? 'dialog-form-sections'
+            : 'app-dialog-form-stack'"
+          :style="bodySectionStyle">
+          <DialogFormSection
+            v-for="block in layoutBlocks"
+            :key="block.id"
+            :plain="!block.section"
+            :model-value="sectionExpanded[block.id]"
+            :title="sectionTitle(block.section)"
+            :helper="sectionHelper(block.section)"
+            :badge="sectionBadge(block.section)"
+            :badge-tone="block.section?.badgeTone || ''"
+            :test-id="block.section
+              ? tid('section', block.id)
+              : ''"
+            :toggle-test-id="block.section
+              ? tid('section', block.id, 'toggle')
+              : ''"
+            @update:model-value="v => setSectionExpanded(block.id, v)">
           <template
-            v-for="field in fields"
+            v-for="field in block.fields"
             :key="field.key">
           <div
             v-if="showFieldRow(field)"
@@ -38,14 +58,55 @@
               'dialog-field-row--full':
                 field.kind === fieldTypes.textarea
                 || field.kind === fieldTypes.permissionTree
+                || field.kind === fieldTypes.heading
+                || field.kind === fieldTypes.checkbox
                 || isOptionCardPickerField(field)
                 || field.kind === fieldTypes.addressSuggest,
-            }">
+              'dialog-field-row--logo':
+                field.kind === fieldTypes.logo,
+            }"
+            :style="logoRowStyle(field)">
+              <div
+                v-if="field.kind === fieldTypes.heading"
+                class="dialog-section-heading">
+                <div class="dialog-section-heading__row">
+                  <span
+                    v-if="field.icon"
+                    class="dialog-section-heading__icon"
+                    aria-hidden="true">
+                    <q-icon
+                      :name="field.icon"
+                      size="20px"/>
+                  </span>
+                  <div class="dialog-section-heading__title">
+                    {{ labelFor(field) }}
+                  </div>
+                </div>
+                <p
+                  v-if="hintFor(field)"
+                  class="dialog-section-heading__hint text-body2
+                    text-grey-7 q-mb-none">
+                  {{ hintFor(field) }}
+                </p>
+              </div>
+              <div
+                v-else-if="field.kind === fieldTypes.logo"
+                class="dialog-logo-field">
+                <CompanyLogoField
+                  :model-value="form[field.key]"
+                  :disabled="isFieldReadonly(field)"
+                  :test-id="resolveFieldTestId(field)"
+                  @update:model-value="
+                    v => onLogoFieldUpdate(field, v)
+                  "
+                />
+              </div>
               <q-input
-                v-if="showPhoneField(field)"
+                v-else-if="showPhoneField(field)"
                 :data-testid="resolveFieldTestId(field)"
                 :model-value="form[field.key]"
                 outlined
+                dense
                 :lazy-rules="lazyRulesFor(field)"
                 :reactive-rules="hasRules(field)"
                 :readonly="isFieldReadonly(field)"
@@ -56,12 +117,19 @@
                 :name="field.inputName"
                 :autocomplete="plainInputAutocomplete(field)"
                 :label="labelFor(field)"
+                :placeholder="placeholderFor(field)"
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
+                :maxlength="field.maxlength"
                 @blur="onFieldBlur(field)"
                 @keydown="ev => onPlainTextKeydown(field, ev)"
                 @paste="ev => onPlainTextPaste(field, ev)"
                 @update:model-value="v => onPlainInputField(field, v)">
+                <template
+                  v-if="field.prependIcon"
+                  #prepend>
+                  <q-icon :name="field.prependIcon"/>
+                </template>
                 <template
                   v-if="isPasswordInputType(field.inputType)
                     && !isFieldReadonly(field)"
@@ -76,6 +144,7 @@
                 v-else-if="isDialPrefixedPhoneField(field)"
                 :data-testid="resolveFieldTestId(field)"
                 outlined
+                dense
                 :lazy-rules="lazyRulesFor(field)"
                 :reactive-rules="hasRules(field)"
                 :type="htmlInputTypes.text"
@@ -85,6 +154,7 @@
                 :readonly="isFieldReadonly(field)"
                 :maxlength="phoneDisplayMaxLength(field)"
                 :label="labelFor(field)"
+                :placeholder="placeholderFor(field)"
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
                 @keydown="ev => onDialPrefixedPhoneKeydown(field, ev)"
@@ -108,11 +178,13 @@
                 <q-input
                   v-model="form[field.key]"
                   outlined
+                  dense
                   :data-testid="resolveFieldTestId(field)"
                   :lazy-rules="lazyRulesFor(field)"
                   :reactive-rules="hasRules(field)"
                   :readonly="isFieldReadonly(field)"
                   :label="labelFor(field)"
+                  :placeholder="placeholderFor(field)"
                   :hint="addressSuggestHint(field)"
                   :rules="rulesFor(field)"
                   :loading="addressSuggestSlot(field).loading"
@@ -150,17 +222,30 @@
                 :rows="field.rows == null ? 3 : field.rows"
                 :autogrow="field.autogrow !== false"
                 :label="labelFor(field)"
+                :placeholder="placeholderFor(field)"
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
                 @blur="onFieldBlur(field)"/>
-              <q-checkbox
+              <div
                 v-else-if="field.kind === fieldTypes.checkbox"
-                v-model="form[field.key]"
-                :data-testid="resolveFieldTestId(field)"
-                color="primary"
-                class="dialog-checkbox-field"
-                :disable="isFieldReadonly(field)"
-                :label="labelFor(field)"/>
+                class="dialog-checkbox-wrap">
+                <q-checkbox
+                  v-model="form[field.key]"
+                  :data-testid="resolveFieldTestId(field)"
+                  color="primary"
+                  class="dialog-checkbox-field"
+                  :disable="isFieldReadonly(field)"
+                  :label="labelFor(field)"
+                  @update:model-value="
+                    v => onSelectModelValue(field, v)
+                  "/>
+                <div
+                  v-if="captionFor(field)"
+                  class="dialog-checkbox-caption text-body2
+                    text-grey-7">
+                  {{ captionFor(field) }}
+                </div>
+              </div>
               <div
                 v-else-if="field.kind === fieldTypes.permissionTree"
                 class="dialog-option-picker"
@@ -232,6 +317,7 @@
                 v-model="form[field.key]"
                 :data-testid="resolveFieldTestId(field)"
                 outlined
+                dense
                 emit-value
                 map-options
                 :lazy-rules="lazyRulesFor(field)"
@@ -243,6 +329,7 @@
                 :option-label="field.optionLabel || qSelectOptionKeys.label"
                 :option-value="field.optionValue || qSelectOptionKeys.value"
                 :label="labelFor(field)"
+                :placeholder="placeholderFor(field)"
                 :hint="hintFor(field)"
                 :rules="rulesFor(field)"
                 :loading="loadingFor(field)"
@@ -273,30 +360,47 @@
               </q-select>
           </div>
           </template>
+          </DialogFormSection>
         </q-card-section>
-        <q-card-actions align="right" class="app-dialog-card__actions">
-          <q-btn
-            no-caps
-            outline
-            color="primary"
-            class="app-btn-outline"
-            :data-testid="tid('btn', 'cancel')"
-            :title="t(cancelKey)"
-            :label="t(cancelKey)"
-            :disable="saving"
-            @click="close"
-          />
-          <q-btn
-            no-caps
-            unelevated
-            class="primary-action"
-            color="primary"
-            :data-testid="tid('btn', 'save')"
-            :type="htmlButtonTypes.submit"
-            :title="t(submitKey)"
-            :label="t(submitKey)"
-            :loading="saving"
-          />
+        <q-card-actions
+          :align="footerHintText ? 'between' : 'right'"
+          class="app-dialog-card__actions"
+          :class="{
+            'app-dialog-card__actions--with-hint': footerHintText,
+          }">
+          <div
+            v-if="footerHintText"
+            class="dialog-form-footer-hint">
+            <q-icon
+              name="info"
+              size="18px"
+              color="info"/>
+            <span>{{ footerHintText }}</span>
+          </div>
+          <div class="dialog-form-footer-actions">
+            <q-btn
+              no-caps
+              outline
+              color="primary"
+              class="app-btn-outline"
+              :data-testid="tid('btn', 'cancel')"
+              :title="t(cancelKey)"
+              :label="t(cancelKey)"
+              :disable="saving"
+              @click="close"
+            />
+            <q-btn
+              no-caps
+              unelevated
+              class="primary-action"
+              color="primary"
+              :data-testid="tid('btn', 'save')"
+              :type="htmlButtonTypes.submit"
+              :title="t(submitKey)"
+              :label="t(submitKey)"
+              :loading="saving"
+            />
+          </div>
         </q-card-actions>
       </q-form>
     </q-card>
@@ -340,11 +444,14 @@ import {
 import UsFlagIcon from './UsFlagIcon.vue'
 import PasswordToggleIcon from './PasswordToggleIcon.vue'
 import AppDialogHeader from './AppDialogHeader.vue'
+import DialogFormSection from './DialogFormSection.vue'
 import PermissionModulePicker from './PermissionModulePicker.vue'
 import RoleOptionPicker from './RoleOptionPicker.vue'
+import CompanyLogoField from './CompanyLogoField.vue'
 import {
   searchTenantAddressSuggestions,
 } from 'src/services/tenant-address-search.js'
+import { sanitizeEinInput } from 'src/utils/ein.js'
 import {
   isPasswordInputType,
   usePasswordVisibilityByKey,
@@ -373,6 +480,10 @@ const INPUT_NORMALIZER_CONFIG = {
     sanitize: sanitizeTenantDomainInput,
     allowKey: key => /^[a-zA-Z0-9_]$/.test(key),
   },
+  [inputNormalizeKeys.ein]: {
+    sanitize: sanitizeEinInput,
+    allowKey: key => /^[0-9-]$/.test(key),
+  },
 }
 
 const props = defineProps({
@@ -393,6 +504,10 @@ const props = defineProps({
   bodyMaxHeight: { type: String, default: 'min(720px, 82vh)' },
   editableKeysWhenEdit: { type: Array, default: null },
   testIdPrefix: { type: String, default: 'form-dialog' },
+  sections: { type: Array, default: null },
+  subtitleKey: { type: String, default: '' },
+  subtitle: { type: String, default: '' },
+  footerHintKey: { type: String, default: '' },
 })
 
 const emit = defineEmits([
@@ -408,6 +523,7 @@ const form = reactive({})
 const selectFilterQueries = reactive({})
 const addressSuggestByKey = reactive({})
 const addressSuggestTimers = {}
+const sectionExpanded = reactive({})
 
 const titleText = computed(() => {
   if (props.title) {
@@ -418,6 +534,49 @@ const titleText = computed(() => {
   }
 
   return ''
+})
+
+const subtitleText = computed(() => {
+  if (props.subtitle) {
+    return props.subtitle
+  }
+  if (props.subtitleKey) {
+    return t(props.subtitleKey)
+  }
+
+  return ''
+})
+
+const footerHintText = computed(() => {
+  if (!props.footerHintKey) {
+    return ''
+  }
+
+  return t(props.footerHintKey)
+})
+
+const hasSections = computed(() =>
+  Array.isArray(props.sections) && props.sections.length > 0,
+)
+
+const bodySectionStyle = computed(() => {
+  if (hasSections.value) {
+    return undefined
+  }
+
+  return { maxHeight: props.bodyMaxHeight }
+})
+
+const layoutBlocks = computed(() => {
+  if (!hasSections.value) {
+    return [{ id: 'all', section: null, fields: props.fields }]
+  }
+
+  return props.sections.map(section => ({
+    id: section.id,
+    section,
+    fields: props.fields.filter(f => f.sectionId === section.id),
+  }))
 })
 
 const dialogTestId = computed(() => buildTestId(props.testIdPrefix, 'dialog'))
@@ -474,6 +633,29 @@ function showFieldRow(field) {
     || props.initialValues != null
 }
 
+function logoRowStyle(field) {
+  if (field.kind !== fieldTypes.logo) {
+    return undefined
+  }
+  const idx = props.fields.findIndex(f => f.key === field.key)
+  if (idx < 0) {
+    return undefined
+  }
+  let span = 0
+  for (const next of props.fields.slice(idx + 1)) {
+    if (next.layoutAside !== true) {
+      break
+    }
+    if (showFieldRow(next)) {
+      span += 1
+    }
+  }
+
+  return {
+    '--dialog-logo-row-span': String(Math.max(span, 1)),
+  }
+}
+
 function isOptionCardPickerField(field) {
   return field.kind === fieldTypes.rolePicker
     || field.kind === fieldTypes.modulePicker
@@ -516,6 +698,9 @@ function blankForKind(field) {
   }
   if (field.kind === fieldTypes.checkbox) {
     return false
+  }
+  if (field.kind === fieldTypes.logo) {
+    return null
   }
   if (field.kind === fieldTypes.select) {
     if (field.multiple === true) {
@@ -763,6 +948,7 @@ watch(
       return
     }
     resetForm()
+    resetSectionExpanded()
     if (typeof props.onOpen === typeNames.function) {
       await props.onOpen()
     }
@@ -898,7 +1084,66 @@ function dialMetaForField(field) {
 }
 
 function labelFor(field) {
-  return field.labelKey ? t(field.labelKey) : (field.label || '')
+  const base = field.labelKey ? t(field.labelKey) : (field.label || '')
+  if (field.required) {
+    return `${base} *`
+  }
+
+  return base
+}
+
+function placeholderFor(field) {
+  return field.placeholderKey ? t(field.placeholderKey) : undefined
+}
+
+function captionFor(field) {
+  return field.captionKey ? t(field.captionKey) : ''
+}
+
+function sectionTitle(section) {
+  if (!section) {
+    return ''
+  }
+
+  return section.titleKey ? t(section.titleKey) : (section.title || '')
+}
+
+function sectionHelper(section) {
+  if (!section?.helperKey) {
+    return ''
+  }
+
+  return t(section.helperKey)
+}
+
+function sectionBadge(section) {
+  if (!section?.badgeKey) {
+    return ''
+  }
+
+  return t(section.badgeKey)
+}
+
+function setSectionExpanded(id, value) {
+  if (!id) {
+    return
+  }
+  sectionExpanded[id] = value
+}
+
+function resetSectionExpanded() {
+  for (const key of Object.keys(sectionExpanded)) {
+    delete sectionExpanded[key]
+  }
+  for (const section of props.sections || []) {
+    sectionExpanded[section.id] = section.defaultExpanded !== false
+  }
+}
+
+function expandAllSections() {
+  for (const section of props.sections || []) {
+    sectionExpanded[section.id] = true
+  }
 }
 
 function hintFor(field) {
@@ -950,6 +1195,9 @@ function rulesFor(field) {
       const cc = form[field.phoneDialFromCountryField]
       const digits = parseNationalPhoneDigits(cc, val)
       const country = cc || countryCodeUsa
+      if (!digits.length && field.optional) {
+        return true
+      }
       if (country === countryCodeUsa) {
         return digits.length === 10 || t('invalidPhone')
       }
@@ -960,6 +1208,8 @@ function rulesFor(field) {
   if (
     !list.length
     && field.kind !== fieldTypes.checkbox
+    && field.kind !== fieldTypes.logo
+    && field.kind !== fieldTypes.heading
     && field.reserveValidationSpace !== false
   ) {
     list.push(validationSpacerRule)
@@ -1052,6 +1302,10 @@ function onFieldBlur(field) {
   }
 }
 
+function onLogoFieldUpdate(field, value) {
+  form[field.key] = value
+}
+
 function close() {
   emit(dialogEmitEvents.updateModelValue, false)
 }
@@ -1059,7 +1313,7 @@ function close() {
 function snapshotForm() {
   const out = {}
   for (const field of props.fields) {
-    if (field?.key) {
+    if (field?.key && field.omitFromPayload !== true) {
       out[field.key] = form[field.key]
     }
   }
@@ -1068,6 +1322,7 @@ function snapshotForm() {
 }
 
 function onFormValidationError() {
+  expandAllSections()
   $q.notify({
     type: quasarNotifyTypes.negative,
     icon: 'error',
@@ -1105,6 +1360,45 @@ async function onFormSubmit() {
   .dialog-field-row {
     width: 100%;
     min-width: 0;
+  }
+
+  .dialog-field-row--logo {
+    align-self: start;
+    width: 100%;
+    min-width: 0;
+    grid-row: span var(--dialog-logo-row-span, 1);
+  }
+
+  .dialog-logo-field {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .dialog-logo-field :deep(.company-logo-field) {
+    width: 100%;
+  }
+
+  .dialog-logo-field :deep(.company-logo-field__preview) {
+    width: 100%;
+    height: 160px;
+  }
+
+  .dialog-logo-field :deep(.company-logo-field__actions) {
+    width: 100%;
+  }
+
+  .dialog-logo-field :deep(.company-logo-field__actions .q-btn) {
+    width: 100%;
+  }
+
+  @media (max-width: 599px) {
+    .dialog-field-row--logo {
+      width: 100%;
+      max-width: none;
+      grid-column: 1 / -1;
+      grid-row: auto;
+    }
   }
 
   .dialog-field-row :deep(.q-field--outlined .q-field__bottom) {
@@ -1146,5 +1440,106 @@ async function onFormSubmit() {
 
   .dialog-option-picker__rules {
     min-height: 0;
+  }
+
+  .dialog-form-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    min-height: 0;
+  }
+
+  .app-dialog-card__actions--with-hint {
+    justify-content: space-between;
+  }
+
+  .dialog-form-footer-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 0 auto;
+    min-width: 0;
+    margin-right: auto;
+    margin-left: 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #e0f2fe;
+    color: $text-strong;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  .dialog-form-footer-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 12px;
+
+    > .q-btn {
+      margin: 0;
+    }
+  }
+
+  .dialog-checkbox-caption {
+    margin: -4px 0 0 28px;
+  }
+
+  .dialog-section-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid $border-subtle;
+  }
+
+  .dialog-field-row:not(:first-child) .dialog-section-heading {
+    margin-top: 8px;
+  }
+
+  .dialog-section-heading__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dialog-section-heading__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: $radius-md;
+    background: rgba($primary, 0.12);
+    color: $primary;
+  }
+
+  .dialog-section-heading__title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: $text-strong;
+  }
+
+  .dialog-section-heading__hint {
+    margin: 0;
+  }
+
+  .dialog-field-row :deep(
+    .q-field--outlined:not(.q-textarea) .q-field__control
+  ) {
+    min-height: 40px;
+    height: 40px;
+  }
+
+  .dialog-field-row :deep(
+    .q-field--outlined:not(.q-textarea) .q-field__marginal
+  ) {
+    height: 40px;
   }
 </style>

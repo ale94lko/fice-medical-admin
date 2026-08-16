@@ -98,10 +98,13 @@
       v-model="addDialogOpen"
       :test-id-prefix="formTestIdPrefix"
       :title-key="tenantDialogTitleKey"
+      :subtitle-key="tenantDialogSubtitleKey"
+      footer-hint-key="tenantLegalBillingFooterHint"
       :fields="tenantAddFields"
       :initial-values="tenantDialogInitialValues"
       :editable-keys-when-edit="tenantDialogEditableKeys"
       :on-open="onTenantDialogOpenWithOverlay"
+      :after-open="onTenantDialogReadyWithOverlay"
       :format-payload="formatTenantDialogPayload"
       :saving="addSaving"
       @save="onSaveTenant"/>
@@ -310,6 +313,7 @@ import {
   TENANT_EDITABLE_KEYS_ON_EDIT,
   useTenantAddForm,
 } from 'src/composables/useTenantAddForm.js'
+import { formatEinDisplay } from 'src/utils/ein.js'
 import { isAuthSessionEndUIError } from 'src/utils/api-session-error.js'
 import { useAdminPageTestIds } from 'src/composables/useAdminPageTestIds.js'
 import { useListFooterPagination } from
@@ -337,6 +341,7 @@ const deleteConfirmOpen = ref(false)
 const tenantPendingDelete = ref(null)
 const deleteSaving = ref(false)
 const tenantBeingEdited = ref(null)
+const tenantLogoObjectUrl = ref('')
 const viewTenantDialogOpen = ref(false)
 const tenantViewing = ref(null)
 
@@ -361,10 +366,12 @@ const {
   formatTenantUpdatePayload,
 } = useTenantAddForm()
 
-const { onOpen: onTenantDialogOpenWithOverlay } =
-  createDialogPreparingHandlers(formPreparing, {
-    onOpen: onTenantDialogOpen,
-  })
+const {
+  onOpen: onTenantDialogOpenWithOverlay,
+  afterOpen: onTenantDialogReadyWithOverlay,
+} = createDialogPreparingHandlers(formPreparing, {
+  onOpen: onTenantDialogOpen,
+})
 
 function formatTenantDialogPayload(form) {
   if (!tenantBeingEdited.value) {
@@ -375,6 +382,10 @@ function formatTenantDialogPayload(form) {
 
 const tenantDialogTitleKey = computed(() =>
   tenantBeingEdited.value ? 'editTenant' : 'newTenant',
+)
+
+const tenantDialogSubtitleKey = computed(() =>
+  tenantBeingEdited.value ? 'editTenantSubtitle' : 'newTenantSubtitle',
 )
 
 const tenantDialogEditableKeys = computed(() =>
@@ -402,6 +413,19 @@ function tenantRowToFormSeed(row) {
     ),
     [tk.contactAddress]: row[tk.contactAddress] ?? '',
     [tk.notes]: row[tk.notes] ?? '',
+    [tk.legalBusinessName]: row[tk.legalBusinessName] ?? '',
+    [tk.taxId]: formatEinDisplay(row[tk.taxId] ?? ''),
+    [tk.billingEmail]: row[tk.billingEmail] ?? '',
+    [tk.billingPhone]: formatNationalPhoneDisplay(
+      row[tk.country] ?? countryCodeUsa,
+      nationalPhoneDigitsFromStored(
+        row[tk.country] ?? countryCodeUsa,
+        row[tk.billingPhone] ?? '',
+      ),
+    ),
+    [tk.billingAddress]: row[tk.billingAddress] ?? '',
+    [tk.sameAsContactAddress]: false,
+    [tk.logoFile]: row[tk.logoFile] || null,
   }
   if (row[tk.country]) {
     seed[tk.country] = row[tk.country]
@@ -422,6 +446,8 @@ const tenantDialogInitialValues = computed(() =>
 watch(addDialogOpen, open => {
   if (!open) {
     tenantBeingEdited.value = null
+    formPreparing.value = false
+    revokeTenantLogoPreview()
   }
 })
 
@@ -430,6 +456,13 @@ watch(viewTenantDialogOpen, open => {
     tenantViewing.value = null
   }
 })
+
+function revokeTenantLogoPreview() {
+  if (tenantLogoObjectUrl.value) {
+    URL.revokeObjectURL(tenantLogoObjectUrl.value)
+    tenantLogoObjectUrl.value = ''
+  }
+}
 
 function dashText(v) {
   const s = String(v ?? '').trim()
@@ -498,6 +531,34 @@ const tenantDetailRows = computed(() => {
       value: dashText(r[tk.contactAddress]),
     },
     { key: tk.notes, label: t('notes'), value: dashText(r[tk.notes]) },
+    {
+      key: tk.legalBusinessName,
+      label: t('legalBusinessName'),
+      value: dashText(r[tk.legalBusinessName]),
+    },
+    {
+      key: tk.taxId,
+      label: t('taxIdEin'),
+      value: dashText(formatEinDisplay(r[tk.taxId])),
+    },
+    {
+      key: tk.billingEmail,
+      label: t('billingEmail'),
+      value: dashText(r[tk.billingEmail]),
+    },
+    {
+      key: tk.billingPhone,
+      label: t('billingPhone'),
+      value: formatPhoneWithCountryCode(
+        r[tk.country] ?? countryCodeUsa,
+        r[tk.billingPhone] ?? '',
+      ) || '—',
+    },
+    {
+      key: tk.billingAddress,
+      label: t('billingAddress'),
+      value: dashText(r[tk.billingAddress]),
+    },
   ]
 })
 
@@ -828,14 +889,19 @@ const showGrid = computed(() => windowWidth.value <= siteBreakpointsPx.XXS)
 
 // Methods
 const addTenant = () => {
+  revokeTenantLogoPreview()
   tenantBeingEdited.value = null
   addDialogOpen.value = true
 }
 
 async function onSaveTenant(payload) {
   const editingId = tenantBeingEdited.value?.id
+  const logoFile = payload?.[tk.logoFile] instanceof File
+    ? payload[tk.logoFile]
+    : null
   addSaving.value = true
   try {
+    let savedId = editingId
     if (editingId != null) {
       await siteStore.updateTenant(editingId, payload)
       $q.notify({
@@ -843,11 +909,22 @@ async function onSaveTenant(payload) {
         message: t('tenantUpdatedSuccess'),
       })
     } else {
-      await siteStore.createTenant(payload)
+      const created = await siteStore.createTenant(payload)
+      savedId = created?.id
       $q.notify({
         type: quasarNotifyTypes.positive,
         message: t('tenantCreatedSuccess'),
       })
+    }
+    if (logoFile && savedId != null) {
+      try {
+        await siteStore.uploadTenantLogo(savedId, logoFile)
+      } catch {
+        $q.notify({
+          type: quasarNotifyTypes.warning,
+          message: t('tenantLogoUploadError'),
+        })
+      }
     }
     addDialogOpen.value = false
     tablePagination.value = tenantTablePaginationFromStore(
@@ -887,11 +964,22 @@ function getbadge(activeTenantFilterCount) {
     ? String(activeTenantFilterCount) : undefined
 }
 
-function editRow(row) {
+async function editRow(row) {
   if (isMainTenant(row)) {
     return
   }
-  tenantBeingEdited.value = row
+  revokeTenantLogoPreview()
+  let preview = null
+  try {
+    const blob = await siteStore.fetchTenantLogo(row.id)
+    if (blob) {
+      preview = URL.createObjectURL(blob)
+      tenantLogoObjectUrl.value = preview
+    }
+  } catch {
+    preview = null
+  }
+  tenantBeingEdited.value = { ...row, [tk.logoFile]: preview }
   addDialogOpen.value = true
 }
 function deleteRow(row) {

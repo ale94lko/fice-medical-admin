@@ -6,12 +6,14 @@ import {
   countryCodeUsa,
   fieldTypes,
   inputNormalizeKeys,
+  htmlAutocomplete,
   htmlInputTypes,
   localeCodes,
   quasarNotifyTypes,
   selectBehaviors,
   tenantFieldKeys,
   tenantFormDefaults,
+  tenantFormSectionIds,
   clinicTypeValues,
   usStateOptions,
 } from 'components/constants.js'
@@ -19,8 +21,13 @@ import {
   concatInternationalPhone,
   getOfficialUtcOffsetTimezoneOptions,
 } from 'components/helpers.js'
+import {
+  isValidEin,
+  normalizeEinDigits,
+} from 'src/utils/ein.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const sid = tenantFormSectionIds
 
 export const TENANT_EDITABLE_KEYS_ON_EDIT = [
   tenantFieldKeys.domain,
@@ -33,6 +40,13 @@ export const TENANT_EDITABLE_KEYS_ON_EDIT = [
   tenantFieldKeys.contactPhone,
   tenantFieldKeys.contactAddress,
   tenantFieldKeys.notes,
+  tenantFieldKeys.legalBusinessName,
+  tenantFieldKeys.taxId,
+  tenantFieldKeys.billingEmail,
+  tenantFieldKeys.billingPhone,
+  tenantFieldKeys.billingAddress,
+  tenantFieldKeys.sameAsContactAddress,
+  tenantFieldKeys.logoFile,
 ]
 
 function deriveSchemaNameFromTenantName(name) {
@@ -47,6 +61,12 @@ function deriveSchemaNameFromTenantName(name) {
     .map(r => r.toLowerCase())
     .join('_')
     .slice(0, 20)
+}
+
+function optionalTrimmed(value) {
+  const v = String(value ?? '').trim()
+
+  return v || ''
 }
 
 export function useTenantAddForm() {
@@ -109,30 +129,66 @@ export function useTenantAddForm() {
       }
       return EMAIL_RE.test(v) || t('invalidEmail')
     }
+    const optionalEmailRule = val => {
+      const v = String(val ?? '').trim()
+      if (!v) {
+        return true
+      }
+      return EMAIL_RE.test(v) || t('invalidEmail')
+    }
     const tenantNameLettersRule = val =>
       deriveSchemaNameFromTenantName(val) !== ''
       || t('tenantNameLettersRequired')
+    const taxIdRule = val =>
+      isValidEin(val) || t('taxIdEinInvalid')
 
     const tk = tenantFieldKeys
     return [
       {
+        key: '_headingBasic',
+        kind: fieldTypes.heading,
+        icon: 'business',
+        labelKey: 'tenantSectionBasic',
+        omitFromPayload: true,
+        alwaysShow: true,
+        reserveValidationSpace: false,
+      },
+      {
+        key: tk.logoFile,
+        kind: fieldTypes.logo,
+        sectionId: sid.basic,
+        alwaysShow: true,
+        reserveValidationSpace: false,
+      },
+      {
         key: tk.name,
         kind: fieldTypes.input,
+        sectionId: sid.basic,
         labelKey: tk.name,
+        placeholderKey: 'tenantNamePlaceholder',
+        required: true,
+        layoutAside: true,
         rules: [requiredRule, tenantNameLettersRule],
       },
       {
         key: tk.mainSubtenantName,
         kind: fieldTypes.input,
+        sectionId: sid.basic,
         labelKey: 'mainSubtenantName',
+        placeholderKey: 'mainSubtenantNamePlaceholder',
         createOnly: true,
+        required: true,
+        layoutAside: true,
         rules: [requiredRule, tenantNameLettersRule],
       },
       {
         key: tk.clinicType,
         kind: fieldTypes.select,
+        sectionId: sid.basic,
         labelKey: 'clinicType',
         createOnly: true,
+        required: true,
+        layoutAside: true,
         rules: [selectRequiredRule],
         options: clinicTypeOptions,
         defaultValue: tenantFormDefaults.clinicType,
@@ -140,14 +196,20 @@ export function useTenantAddForm() {
       {
         key: tk.domain,
         kind: fieldTypes.input,
+        sectionId: sid.basic,
         labelKey: tk.domain,
+        placeholderKey: 'tenantDomainPlaceholder',
+        required: true,
         rules: [requiredRule],
         inputNormalizeKey: inputNormalizeKeys.tenantDomain,
       },
       {
         key: tk.planId,
         kind: fieldTypes.select,
+        sectionId: sid.basic,
         labelKey: 'planName',
+        placeholderKey: 'tenantPlanPlaceholder',
+        required: true,
         rules: [selectRequiredRule],
         options: () => siteStore.planSelectOptions,
         loading: plansLoading,
@@ -155,8 +217,10 @@ export function useTenantAddForm() {
       {
         key: tk.status,
         kind: fieldTypes.select,
+        sectionId: sid.basic,
         labelKey: tk.status,
         selectBehavior: selectBehaviors.menu,
+        required: true,
         rules: [selectRequiredRule],
         options: () => [
           { label: t('tenantStatusActive'), value: 1 },
@@ -167,7 +231,10 @@ export function useTenantAddForm() {
       {
         key: tk.timezone,
         kind: fieldTypes.select,
+        sectionId: sid.basic,
         labelKey: tk.timezone,
+        placeholderKey: 'tenantTimezonePlaceholder',
+        required: true,
         rules: [selectRequiredRule],
         options: timezoneOptions,
         defaultValue: tenantFormDefaults.timezonePicker,
@@ -175,7 +242,10 @@ export function useTenantAddForm() {
       {
         key: tk.locale,
         kind: fieldTypes.select,
+        sectionId: sid.basic,
         labelKey: 'language',
+        placeholderKey: 'tenantLanguagePlaceholder',
+        required: true,
         rules: [selectRequiredRule],
         options: localeOptions,
         defaultValue: localeCodes.enUs,
@@ -183,7 +253,10 @@ export function useTenantAddForm() {
       {
         key: tk.country,
         kind: fieldTypes.select,
+        sectionId: sid.basic,
         labelKey: tk.country,
+        placeholderKey: 'tenantCountryPlaceholder',
+        required: true,
         rules: [selectRequiredRule],
         options: countryOptions,
         defaultValue: countryCodeUsa,
@@ -191,40 +264,147 @@ export function useTenantAddForm() {
       {
         key: tk.state,
         kind: fieldTypes.select,
+        sectionId: sid.basic,
         labelKey: tk.state,
+        placeholderKey: 'tenantStatePlaceholder',
+        required: true,
         rules: [selectRequiredRule],
         options: stateOptions,
         disable: form => !form[tk.country],
       },
       {
+        key: '_headingContact',
+        kind: fieldTypes.heading,
+        icon: 'contact_mail',
+        labelKey: 'tenantSectionContact',
+        omitFromPayload: true,
+        alwaysShow: true,
+        reserveValidationSpace: false,
+      },
+      {
         key: tk.contactEmail,
         kind: fieldTypes.input,
+        sectionId: sid.contact,
         labelKey: tk.contactEmail,
+        placeholderKey: 'contactEmailPlaceholder',
         inputType: htmlInputTypes.email,
+        prependIcon: 'email',
+        autocomplete: htmlAutocomplete.email,
+        required: true,
         rules: [requiredRule, emailRule],
       },
       {
         key: tk.contactPhone,
         kind: fieldTypes.input,
+        sectionId: sid.contact,
         labelKey: tk.contactPhone,
+        placeholderKey: 'contactPhonePlaceholder',
         phoneDialFromCountryField: tk.country,
+        required: true,
         rules: [requiredRule],
       },
       {
         key: tk.contactAddress,
         kind: fieldTypes.addressSuggest,
+        sectionId: sid.contact,
         labelKey: tk.contactAddress,
+        placeholderKey: 'contactAddressPlaceholder',
         hintKey: 'contactAddressHint',
         addressCountryField: tk.country,
         addressStateField: tk.state,
+        required: true,
         rules: [requiredRule],
       },
       {
         key: tk.notes,
         kind: fieldTypes.textarea,
-        labelKey: tk.notes,
+        sectionId: sid.contact,
+        labelKey: 'notesOptional',
+        placeholderKey: 'tenantNotesPlaceholder',
         rows: 4,
         autogrow: false,
+      },
+      {
+        key: '_headingLegal',
+        kind: fieldTypes.heading,
+        icon: 'account_balance',
+        labelKey: 'tenantSectionLegal',
+        hintKey: 'tenantSectionLegalHelper',
+        omitFromPayload: true,
+        alwaysShow: true,
+        reserveValidationSpace: false,
+      },
+      {
+        key: tk.legalBusinessName,
+        kind: fieldTypes.input,
+        sectionId: sid.legal,
+        labelKey: 'legalBusinessName',
+        placeholderKey: 'legalBusinessNamePlaceholder',
+      },
+      {
+        key: tk.taxId,
+        kind: fieldTypes.input,
+        sectionId: sid.legal,
+        labelKey: 'taxIdEin',
+        placeholderKey: 'taxIdEinPlaceholder',
+        hintKey: 'taxIdEinHint',
+        inputNormalizeKey: inputNormalizeKeys.ein,
+        maxlength: 10,
+        required: true,
+        rules: [requiredRule, taxIdRule],
+      },
+      {
+        key: tk.billingEmail,
+        kind: fieldTypes.input,
+        sectionId: sid.legal,
+        labelKey: 'billingEmail',
+        placeholderKey: 'billingEmailPlaceholder',
+        inputType: htmlInputTypes.email,
+        prependIcon: 'email',
+        autocomplete: htmlAutocomplete.email,
+        rules: [optionalEmailRule],
+      },
+      {
+        key: tk.billingPhone,
+        kind: fieldTypes.input,
+        sectionId: sid.legal,
+        labelKey: 'billingPhone',
+        placeholderKey: 'contactPhonePlaceholder',
+        phoneDialFromCountryField: tk.country,
+        optional: true,
+      },
+      {
+        key: tk.billingAddress,
+        kind: fieldTypes.addressSuggest,
+        sectionId: sid.legal,
+        labelKey: 'billingAddress',
+        placeholderKey: 'billingAddressPlaceholder',
+        hintKey: 'contactAddressHint',
+        addressCountryField: tk.country,
+        addressStateField: tk.state,
+      },
+      {
+        key: tk.sameAsContactAddress,
+        kind: fieldTypes.checkbox,
+        sectionId: sid.legal,
+        labelKey: 'sameAsContactAddress',
+        captionKey: 'sameAsContactAddressHint',
+        omitFromPayload: true,
+        afterModelUpdate: (form, value) => {
+          if (value) {
+            form[tk.billingAddress] = form[tk.contactAddress] || ''
+          }
+        },
+      },
+      {
+        key: '_headingCredentials',
+        kind: fieldTypes.heading,
+        icon: 'badge',
+        labelKey: 'tenantSectionCredentials',
+        hintKey: 'tenantSectionCredentialsHelper',
+        omitFromPayload: true,
+        alwaysShow: true,
+        reserveValidationSpace: false,
       },
     ]
   })
@@ -243,11 +423,27 @@ export function useTenantAddForm() {
     }
   }
 
+  function formatLegalBilling(form, tk) {
+    const phone = optionalTrimmed(form[tk.billingPhone])
+
+    return {
+      [tk.legalBusinessName]: optionalTrimmed(form[tk.legalBusinessName]),
+      [tk.taxId]: normalizeEinDigits(form[tk.taxId]),
+      [tk.billingEmail]: optionalTrimmed(form[tk.billingEmail]),
+      [tk.billingPhone]: phone
+        ? concatInternationalPhone(form[tk.country], phone)
+        : '',
+      [tk.billingAddress]: optionalTrimmed(form[tk.billingAddress]),
+    }
+  }
+
   function formatTenantPayload(form) {
     const tk = tenantFieldKeys
     return {
       [tk.name]: form[tk.name].trim(),
-      [tk.mainSubtenantName]: form[tk.mainSubtenantName].trim(),
+      [tk.mainSubtenantName]: String(
+        form[tk.mainSubtenantName] ?? '',
+      ).trim() || form[tk.name].trim(),
       [tk.clinicType]: String(form[tk.clinicType] ?? '').trim(),
       [tk.domain]: form[tk.domain].trim(),
       [tk.planId]: Number(form[tk.planId]),
@@ -263,6 +459,10 @@ export function useTenantAddForm() {
       [tk.notes]: form[tk.notes].trim(),
       [tk.state]: String(form[tk.state] ?? '').trim(),
       [tk.country]: String(form[tk.country] ?? '').trim(),
+      ...formatLegalBilling(form, tk),
+      [tk.logoFile]: form[tk.logoFile] instanceof File
+        ? form[tk.logoFile]
+        : null,
     }
   }
 
@@ -280,9 +480,13 @@ export function useTenantAddForm() {
       [tk.contactAddress]: form[tk.contactAddress].trim(),
       [tk.notes]: form[tk.notes].trim(),
       [tk.state]: String(form[tk.state] ?? '').trim(),
+      ...formatLegalBilling(form, tk),
     }
     const out = {}
     for (const key of TENANT_EDITABLE_KEYS_ON_EDIT) {
+      if (key === tk.sameAsContactAddress) {
+        continue
+      }
       if (key === tk.status) {
         const s = form[tk.status]
         if (s === 0 || s === 1) {
@@ -300,6 +504,9 @@ export function useTenantAddForm() {
       if (Object.prototype.hasOwnProperty.call(shaped, key)) {
         out[key] = shaped[key]
       }
+    }
+    if (form[tk.logoFile] instanceof File) {
+      out[tk.logoFile] = form[tk.logoFile]
     }
 
     return out
