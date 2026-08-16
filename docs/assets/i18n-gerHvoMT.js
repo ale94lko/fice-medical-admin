@@ -1,1 +1,0 @@
-import{n as e,t}from"./i18n-CI8d_Y-C.js";export{e as default,t as i18nGlobalT};
