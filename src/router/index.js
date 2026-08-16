@@ -63,6 +63,13 @@ export default defineRouter(function() {
         sessionStorage.removeItem(key)
       }
     }
+    if (authStore.token == null) {
+      authStore.restoreSession()
+    }
+    if (authStore.mustEnrollMfa && to.meta.requiresAuth) {
+      next('/login')
+      return
+    }
     if (to.meta.requiresAuth) {
       try {
         let expireAt = new Date(authStore.expireAt)

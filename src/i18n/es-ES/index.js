@@ -21,6 +21,28 @@ export default {
     + 'contraseña.',
   backToLogin: 'Volver a Iniciar sesión',
   invalidCredentials: 'Credenciales inválidas, intente de nuevo.',
+  loginAccountLocked:
+    'Cuenta bloqueada por demasiados intentos. Prueba más tarde.',
+  loginTooManyRequests:
+    'Demasiados intentos. Espera un minuto e inténtalo de nuevo.',
+  loginMfaSubtitle:
+    'Introduzca el código de 6 dígitos de su app o un código de recuperación.',
+  loginMfaCodeLabel: 'Código de autenticación',
+  loginMfaCodeRequired: 'El código de autenticación es obligatorio.',
+  loginMfaVerify: 'Verificar',
+  loginMfaBack: 'Volver al inicio de sesión',
+  loginMfaInvalidCode:
+    'Ese código de autenticación no es válido. Inténtelo de nuevo.',
+  forcedMfaEnrollTitle: 'Configurar autenticación en dos pasos',
+  forcedMfaEnrollSubtitle:
+    'Escanee el código QR con una app de autenticación e introduzca el código.',
+  forcedMfaQrAlt: 'Código QR del autenticador',
+  forcedMfaRecoverySubtitle:
+    'Guarde estos códigos de recuperación ahora. No se mostrarán otra vez.',
+  forcedMfaSetupFailed:
+    'No se pudo iniciar la configuración 2FA. Inténtelo de nuevo.',
+  forcedMfaEnrollSuccess:
+    'La autenticación en dos pasos ya está activada.',
   sessionExpiredRelogin:
     'La session expiró, por favor inicia session de nuevo',
   save: 'Guardar',

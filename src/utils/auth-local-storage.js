@@ -39,5 +39,19 @@ export function clearAuthLocalStorage() {
     keys.expireAtLegacy,
     keys.refresh,
     keys.refreshLegacy,
+    keys.mustEnrollMfa,
   ].forEach(k => localStorage.removeItem(k))
+}
+
+export function readStoredMustEnrollMfa() {
+  return localStorage.getItem(keys.mustEnrollMfa) === 'true'
+}
+
+export function writeStoredMustEnrollMfa(value) {
+  if (value) {
+    localStorage.setItem(keys.mustEnrollMfa, 'true')
+
+    return
+  }
+  localStorage.removeItem(keys.mustEnrollMfa)
 }

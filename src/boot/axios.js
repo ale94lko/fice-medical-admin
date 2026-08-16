@@ -24,6 +24,11 @@ import {
 } from '../utils/api-session-error.js'
 import { deepMapRequestKeysToSnakeCase } from '../utils/request-key-case.js'
 import { i18nGlobalT } from './i18n.js'
+import {
+  applyMfaEnrollmentRequiredFromApiError,
+  applyMfaEnrollmentRequiredFromApiResponse,
+  createMfaEnrollmentRequiredRejection,
+} from '../utils/api-mfa-enrollment-required.js'
 
 let lastSessionExpiredNotifyAt = 0
 
@@ -74,7 +79,9 @@ async function getRefreshJwtForRequest() {
 function isPublicAuthUrl(url) {
   const u = url || ''
 
-  return u.includes(apiPaths.oauthLogin) || u.includes(apiPaths.oauthRefresh)
+  return u.includes(apiPaths.oauthLogin)
+    || u.includes(apiPaths.oauthRefresh)
+    || u.includes(apiPaths.oauthMfaChallenge)
 }
 
 function getRefreshInFlight() {
@@ -216,8 +223,17 @@ api.interceptors.request.use(
 )
 
 api.interceptors.response.use(
-  r => r,
+  async response => {
+    if (await applyMfaEnrollmentRequiredFromApiResponse(response)) {
+      return createMfaEnrollmentRequiredRejection(response)
+    }
+
+    return response
+  },
   async error => {
+    if (await applyMfaEnrollmentRequiredFromApiError(error)) {
+      return Promise.reject(error)
+    }
     const cfg = error.config
     if (cfg?.__refreshCall) {
       if (isInvalidRefreshTokenError(error)) {
@@ -229,7 +245,8 @@ api.interceptors.response.use(
     if (!isUnauthorizedError(error) || !cfg || cfg.__retryAfterRefresh) {
       return Promise.reject(error)
     }
-    if (cfg.url?.includes(apiPaths.oauthLogin)) {
+    if (cfg.url?.includes(apiPaths.oauthLogin)
+      || cfg.url?.includes(apiPaths.oauthMfaChallenge)) {
       return Promise.reject(error)
     }
 

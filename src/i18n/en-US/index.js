@@ -21,6 +21,28 @@ export default {
     + 'reset your password.',
   backToLogin: 'Back to login',
   invalidCredentials: 'Invalid credentials, please try again.',
+  loginAccountLocked:
+    'Account locked after too many failed sign-ins. Try again later.',
+  loginTooManyRequests:
+    'Too many attempts. Please wait a minute and try again.',
+  loginMfaSubtitle:
+    'Enter the 6-digit code from your authenticator app, or a recovery code.',
+  loginMfaCodeLabel: 'Authentication code',
+  loginMfaCodeRequired: 'Authentication code is required.',
+  loginMfaVerify: 'Verify',
+  loginMfaBack: 'Back to sign in',
+  loginMfaInvalidCode:
+    'That authentication code is not valid. Try again.',
+  forcedMfaEnrollTitle: 'Set up two-factor authentication',
+  forcedMfaEnrollSubtitle:
+    'Scan the QR code with an authenticator app, then enter the 6-digit code.',
+  forcedMfaQrAlt: 'Authenticator QR code',
+  forcedMfaRecoverySubtitle:
+    'Save these recovery codes now. They will not be shown again.',
+  forcedMfaSetupFailed:
+    'Could not start two-factor setup. Please try again.',
+  forcedMfaEnrollSuccess:
+    'Two-factor authentication is now enabled.',
   sessionExpiredRelogin:
     'Your session has expired. Please sign in again.',
   save: 'Save',

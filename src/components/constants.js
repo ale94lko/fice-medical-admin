@@ -61,6 +61,11 @@ export const apiPaths = {
   oauthLogin: '/oauth/v1/login',
   oauthRefresh: '/oauth/v1/refresh',
   oauthResetPassword: '/oauth/v1/reset-password',
+  oauthMfaChallenge: '/oauth/v1/mfa/challenge',
+  oauthMfaSetup: '/oauth/v1/mfa/setup',
+  oauthMfaVerifySetup: '/oauth/v1/mfa/verify-setup',
+  oauthMfaStatus: '/oauth/v1/mfa/status',
+  oauthMfaDisable: '/oauth/v1/mfa/disable',
   logout: '/logout',
 }
 
@@ -132,6 +137,7 @@ export const authStorageKeys = {
   expireAtLegacy: 'expiresAt',
   refresh: 'refreshToken',
   refreshLegacy: 'refresh_token',
+  mustEnrollMfa: 'mustEnrollMfa',
 }
 
 export const countryCodeUsa = 'USA'

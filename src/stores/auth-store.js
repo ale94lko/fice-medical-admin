@@ -1,27 +1,37 @@
 import { defineStore } from 'pinia'
 import { apiInstance } from 'boot/axios'
 import { apiPaths, typeNames } from 'components/constants.js'
-import { extractOAuthTokenPayload } from 'components/helpers.js'
+import {
+  extractLoginUserInfo,
+  extractMfaChallenge,
+  extractOAuthTokenPayload,
+} from 'components/helpers.js'
 import {
   clearAuthLocalStorage,
   readStoredExpireAt,
+  readStoredMustEnrollMfa,
   readStoredRefreshToken,
   readStoredToken,
   writeStoredExpireAt,
+  writeStoredMustEnrollMfa,
   writeStoredRefreshToken,
   writeStoredToken,
 } from '../utils/auth-local-storage.js'
 import { dismissSessionExpiredNotify } from '../utils/api-session-error.js'
+import { completeMfaChallenge as postMfaChallenge } from
+  '../utils/mfa-api.js'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: null,
     expireAt: null,
     refreshToken: null,
+    mustEnrollMfa: false,
     _initialized: false,
   }),
   getters: {
     isAuthenticated: state => !!state.token,
+    needsPostLoginSetup: state => state.mustEnrollMfa,
   },
   actions: {
     applyTokensFromApi(td) {
@@ -38,6 +48,42 @@ export const useAuthStore = defineStore('auth', {
       writeStoredToken(this.token)
       writeStoredExpireAt(this.expireAt)
     },
+    applyMfaFlagsFromLogin(body) {
+      const userInfo = extractLoginUserInfo(body)
+      this.mustEnrollMfa = Boolean(userInfo?.mfaEnrollmentRequired)
+        && !userInfo?.mfaEnabled
+      writeStoredMustEnrollMfa(this.mustEnrollMfa)
+    },
+    completeMfaEnrollment() {
+      this.mustEnrollMfa = false
+      writeStoredMustEnrollMfa(false)
+      void this.enterAppIfReady()
+    },
+    requireMfaEnrollment() {
+      this.mustEnrollMfa = true
+      writeStoredMustEnrollMfa(true)
+      void this.holdOnLoginIfNeeded()
+    },
+    async enterAppIfReady() {
+      if (this.mustEnrollMfa) {
+        return false
+      }
+      const path = String(this.router?.currentRoute?.value?.path ?? '')
+      if (path === '/login' || path === '/reset-password') {
+        await this.router.replace('/dashboard').catch(() => {})
+      }
+
+      return true
+    },
+    holdOnLoginIfNeeded() {
+      if (!this.mustEnrollMfa || !this.router) {
+        return
+      }
+      const path = String(this.router.currentRoute?.value?.path ?? '')
+      if (path !== '/login' && path !== '/reset-password') {
+        void this.router.replace('/login').catch(() => {})
+      }
+    },
     async login(email, pass, t) {
       try {
         const response = await apiInstance.post(apiPaths.oauthLogin, {
@@ -45,8 +91,44 @@ export const useAuthStore = defineStore('auth', {
           password: pass,
         })
 
+        const challenge = extractMfaChallenge(response.data)
+        if (challenge) {
+          return {
+            mfaRequired: true,
+            token: challenge.token,
+            expires: challenge.expires,
+          }
+        }
+
         const td = extractOAuthTokenPayload(response.data)
         this.applyTokensFromApi(td)
+        this.applyMfaFlagsFromLogin(response.data)
+        dismissSessionExpiredNotify()
+
+        return { mfaRequired: false }
+      } catch (error) {
+        const st = error.response?.status ?? error.status
+        switch (st) {
+          case 401:
+            throw new Error(t('invalidCredentials'))
+          case 423:
+            throw new Error(t('loginAccountLocked'))
+          case 429:
+            throw new Error(t('loginTooManyRequests'))
+        }
+
+        throw error
+      }
+    },
+    async completeMfaLogin(challengeToken, code, t) {
+      try {
+        const response = await postMfaChallenge({
+          mfaChallengeToken: challengeToken,
+          code,
+        })
+        const td = extractOAuthTokenPayload(response)
+        this.applyTokensFromApi(td)
+        this.applyMfaFlagsFromLogin(response)
         dismissSessionExpiredNotify()
 
         return true
@@ -54,7 +136,11 @@ export const useAuthStore = defineStore('auth', {
         const st = error.response?.status ?? error.status
         switch (st) {
           case 401:
-            throw new Error(t('invalidCredentials'))
+            throw new Error(t('loginMfaInvalidCode'))
+          case 423:
+            throw new Error(t('loginAccountLocked'))
+          case 429:
+            throw new Error(t('loginTooManyRequests'))
         }
 
         throw error
@@ -84,12 +170,14 @@ export const useAuthStore = defineStore('auth', {
         this.token = token
         this.expireAt = expireAt
         this.refreshToken = refreshToken
+        this.mustEnrollMfa = readStoredMustEnrollMfa()
       }
     },
     clearSession() {
       this.token = null
       this.expireAt = null
       this.refreshToken = null
+      this.mustEnrollMfa = false
       clearAuthLocalStorage()
     },
     init() {
@@ -103,6 +191,7 @@ export const useAuthStore = defineStore('auth', {
             this.token = null
             this.expireAt = null
             this.refreshToken = null
+            this.mustEnrollMfa = false
             if (this.router) {
               this.router.push('/login')
             }

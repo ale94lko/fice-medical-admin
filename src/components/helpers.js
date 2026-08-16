@@ -624,6 +624,68 @@ export function extractOAuthTokenPayload(body) {
   return extractFromRoots(body)
 }
 
+export function extractMfaChallenge(body) {
+  if (!body || typeof body !== 'object') {
+    return null
+  }
+  const roots = [body]
+  if (body.data && typeof body.data === 'object') {
+    roots.push(body.data)
+  }
+  for (const root of roots) {
+    const required = root.mfa_required ?? root.mfaRequired
+    if (!required) {
+      continue
+    }
+    const token = String(
+      root.mfa_challenge_token ?? root.mfaChallengeToken ?? '',
+    ).trim()
+    if (!token) {
+      continue
+    }
+
+    return {
+      token,
+      expires: root.mfa_challenge_expires
+        ?? root.mfaChallengeExpires
+        ?? null,
+    }
+  }
+
+  return null
+}
+
+export function extractLoginUserInfo(body) {
+  if (!body || typeof body !== 'object') {
+    return null
+  }
+  const raw = body.data?.user_info
+    || body.data?.userInfo
+    || body.user_info
+    || body.userInfo
+  if (!raw || typeof raw !== 'object') {
+    return null
+  }
+
+  return {
+    mfaEnabled: Boolean(raw.mfa_enabled ?? raw.mfaEnabled ?? false),
+    mfaEnrollmentRequired: Boolean(
+      raw.mfa_enrollment_required ?? raw.mfaEnrollmentRequired ?? false,
+    ),
+    changePassword: Boolean(
+      raw.change_password ?? raw.changePassword ?? false,
+    ),
+  }
+}
+
+export function unwrapApiData(body) {
+  if (!body || typeof body !== 'object') {
+    return body
+  }
+
+  return body.data ?? body
+}
+
 export function getTenantCountryIso3166Alpha2(tenantCountryCode) {
   const c = tenantCountryCode || countryCodeUsa
 
