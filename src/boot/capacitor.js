@@ -1,4 +1,4 @@
-import { defineBoot } from '#q-app/wrappers'
+import { defineBoot } from '#q-app'
 import { Capacitor } from '@capacitor/core'
 
 export default defineBoot(async({ router }) => {

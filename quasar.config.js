@@ -1,4 +1,4 @@
-import { defineConfig } from '#q-app/wrappers'
+import { defineConfig } from '#q-app'
 import { fileURLToPath } from 'node:url'
 
 export default defineConfig((ctx) => {
@@ -20,17 +20,30 @@ export default defineConfig((ctx) => {
     build: {
       target: {
         browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],
-        node: 'node20'
+        node: 'node22'
+      },
+      alias: {
+        src: ctx.appPaths.srcDir,
+        app: ctx.appPaths.appDir,
+        components: ctx.appPaths.resolve.src('components'),
+        layouts: ctx.appPaths.resolve.src('layouts'),
+        pages: ctx.appPaths.resolve.src('pages'),
+        assets: ctx.appPaths.resolve.src('assets'),
+        boot: ctx.appPaths.resolve.src('boot'),
+        stores: ctx.appPaths.resolve.src('stores')
       },
       // Capacitor serves from app root; GitHub Pages uses project path.
       vueRouterMode: isCapacitor ? 'hash' : 'history',
       publicPath: isCapacitor ? '/' : 'fice-medical-admin',
       env: {
-        VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || '',
+        clientPrefix: 'VITE_',
+      },
+      defineEnv: {
+        VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL || '',
       },
       vitePlugins: [
         ['@intlify/unplugin-vue-i18n/vite', {
-          ssr: ctx.modeName === 'ssr',
+          ssr: ctx.mode.ssr || ctx.mode.ssg,
           include: [fileURLToPath(new URL('./src/i18n', import.meta.url))]
         }],
         ['vite-plugin-checker', {

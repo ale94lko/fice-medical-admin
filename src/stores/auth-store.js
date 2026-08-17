@@ -110,11 +110,11 @@ export const useAuthStore = defineStore('auth', {
         const st = error.response?.status ?? error.status
         switch (st) {
           case 401:
-            throw new Error(t('invalidCredentials'))
+            throw new Error(t('invalidCredentials'), { cause: error })
           case 423:
-            throw new Error(t('loginAccountLocked'))
+            throw new Error(t('loginAccountLocked'), { cause: error })
           case 429:
-            throw new Error(t('loginTooManyRequests'))
+            throw new Error(t('loginTooManyRequests'), { cause: error })
         }
 
         throw error
@@ -136,11 +136,11 @@ export const useAuthStore = defineStore('auth', {
         const st = error.response?.status ?? error.status
         switch (st) {
           case 401:
-            throw new Error(t('loginMfaInvalidCode'))
+            throw new Error(t('loginMfaInvalidCode'), { cause: error })
           case 423:
-            throw new Error(t('loginAccountLocked'))
+            throw new Error(t('loginAccountLocked'), { cause: error })
           case 429:
-            throw new Error(t('loginTooManyRequests'))
+            throw new Error(t('loginTooManyRequests'), { cause: error })
         }
 
         throw error
@@ -153,7 +153,7 @@ export const useAuthStore = defineStore('auth', {
         const st = error.response?.status ?? error.status
         switch (st) {
           case 401:
-            throw new Error(t('alreadySignOut'))
+            throw new Error(t('alreadySignOut'), { cause: error })
         }
 
         throw error
