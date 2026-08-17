@@ -43,20 +43,43 @@ function reloadForStaleChunk(Router, to) {
 export default defineRouter(function() {
   const createHistory = import.meta.env.QUASAR_SERVER
     ? createMemoryHistory
-    : (import.meta.env.VUE_ROUTER_MODE === 'history'
+    : (import.meta.env.QUASAR_VUE_ROUTER_MODE === 'history'
       ? createWebHistory
       : createWebHashHistory)
 
   const Router = createRouter({
     scrollBehavior: () => ({ left: 0, top: 0 }),
     routes,
-    history: createHistory(import.meta.env.VUE_ROUTER_BASE)
+    history: createHistory(import.meta.env.QUASAR_VUE_ROUTER_BASE)
   })
 
   const authStore = useAuthStore()
   authStore.init()
 
+  let githubPagesRedirectHandled = false
+
   Router.beforeEach(async(to, from, next) => {
+    if (!githubPagesRedirectHandled
+      && typeof sessionStorage !== 'undefined') {
+      githubPagesRedirectHandled = true
+      const stored = sessionStorage.getItem('redirect')
+      if (stored) {
+        sessionStorage.removeItem('redirect')
+        const base = String(Router.options.history.base || '/')
+        const basePath = base.endsWith('/') ? base.slice(0, -1) : base
+        let path = stored
+        if (basePath && path.startsWith(basePath)) {
+          path = path.slice(basePath.length) || '/'
+        }
+        if (!path.startsWith('/')) {
+          path = `/${path}`
+        }
+        if (path !== to.fullPath) {
+          next(path)
+          return
+        }
+      }
+    }
     if (typeof sessionStorage !== 'undefined') {
       const key = 'chunk-reload'
       if (sessionStorage.getItem(key) === to.fullPath) {
