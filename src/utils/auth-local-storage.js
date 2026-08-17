@@ -13,10 +13,39 @@ export function readStoredExpireAt() {
     || localStorage.getItem(keys.expireAtLegacy)
 }
 
-export function writeStoredExpireAt(value) {
-  const v = value ?? ''
-  localStorage.setItem(keys.expireAt, v)
-  localStorage.setItem(keys.expireAtLegacy, v)
+function decodeJwtPayload(token) {
+  const parts = String(token || '').split('.')
+  if (parts.length < 2) {
+    return null
+  }
+  const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+  const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4)
+  try {
+    return JSON.parse(atob(padded))
+  } catch {
+    return null
+  }
+}
+
+function expireAtIsoFromAccessToken(token) {
+  const exp = Number(decodeJwtPayload(token)?.exp)
+  if (!Number.isFinite(exp) || exp <= 0) {
+    return ''
+  }
+
+  return new Date(exp * 1000).toISOString()
+}
+
+export function writeStoredExpireAt() {
+  const iso = expireAtIsoFromAccessToken(readStoredToken())
+  if (!iso) {
+    localStorage.removeItem(keys.expireAt)
+    localStorage.removeItem(keys.expireAtLegacy)
+
+    return
+  }
+  localStorage.setItem(keys.expireAt, iso)
+  localStorage.setItem(keys.expireAtLegacy, iso)
 }
 
 export function readStoredRefreshToken() {
