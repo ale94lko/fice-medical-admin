@@ -6,13 +6,14 @@
     :lazy-rules="'ondemand'"
     :class="{
       'text-input--float-on-value': floatLabelOnValue,
+      'text-input--has-value': floatLabelOnValue && hasValue,
     }"
     :autofocus="autofocus"
     :autocomplete="autocomplete || undefined"
     :data-testid="props.testId"
     :type="resolvedType"
-    :label="resolvedLabel"
-    :placeholder="resolvedPlaceholder"
+    :label="label || undefined"
+    :placeholder="placeholder || undefined"
     :rules="props.rules || []">
     <template v-slot:prepend v-if="iconLeft">
       <q-icon :name="iconLeft" class="input-icon"/>
@@ -80,23 +81,6 @@ const showPlainPassword = ref(false)
 
 const hasValue = computed(() => String(model.value ?? '').length > 0)
 
-const resolvedLabel = computed(() => {
-  if (props.floatLabelOnValue && !hasValue.value) {
-    return undefined
-  }
-  return props.label
-})
-
-const resolvedPlaceholder = computed(() => {
-  if (props.placeholder) {
-    return props.placeholder
-  }
-  if (props.floatLabelOnValue && !hasValue.value) {
-    return props.label || undefined
-  }
-  return undefined
-})
-
 function focus() {
   fieldRef.value?.focus()
 }
@@ -122,8 +106,10 @@ const resolvedType = computed(() =>
     color: #004D40;
   }
 
-  .text-input--float-on-value :deep(.q-field__native::placeholder) {
-    color: #64748b;
-    opacity: 1;
+  .text-input--float-on-value:not(.text-input--has-value)
+    :deep(.q-field__label) {
+    transform: none !important;
+    max-width: 100% !important;
+    color: rgba(0, 0, 0, 0.6);
   }
 </style>
