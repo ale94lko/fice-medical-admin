@@ -34,7 +34,7 @@ export default defineConfig((ctx) => {
       },
       // Capacitor serves from app root; GitHub Pages uses project path.
       vueRouterMode: isCapacitor ? 'hash' : 'history',
-      publicPath: isCapacitor ? '/' : 'fice-medical-admin',
+      publicPath: isCapacitor ? '/' : '/fice-medical-admin/',
       env: {
         clientPrefix: 'VITE_',
       },

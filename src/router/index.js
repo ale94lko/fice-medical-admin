@@ -109,6 +109,16 @@ export default defineRouter(function() {
     }
   })
 
+  if (typeof window !== 'undefined') {
+    window.addEventListener('unhandledrejection', event => {
+      if (!isChunkLoadError(event.reason)) {
+        return
+      }
+      event.preventDefault()
+      reloadForStaleChunk(Router, Router.currentRoute.value)
+    })
+  }
+
   authStore.router = Router
 
   return Router
