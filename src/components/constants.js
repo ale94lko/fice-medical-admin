@@ -155,31 +155,32 @@ export const US_NANP_DISPLAY_MAX_LENGTH = 14
 export const US_NANP_LENGTH = 10
 
 export const officialTimezoneRows = [
-  { h: -12, cities: 'Baker Island, Howland Island' },
-  { h: -11, cities: 'Pago Pago, Midway' },
-  { h: -10, cities: 'Honolulu' },
-  { h: -9, cities: 'Anchorage' },
-  { h: -8, cities: 'Los Angeles, Vancouver' },
-  { h: -7, cities: 'Denver, Phoenix' },
-  { h: -6, cities: 'Mexico City, Chicago' },
-  { h: -5, cities: 'New York, Bogotá, Lima' },
-  { h: -4, cities: 'Caracas, Atlantic Time' },
-  { h: -3, cities: 'São Paulo, Buenos Aires' },
-  { h: -2, cities: 'Mid-Atlantic' },
-  { h: -1, cities: 'Azores' },
-  { h: 0, cities: 'London, Lisbon, Dublin' },
-  { h: 1, cities: 'Paris, Berlin, Madrid' },
-  { h: 2, cities: 'Cairo, Athens, Helsinki' },
-  { h: 3, cities: 'Kuwait, Riyadh, Moscow, Nairobi' },
-  { h: 4, cities: 'Abu Dhabi, Dubai, Baku' },
-  { h: 5, cities: 'Islamabad, Karachi, Tashkent' },
-  { h: 6, cities: 'Dhaka, Almaty' },
-  { h: 7, cities: 'Bangkok, Jakarta, Ho Chi Minh City' },
-  { h: 8, cities: 'Beijing, Hong Kong, Singapore' },
-  { h: 9, cities: 'Tokyo, Seoul, Osaka' },
-  { h: 10, cities: 'Sydney, Melbourne, Guam' },
-  { h: 11, cities: 'Solomon Islands, New Caledonia' },
+  { value: 'America/New_York', cities: 'New York (Eastern)' },
+  { value: 'America/Chicago', cities: 'Chicago (Central)' },
+  { value: 'America/Denver', cities: 'Denver (Mountain)' },
+  { value: 'America/Los_Angeles', cities: 'Los Angeles (Pacific)' },
+  { value: 'America/Phoenix', cities: 'Phoenix (Arizona)' },
+  { value: 'America/Anchorage', cities: 'Anchorage (Alaska)' },
+  { value: 'Pacific/Honolulu', cities: 'Honolulu (Hawaii)' },
+  { value: 'UTC', cities: 'UTC' },
 ]
+
+export const dateFormatOptions = [
+  { label: 'MM/DD/YYYY', value: 'MM/DD/YYYY' },
+  { label: 'DD/MM/YYYY', value: 'DD/MM/YYYY' },
+  { label: 'YYYY-MM-DD', value: 'YYYY-MM-DD' },
+  { label: 'YYYY/MM/DD', value: 'YYYY/MM/DD' },
+]
+
+export const timeFormatValues = {
+  h12: '12h',
+  h24: '24h',
+}
+
+export const firstDayOfWeekValues = {
+  sunday: 'SUNDAY',
+  monday: 'MONDAY',
+}
 
 export const typeNames = {
   undefined: 'undefined',
@@ -227,6 +228,9 @@ export const tenantFieldKeys = {
   planName: 'planName',
   status: 'status',
   timezone: 'timezone',
+  dateFormat: 'dateFormat',
+  timeFormat: 'timeFormat',
+  firstDayOfWeek: 'firstDayOfWeek',
   locale: 'locale',
   country: 'country',
   state: 'state',
@@ -454,10 +458,16 @@ export const localeCodes = {
 export const tenantModelFallbacks = {
   timezone: 'UTC',
   locale: localeCodes.enUs,
+  dateFormat: 'MM/DD/YYYY',
+  timeFormat: '12h',
+  firstDayOfWeek: 'SUNDAY',
 }
 
 export const tenantFormDefaults = {
-  timezonePicker: 'UTC-08:00',
+  timezonePicker: 'America/New_York',
+  dateFormat: 'MM/DD/YYYY',
+  timeFormat: '12h',
+  firstDayOfWeek: 'SUNDAY',
   statusActive: 1,
   clinicType: 'PRIMARY_CARE',
 }

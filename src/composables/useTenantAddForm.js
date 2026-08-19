@@ -15,6 +15,9 @@ import {
   tenantFormDefaults,
   tenantFormSectionIds,
   clinicTypeValues,
+  dateFormatOptions,
+  timeFormatValues,
+  firstDayOfWeekValues,
   usStateOptions,
 } from 'components/constants.js'
 import {
@@ -34,6 +37,9 @@ export const TENANT_EDITABLE_KEYS_ON_EDIT = [
   tenantFieldKeys.planId,
   tenantFieldKeys.status,
   tenantFieldKeys.timezone,
+  tenantFieldKeys.dateFormat,
+  tenantFieldKeys.timeFormat,
+  tenantFieldKeys.firstDayOfWeek,
   tenantFieldKeys.locale,
   tenantFieldKeys.state,
   tenantFieldKeys.contactEmail,
@@ -88,7 +94,17 @@ export function useTenantAddForm() {
     { label: t('languageSpanish'), value: localeCodes.esUs },
   ])
 
-  const timezoneOptions = computed(() => getOfficialUtcOffsetTimezoneOptions())
+  const timezoneOptions = computed(() =>
+    getOfficialUtcOffsetTimezoneOptions(),
+  )
+  const timeFormatSelectOptions = computed(() => [
+    { label: t('timeFormat12h'), value: timeFormatValues.h12 },
+    { label: t('timeFormat24h'), value: timeFormatValues.h24 },
+  ])
+  const firstDaySelectOptions = computed(() => [
+    { label: t('firstDaySunday'), value: firstDayOfWeekValues.sunday },
+    { label: t('firstDayMonday'), value: firstDayOfWeekValues.monday },
+  ])
 
   const clinicTypeOptions = computed(() => [
     {
@@ -238,6 +254,39 @@ export function useTenantAddForm() {
         rules: [selectRequiredRule],
         options: timezoneOptions,
         defaultValue: tenantFormDefaults.timezonePicker,
+      },
+      {
+        key: tk.dateFormat,
+        kind: fieldTypes.select,
+        sectionId: sid.basic,
+        labelKey: 'dateFormat',
+        placeholderKey: 'tenantDateFormatPlaceholder',
+        required: true,
+        rules: [selectRequiredRule],
+        options: () => dateFormatOptions,
+        defaultValue: tenantFormDefaults.dateFormat,
+      },
+      {
+        key: tk.timeFormat,
+        kind: fieldTypes.select,
+        sectionId: sid.basic,
+        labelKey: 'timeFormat',
+        placeholderKey: 'tenantTimeFormatPlaceholder',
+        required: true,
+        rules: [selectRequiredRule],
+        options: timeFormatSelectOptions,
+        defaultValue: tenantFormDefaults.timeFormat,
+      },
+      {
+        key: tk.firstDayOfWeek,
+        kind: fieldTypes.select,
+        sectionId: sid.basic,
+        labelKey: 'firstDayOfWeek',
+        placeholderKey: 'tenantFirstDayPlaceholder',
+        required: true,
+        rules: [selectRequiredRule],
+        options: firstDaySelectOptions,
+        defaultValue: tenantFormDefaults.firstDayOfWeek,
       },
       {
         key: tk.locale,
@@ -449,6 +498,9 @@ export function useTenantAddForm() {
       [tk.planId]: Number(form[tk.planId]),
       [tk.schemaName]: deriveSchemaNameFromTenantName(form[tk.name]),
       [tk.timezone]: String(form[tk.timezone] ?? '').trim(),
+      [tk.dateFormat]: String(form[tk.dateFormat] ?? '').trim(),
+      [tk.timeFormat]: String(form[tk.timeFormat] ?? '').trim(),
+      [tk.firstDayOfWeek]: String(form[tk.firstDayOfWeek] ?? '').trim(),
       [tk.locale]: String(form[tk.locale] ?? '').trim(),
       [tk.contactEmail]: form[tk.contactEmail].trim(),
       [tk.contactPhone]: concatInternationalPhone(
@@ -471,6 +523,9 @@ export function useTenantAddForm() {
     const shaped = {
       [tk.domain]: form[tk.domain].trim(),
       [tk.timezone]: String(form[tk.timezone] ?? '').trim(),
+      [tk.dateFormat]: String(form[tk.dateFormat] ?? '').trim(),
+      [tk.timeFormat]: String(form[tk.timeFormat] ?? '').trim(),
+      [tk.firstDayOfWeek]: String(form[tk.firstDayOfWeek] ?? '').trim(),
       [tk.locale]: String(form[tk.locale] ?? '').trim(),
       [tk.contactEmail]: form[tk.contactEmail].trim(),
       [tk.contactPhone]: concatInternationalPhone(

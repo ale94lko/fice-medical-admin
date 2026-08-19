@@ -512,6 +512,21 @@ const tenantDetailRows = computed(() => {
     { key: tk.planName, label: t('planName'), value: dashText(r[tk.planName]) },
     { key: tk.status, label: t('status'), value: statusText },
     { key: tk.timezone, label: t('timezone'), value: dashText(r[tk.timezone]) },
+    {
+      key: tk.dateFormat,
+      label: t('dateFormat'),
+      value: dashText(r[tk.dateFormat]),
+    },
+    {
+      key: tk.timeFormat,
+      label: t('timeFormat'),
+      value: dashText(r[tk.timeFormat]),
+    },
+    {
+      key: tk.firstDayOfWeek,
+      label: t('firstDayOfWeek'),
+      value: dashText(r[tk.firstDayOfWeek]),
+    },
     { key: tk.locale, label: t('language'), value: localeVal },
     { key: tk.country, label: t('country'), value: countryVal },
     { key: tk.state, label: t('state'), value: stateVal },

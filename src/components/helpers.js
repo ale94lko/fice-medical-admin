@@ -843,36 +843,17 @@ export function usAddressTextMatchesState(text, stateCode) {
   return false
 }
 
-function utcOffsetToken(hours) {
-  if (hours === 0) {
-    return 'UTC+00:00'
-  }
-  const sign = hours > 0 ? '+' : '-'
-  const abs = Math.abs(hours)
-  const hh = String(abs).padStart(2, '0')
-
-  return `UTC${sign}${hh}:00`
-}
-
-function utcOffsetValue(hours) {
-  if (hours === 0) {
-    return 'UTC'
-  }
-  return utcOffsetToken(hours)
-}
-
-let cachedOfficialTimezoneOptions = null
-
-export function getOfficialUtcOffsetTimezoneOptions() {
-  if (cachedOfficialTimezoneOptions) {
-    return cachedOfficialTimezoneOptions
-  }
-  cachedOfficialTimezoneOptions = officialTimezoneRows.map(({ h, cities }) => ({
-    label: `(${utcOffsetToken(h)}) ${cities}`,
-    value: utcOffsetValue(h),
+export function getOfficialUtcOffsetTimezoneOptions(currentValue) {
+  const options = officialTimezoneRows.map(({ value, cities }) => ({
+    label: value === 'UTC' ? 'UTC' : `${value} — ${cities}`,
+    value,
   }))
+  const current = String(currentValue ?? '').trim()
+  if (current && !options.some(row => row.value === current)) {
+    options.unshift({ label: current, value: current })
+  }
 
-  return cachedOfficialTimezoneOptions
+  return options
 }
 
 export function extractPlansList(root) {
@@ -1277,6 +1258,15 @@ export function mapTenant(tenant) {
         : null,
     [tk.schemaName]: tenant.schema_name ?? tenant.schemaName ?? '',
     [tk.timezone]: tenant.timezone ?? tenantModelFallbacks.timezone,
+    [tk.dateFormat]: tenant.date_format
+      ?? tenant.dateFormat
+      ?? tenantModelFallbacks.dateFormat,
+    [tk.timeFormat]: tenant.time_format
+      ?? tenant.timeFormat
+      ?? tenantModelFallbacks.timeFormat,
+    [tk.firstDayOfWeek]: tenant.first_day_of_week
+      ?? tenant.firstDayOfWeek
+      ?? tenantModelFallbacks.firstDayOfWeek,
     [tk.locale]: tenant.locale ?? tenantModelFallbacks.locale,
     [tk.contactEmail]: tenant.contact_email ?? tenant.contactEmail ?? '',
     [tk.contactPhone]: tenant.contact_phone ?? tenant.contactPhone ?? '',
@@ -1328,6 +1318,18 @@ export function mergeTenantWithPayload(mapped, payload, plans) {
     [tk.schemaName]: pickStr(mapped[tk.schemaName], payload[tk.schemaName]),
     [tk.timezone]: pickStr(mapped[tk.timezone], payload[tk.timezone])
       || mapped[tk.timezone],
+    [tk.dateFormat]: pickStr(
+      mapped[tk.dateFormat],
+      payload[tk.dateFormat],
+    ) || mapped[tk.dateFormat],
+    [tk.timeFormat]: pickStr(
+      mapped[tk.timeFormat],
+      payload[tk.timeFormat],
+    ) || mapped[tk.timeFormat],
+    [tk.firstDayOfWeek]: pickStr(
+      mapped[tk.firstDayOfWeek],
+      payload[tk.firstDayOfWeek],
+    ) || mapped[tk.firstDayOfWeek],
     [tk.locale]: pickStr(mapped[tk.locale], payload[tk.locale])
       || mapped[tk.locale],
     [tk.contactEmail]: pickStr(
@@ -1385,6 +1387,9 @@ function applyTenantPayloadToSnakeBody(body, payload, tk) {
     },
     { p: tk.schemaName, b: 'schema_name' },
     { p: tk.timezone, b: 'timezone' },
+    { p: tk.dateFormat, b: 'date_format' },
+    { p: tk.timeFormat, b: 'time_format' },
+    { p: tk.firstDayOfWeek, b: 'first_day_of_week' },
     { p: tk.locale, b: 'locale' },
     { p: tk.contactEmail, b: 'contact_email' },
     { p: tk.contactPhone, b: 'contact_phone', map: v => v ?? '' },

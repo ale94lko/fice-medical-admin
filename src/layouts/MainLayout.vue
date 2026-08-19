@@ -14,6 +14,8 @@
         <q-toolbar-title>
           FiCE Medical
         </q-toolbar-title>
+        <q-space />
+        <TimezoneMismatchBanner />
         <q-btn
           flat
           round
@@ -334,6 +336,8 @@ import { useI18n } from 'vue-i18n'
 import ModalComponent from 'components/ModalComponent.vue'
 import AppFooterPaginationHost from
   'components/admin-table/AppFooterPaginationHost.vue'
+import TimezoneMismatchBanner from
+  'components/TimezoneMismatchBanner.vue'
 import { useAppFooterPagination } from
   'src/composables/useAppFooterPagination.js'
 

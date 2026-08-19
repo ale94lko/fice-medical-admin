@@ -20,6 +20,8 @@ import {
 import { dismissSessionExpiredNotify } from '../utils/api-session-error.js'
 import { completeMfaChallenge as postMfaChallenge } from
   '../utils/mfa-api.js'
+import { clearSessionDisplayTimezone } from
+  '../composables/useSessionDisplayTimezone.js'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -179,6 +181,7 @@ export const useAuthStore = defineStore('auth', {
       this.refreshToken = null
       this.mustEnrollMfa = false
       clearAuthLocalStorage()
+      clearSessionDisplayTimezone()
     },
     init() {
       if (this._initialized) {

@@ -333,6 +333,7 @@ import AppLoadingOverlay from 'components/AppLoadingOverlay.vue'
 import DashboardDonutChart from 'components/dashboard/DashboardDonutChart.vue'
 import DashboardBarChart from 'components/dashboard/DashboardBarChart.vue'
 import { useDashboardStats } from 'src/composables/useDashboardStats.js'
+import { formatDateTime } from 'src/utils/app-datetime.js'
 
 const { t, locale } = useI18n()
 const tk = tenantFieldKeys
@@ -458,14 +459,7 @@ function formatCurrency(amount) {
 }
 
 function formatUpdated(date) {
-  try {
-    return new Intl.DateTimeFormat(locale.value, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(date)
-  } catch {
-    return date.toLocaleString()
-  }
+  return formatDateTime(date) || ''
 }
 
 function tenantInitial(tenant) {
