@@ -1,0 +1,1 @@
+import{On as e,on as t}from"./auth-store-DP2bB7jx.js";function n(n,r,i=t.label,a=t.value){let o=Array.isArray(n)?[...n]:[],s=String(r??``).toLowerCase().trim();return s?o.filter(t=>{if(!t||typeof t!==e.object)return!1;let n=String(t[i]??``).toLowerCase(),r=String(t[a]??``).toLowerCase();return n.includes(s)||r.includes(s)}):o}export{n as t};

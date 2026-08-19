@@ -1,1 +1,0 @@
-import{D as e,St as t,mt as n,qt as r,v as i}from"./runtime-core.esm-bundler-jaTeRxlz.js";import{a}from"./index-BOPjS5Z4.js";import{i as o,t as s}from"./QLayout-BOdlbxiT.js";var c={};function l(a,c){let l=t(`router-view`);return n(),i(s,{view:`hHh Lpr lff`},{default:r(()=>[e(o,null,{default:r(()=>[e(l)]),_:1})]),_:1})}var u=a(c,[[`render`,l]]);export{u as default};
