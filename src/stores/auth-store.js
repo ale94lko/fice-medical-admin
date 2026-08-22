@@ -148,17 +148,11 @@ export const useAuthStore = defineStore('auth', {
         throw error
       }
     },
-    async logout(router, t) {
+    async logout(router) {
       try {
         await apiInstance.post(apiPaths.logout)
-      } catch (error) {
-        const st = error.response?.status ?? error.status
-        switch (st) {
-          case 401:
-            throw new Error(t('alreadySignOut'), { cause: error })
-        }
-
-        throw error
+      } catch {
+        // Best-effort server revoke. Local session still ends.
       } finally {
         this.clearSession()
         await router.push('/login')

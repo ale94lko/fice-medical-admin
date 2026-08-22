@@ -84,6 +84,12 @@ function isPublicAuthUrl(url) {
     || u.includes(apiPaths.oauthMfaChallenge)
 }
 
+function isLogoutUrl(url) {
+  const u = String(url || '')
+
+  return u === apiPaths.logout || u.endsWith(apiPaths.logout)
+}
+
 function getRefreshInFlight() {
   if (!refreshInFlight) {
     refreshInFlight = performRefresh().finally(() => {
@@ -246,7 +252,8 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
     if (cfg.url?.includes(apiPaths.oauthLogin)
-      || cfg.url?.includes(apiPaths.oauthMfaChallenge)) {
+      || cfg.url?.includes(apiPaths.oauthMfaChallenge)
+      || isLogoutUrl(cfg.url)) {
       return Promise.reject(error)
     }
 
